@@ -1,7 +1,7 @@
 package de.tomalbrc.cameraobscura.json;
 
 import com.google.gson.*;
-import de.tomalbrc.cameraobscura.RPBlockState;
+import de.tomalbrc.cameraobscura.render.RPBlockState;
 import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;

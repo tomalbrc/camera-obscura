@@ -1,4 +1,4 @@
-package de.tomalbrc.cameraobscura;
+package de.tomalbrc.cameraobscura.render;
 
 import org.joml.Vector3d;
 

@@ -1,4 +1,4 @@
-package de.tomalbrc.cameraobscura;
+package de.tomalbrc.cameraobscura.render;
 
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

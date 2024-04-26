@@ -1,18 +1,10 @@
-package de.tomalbrc.cameraobscura;
+package de.tomalbrc.cameraobscura.render;
 
-import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.core.Direction;
-import net.minecraft.data.worldgen.DimensionTypes;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 

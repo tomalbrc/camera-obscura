@@ -1,10 +1,9 @@
-package de.tomalbrc.cameraobscura;
+package de.tomalbrc.cameraobscura.render;
 
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -88,51 +87,27 @@ public class Raytracer {
             int finalColor = cc.getRgbColor();
 
             if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA) && !(blockState.getBlock() instanceof BaseEntityBlock)) {
-                String blockName = BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath();
-                RPBlockState rpBlockState = RPHelper.loadBlockState(blockName);
-                if (rpBlockState != null) {
-                    RPModel rpModel = null;
-                    if (rpBlockState.variants != null) for (var entry: rpBlockState.variants.entrySet()) {
-                        BlockState state = null;
-                        if (!entry.getKey().isEmpty()) {
-                            try {
-                                state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), String.format("%s[%s]", blockName, entry.getKey()), false).blockState();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+                RPModel rpModel = RPHelper.loadModel(blockState);
 
-                        //System.out.println("KEY: --- " + entry.getKey());
+                if (rpModel == null) {
+                    System.out.println("Could not load model: " + blockState.getBlock().getName().getString());
+                } else {
+                    Map<String, ResourceLocation> textures = rpModel.collectTextures();
 
-                        if (entry.getKey().isEmpty() || state == blockState) {
-                            rpModel = RPHelper.loadModel(entry.getValue().model.getPath());
-                            break;
-                        }
-                    }
+                    // TODO: find ray intersection in model geometry aka cubes
 
-                    if (rpModel == null) {
-                        System.out.println("FUCK " + blockName);
-                    } else {
-                        Map<String, ResourceLocation> textures = rpModel.collectTextures();
+                    byte[] data = RPHelper.loadTexture(textures.values().iterator().next().getPath());
+                    if (data != null) {
+                        var out = new ByteArrayInputStream(data);
+                        var img = ImageIO.read(out);
 
-                        // TODO: find ray intersection in model geometry aka cubes
-
-
-                        byte[] data = RPHelper.loadTexture(textures.values().iterator().next().getPath());
-                        if (data != null) {
-                            var out = new ByteArrayInputStream(data);
-                            var img = ImageIO.read(out);
-
-                            var imgData = img.getRGB(level.random.nextInt(0, 15), level.random.nextInt(0, 15));
-                            if (img.getColorModel().getPixelSize() == 8) {
-                                finalColor = ColorHelper.multiplyColor(cc.getRgbColor(), imgData);
-                            } else {
-                                finalColor = imgData;
-                            }
+                        var imgData = img.getRGB(level.random.nextInt(0, 15), level.random.nextInt(0, 15));
+                        if (img.getColorModel().getPixelSize() == 8) {
+                            finalColor = ColorHelper.multiplyColor(cc.getRgbColor(), imgData);
+                        } else {
+                            finalColor = imgData;
                         }
                     }
-
-
                 }
             }
 
@@ -149,5 +124,4 @@ public class Raytracer {
 
         return CanvasColor.YELLOW_HIGH;
     }
-
 }

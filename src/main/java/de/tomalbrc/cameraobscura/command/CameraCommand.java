@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import de.tomalbrc.cameraobscura.ServerRenderer;
+import de.tomalbrc.cameraobscura.render.ServerRenderer;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.ChatFormatting;
@@ -121,7 +121,7 @@ public class CameraCommand {
                     }
                 }
 
-                // getMapName() = makeKey??????? TODO: FUCK
+                // getMapName() = makeKey??????? TODO
                 level.setMapData(MapItem.makeKey(id), state);
 
                 var stack = new ItemStack(Items.FILLED_MAP);
