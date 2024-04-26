@@ -2,9 +2,9 @@ package de.tomalbrc.cameraobscura.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.tomalbrc.cameraobscura.json.VariantDeserializer;
 import de.tomalbrc.cameraobscura.render.RPBlockState;
 import de.tomalbrc.cameraobscura.render.RPModel;
-import de.tomalbrc.cameraobscura.json.VariantDeserializer;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
