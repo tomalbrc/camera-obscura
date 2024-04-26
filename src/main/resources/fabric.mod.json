@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "camera-obscura",
+  "version": "${version}",
+  "name": "Camera Obscura",
+  "description": "Serverside camera! Renders images on the server, no client-side mods required!",
+  "authors": [
+    "tomalbrc"
+  ],
+  "contact": {
+    "website": "https://github.com/tomalbrc/camera-obscura",
+    "repo": "camera-obscura"
+  },
+  "license": "LGPL-3.0",
+  "icon": "assets/camera-obscura/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "de.tomalbrc.cameraobscura.CameraObscura"
+    ]
+  },
+  "mixins": [
+    "camera-obscura.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
