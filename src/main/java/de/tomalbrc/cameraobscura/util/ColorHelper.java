@@ -1,4 +1,4 @@
-package de.tomalbrc.cameraobscura;
+package de.tomalbrc.cameraobscura.util;
 
 public class ColorHelper {
     public static int packColor(double[] color) {

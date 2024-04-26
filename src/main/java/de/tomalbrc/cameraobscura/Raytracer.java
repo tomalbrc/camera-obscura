@@ -1,30 +1,19 @@
 package de.tomalbrc.cameraobscura;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.DynamicOps;
+import de.tomalbrc.cameraobscura.util.ColorHelper;
+import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
-import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.commands.SetBlockCommand;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.MapColor;
@@ -35,23 +24,15 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.Map;
 
 public class Raytracer {
-    private static ResourcePackBuilder resourcePackBuilder = null;
 
     private final Level level;
 
-    final private Gson gson = new GsonBuilder().registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer()).create();
-
     public Raytracer(Level level) {
         this.level = level;
-        if (resourcePackBuilder == null) {
-            var p = Path.of("a/b");
-            resourcePackBuilder = PolymerResourcePackUtils.createBuilder(p);
-        }
+
     }
 
     public CanvasColor trace(Vec3 pos, Vec3 direction) throws IOException {
@@ -108,51 +89,50 @@ public class Raytracer {
 
             if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA) && !(blockState.getBlock() instanceof BaseEntityBlock)) {
                 String blockName = BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath();
-                RPBlockState rpBlockState = loadBlockState(blockName);
+                RPBlockState rpBlockState = RPHelper.loadBlockState(blockName);
                 if (rpBlockState != null) {
                     RPModel rpModel = null;
-                    for (var entry: rpBlockState.variants.entrySet()) {
+                    if (rpBlockState.variants != null) for (var entry: rpBlockState.variants.entrySet()) {
                         BlockState state = null;
                         if (!entry.getKey().isEmpty()) {
                             try {
-                                state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), entry.getKey(), false).blockState();
+                                state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), String.format("%s[%s]", blockName, entry.getKey()), false).blockState();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
 
+                        //System.out.println("KEY: --- " + entry.getKey());
+
                         if (entry.getKey().isEmpty() || state == blockState) {
-                            rpModel = loadModel(entry.getValue().model.getPath());
+                            rpModel = RPHelper.loadModel(entry.getValue().model.getPath());
                             break;
                         }
                     }
 
-                    Map<String, ResourceLocation> textures = new Object2ObjectOpenHashMap<>();
-                    textures.putAll(rpModel.textures);
+                    if (rpModel == null) {
+                        System.out.println("FUCK " + blockName);
+                    } else {
+                        Map<String, ResourceLocation> textures = rpModel.collectTextures();
 
-                    ResourceLocation parent = rpModel.parent;
-                    while (parent != null || parent.getPath() == null || !parent.getPath().isEmpty()) {
-                        var child =  loadModel(parent.getPath());
-                        if (child != null) {
-                            Raytracer.resourcePackBuilder.getDataOrSource("assets/minecraft/" + "models/block/" + BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath() + ".json");
-                            parent = child.parent;
-                        } else {
-                            break;
+                        // TODO: find ray intersection in model geometry aka cubes
+
+
+                        byte[] data = RPHelper.loadTexture(textures.values().iterator().next().getPath());
+                        if (data != null) {
+                            var out = new ByteArrayInputStream(data);
+                            var img = ImageIO.read(out);
+
+                            var imgData = img.getRGB(level.random.nextInt(0, 15), level.random.nextInt(0, 15));
+                            if (img.getColorModel().getPixelSize() == 8) {
+                                finalColor = ColorHelper.multiplyColor(cc.getRgbColor(), imgData);
+                            } else {
+                                finalColor = imgData;
+                            }
                         }
                     }
 
-                    byte[] data = Raytracer.resourcePackBuilder.getDataOrSource("assets/minecraft/" + "textures/block/" + BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath() + ".png");
-                    if (data != null) {
-                        var out = new ByteArrayInputStream(data);
-                        var img = ImageIO.read(out);
 
-                        var imgData = img.getRGB(level.random.nextInt(0, 15), level.random.nextInt(0, 15));
-                        if (img.getColorModel().getPixelSize() == 8) {
-                            finalColor = ColorHelper.multiplyColor(cc.getRgbColor(), imgData);
-                        } else {
-                            finalColor = imgData;
-                        }
-                    }
                 }
             }
 
@@ -170,13 +150,4 @@ public class Raytracer {
         return CanvasColor.YELLOW_HIGH;
     }
 
-    private RPBlockState loadBlockState(String path) {
-        byte[] data = Raytracer.resourcePackBuilder.getDataOrSource("assets/minecraft/blockstates/" + path + ".json");
-        return gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
-    }
-
-    private RPModel loadModel(String path) {
-        byte[] data = Raytracer.resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
-        return gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPModel.class);
-    }
 }

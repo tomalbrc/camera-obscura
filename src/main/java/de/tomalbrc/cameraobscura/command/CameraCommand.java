@@ -71,6 +71,7 @@ public class CameraCommand {
         try {
             mapImage = new ServerRenderer(player).render();
         } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
@@ -89,6 +90,7 @@ public class CameraCommand {
             try {
                 return new BufferedImage(128,128, BufferedImage.TYPE_INT_RGB);
             } catch (Throwable e) {
+                e.printStackTrace();
                 return null;
             }
         });
