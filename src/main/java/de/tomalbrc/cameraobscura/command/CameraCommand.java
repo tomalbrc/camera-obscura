@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadFactory;
 
 public class CameraCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -49,9 +50,6 @@ public class CameraCommand {
 
         source.sendSuccess(() -> Component.literal("Taking photo..."), false);
 
-        int finalHeight = 128;
-        int finalWidth = 128;
-
 //        CompletableFuture.supplyAsync(() -> {
 //            try {
 //                return new ServerRenderer(player).render();
@@ -67,19 +65,25 @@ public class CameraCommand {
 //            source.sendSuccess(() -> Component.literal("Done!"), false);
 //        }, source.getServer());
 
-        CanvasImage mapImage = null;
-        try {
-            mapImage = new ServerRenderer(player).render();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
 
-        source.sendSuccess(() -> Component.literal("Took a photo!"), false);
 
-        var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
-        player.addItem(items.get(0));
-        source.sendSuccess(() -> Component.literal("Done!"), false);
+        new Thread(() -> {
+            CanvasImage mapImage = null;
+            try {
+                mapImage = new ServerRenderer(player, 256,256).render();
+
+                source.sendSuccess(() -> Component.literal("Took a photo!"), false);
+
+                var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
+                items.forEach(player::addItem);
+                source.sendSuccess(() -> Component.literal("Done!"), false);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }, "obscurarenderer").start();
+
+
 
         return Command.SINGLE_SUCCESS;
     }

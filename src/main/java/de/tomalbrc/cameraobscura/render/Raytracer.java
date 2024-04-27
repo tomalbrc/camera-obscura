@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
+    static double[] WATER_TINT = new double[] { .3, .3, 1 };
+    static double[] LAVA_TINT = new double[] { 1, .3, .3 };
 
     private final Level level;
 
@@ -35,9 +37,10 @@ public class Raytracer {
 
     }
 
-    public CanvasColor trace(Vec3 pos, Vec3 direction) throws IOException {
-        BlockHitResult result =             this.level.clip(new ClipContext(pos, direction, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
-        BlockHitResult resultWithLiquids =  this.level.clip(new ClipContext(pos, direction, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, CollisionContext.empty()));
+    public int trace(Vec3 pos, Vec3 direction) throws IOException {
+        var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
+        BlockHitResult result =             this.level.clip(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        BlockHitResult resultWithLiquids =  this.level.clip(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, CollisionContext.empty()));
 
         // Color change for liquids
         boolean lava = false;
@@ -50,11 +53,11 @@ public class Raytracer {
             if (resultWithLiquids != null) {
                 var fs = this.level.getBlockState(resultWithLiquids.getBlockPos()).getFluidState();
                 if (fs.is(Fluids.WATER) || fs.is(Fluids.FLOWING_WATER)) {
-                    tint = new double[] { .3, .3, 1 };
+                    tint = WATER_TINT;
                     water = true;
                 }
                 if (fs.is(Fluids.LAVA) || fs.is(Fluids.FLOWING_LAVA)) {
-                    tint = new double[] { 1, .3, .3 };
+                    tint = LAVA_TINT;
                     lava = true;
                 }
             }
@@ -73,7 +76,6 @@ public class Raytracer {
 
             if (shadows) {
                 double shadowLevel = 15.0;
-
                 for(int i = 0; i < tint.length; i++) {
                     tint[i] = tint[i] * (lightLevel / shadowLevel);
                 }
@@ -86,17 +88,17 @@ public class Raytracer {
 
             int finalColor = canvasColor.getRgbColor();
 
-            if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA) && !(blockState.getBlock() instanceof BaseEntityBlock)) {
+            if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA)) {
                 RPModel rpModel = RPHelper.loadModel(blockState);
 
                 if (rpModel == null) {
                     System.out.println("Could not load model: " + blockState.getBlock().getName().getString());
                 } else {
-                    Map<String, ResourceLocation> textures = rpModel.collectTextures();
+                    //Map<String, ResourceLocation> textures = rpModel.collectTextures();
 
                     // TODO: find ray intersection in model geometry aka cubes
                     int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), result.getBlockPos().getCenter().toVector3f());
-                    finalColor = imgData;
+                    finalColor = imgData != -1 ? imgData : canvasColor.getRgbColor(); // fallback = mapcolor
 //                             finalColor = ColorHelper.multiplyColor(canvasColor.getRgbColor(), imgData);
                 }
             }
@@ -106,12 +108,12 @@ public class Raytracer {
                 col2 = ColorHelper.packColor(tint);
             }
 
-            return CanvasUtils.findClosestColor(col2);
+            return col2;
         } else if (resultWithLiquids != null) {
-            var col = level.getBlockState(resultWithLiquids.getBlockPos()).getMapColor(level, result.getBlockPos());
-            return CanvasColor.from(col, MapColor.Brightness.NORMAL);
+            // TODO: lava/water check
+            return ColorHelper.packColor(WATER_TINT);
         }
 
-        return CanvasColor.YELLOW_HIGH;
+        return -1;
     }
 }

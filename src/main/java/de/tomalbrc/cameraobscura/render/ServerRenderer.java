@@ -4,10 +4,14 @@ import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -18,30 +22,40 @@ public class ServerRenderer {
     private static final double FOV_YAW_RAD = Math.toRadians(FOV_YAW_DEG);
     private static final double FOV_PITCH_RAD = Math.toRadians(FOV_PITCH_DEG);
 
+    private final int width;
+    private final int height;
 
     private final ServerPlayer player;
     private final CanvasImage image;
-    public ServerRenderer(ServerPlayer player) {
+    public ServerRenderer(ServerPlayer player, int width, int height) {
         this.player = player;
-        this.image = new CanvasImage(128, 128);
+        this.image = new CanvasImage(width, height);
+        this.width = width;
+        this.height = height;
     }
 
     public CanvasImage render() throws IOException {
         Vec3 eyes = this.player.getEyePosition();
         List<Vector3d> rays = buildRayMap(this.player);
 
+        var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+
         Raytracer raytracer = new Raytracer(this.player.level());
         // loop through every pixel on map
-        for (int x = 0; x < 128; x++) {
-            for (int y = 0; y < 128; y++) {
-                int index = x+128*y;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int index = x+height*y;
                 Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
-                rayTraceVector = rayTraceVector.scale(128).add(eyes);
-                this.image.set(x,y, raytracer.trace(eyes, rayTraceVector));
+
+                var col = raytracer.trace(eyes, rayTraceVector);
+
+                imgFile.setRGB(x, y, col == -1 ? 0 : (col&0xffffff));
+                this.image.set(x,y, CanvasUtils.findClosestColor(col));
             }
         }
 
-        this.image.set(0, 0, CanvasUtils.findClosestColor(123));
+        ImageIO.write(imgFile, "PNG", new File("/tmp/out.png"));
+
         return this.image;
     }
 
@@ -67,11 +81,11 @@ public class ServerRenderer {
         return yawPitchRotation(yawPitchRotation(base, firstYaw, firstPitch), secondYaw, secondPitch);
     }
 
-    public static List<Vector3d> buildRayMap(Player player) {
+    public List<Vector3d> buildRayMap(Player player) {
         Vector3d direction = new Vector3d(player.getLookAngle().toVector3f()).normalize(); // Get normalized direction vector
 
-        double yawRad = Math.atan2(direction.z, direction.x);
-        double pitchRad = Math.atan2(direction.y, Math.sqrt(direction.x * direction.x + direction.z * direction.z));
+        double yawRad = (player.yHeadRot+90) * Mth.DEG_TO_RAD;
+        double pitchRad = -player.xRotO * Mth.DEG_TO_RAD;
 
         // this is incorrect but the math is not mathing when using 0,0,-1...
         Vector3d baseVec = new Vector3d(1, 0, 0);
@@ -81,8 +95,6 @@ public class ServerRenderer {
         Vector3d lowerRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
         Vector3d upperRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
 
-        double width = 128;
-        double height = 128;
         List<Vector3d> rays = new ObjectArrayList<>((int) (width * height));
 
         Vector3d leftFraction = new Vector3d(upperLeft).sub(lowerLeft).mul(1.0 / (height - 1.0));

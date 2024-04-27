@@ -1,10 +1,12 @@
 package de.tomalbrc.cameraobscura.render;
 
 import de.tomalbrc.cameraobscura.util.RPHelper;
+import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
 import javax.imageio.ImageIO;
@@ -21,7 +23,17 @@ public class RPModel {
 
     List<RPElement> elements;
 
-    public Map<String, ResourceLocation> collectTextures() {
+    Map<String, ResourceLocation> textureMap;
+
+    List<RPElement> allElements;
+
+    public RPModel prepare() {
+        this.textureMap = collectTextures();
+        this.allElements = collectElements();
+        return this;
+    }
+
+    private Map<String, ResourceLocation> collectTextures() {
         Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
         this.textures.forEach((key,value) -> {
             collectedTextures.put(key, new ResourceLocation(value.replace("#","")));
@@ -43,7 +55,7 @@ public class RPModel {
         return collectedTextures;
     }
 
-    public List<RPElement> collectElements() {
+    private List<RPElement> collectElements() {
         List<RPElement> elementsList = new ObjectArrayList<>();
         if (this.elements != null) elementsList.addAll(this.elements);
 
@@ -63,82 +75,162 @@ public class RPModel {
     private List<Triangle> generateCubeTriangles(Vector3f min, Vector3f max) {
         List<Triangle> triangles = new ObjectArrayList<>();
 
-        // Define vertices for each face (assuming clockwise winding order)
-        Vector3f v1 = new Vector3f(min.x, min.y, min.z);
-        Vector3f v2 = new Vector3f(max.x, min.y, min.z);
-        Vector3f v3 = new Vector3f(max.x, max.y, min.z);
-        Vector3f v4 = new Vector3f(min.x, max.y, min.z);
-        Vector3f v5 = new Vector3f(min.x, min.y, max.z);
-        Vector3f v6 = new Vector3f(max.x, min.y, max.z);
-        Vector3f v7 = new Vector3f(max.x, max.y, max.z);
-        Vector3f v8 = new Vector3f(min.x, max.y, max.z);
-
-        // Front face
-        triangles.add(new Triangle(v4, v3, v2, Direction.NORTH));
-        triangles.add(new Triangle(v4, v2, v1, Direction.NORTH));
-
-        // Back face
-        triangles.add(new Triangle(v8, v7, v6, Direction.SOUTH));
-        triangles.add(new Triangle(v8, v6, v5, Direction.SOUTH));
-
-        // Right face
-        triangles.add(new Triangle(v7, v3, v2, Direction.WEST));
-        triangles.add(new Triangle(v7, v2, v6, Direction.WEST));
-
-        // Left face
-        triangles.add(new Triangle(v5, v1, v4, Direction.EAST));
-        triangles.add(new Triangle(v5, v4, v8, Direction.EAST));
-
-        // Top face
-        triangles.add(new Triangle(v4, v8, v7, Direction.UP));
-        triangles.add(new Triangle(v4, v7, v3, Direction.UP));
+        float maxX = max.x;
+        float maxY = max.y; // temporary value holder for y
+        float maxZ = max.z; // swap y and z
+        float minX = min.x;
+        float minY = min.y; // swap y and z
+        float minZ = min.z;
 
         // Bottom face
-        triangles.add(new Triangle(v1, v5, v6, Direction.DOWN));
-        triangles.add(new Triangle(v1, v6, v2, Direction.DOWN));
+        triangles.add(new Triangle(
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(maxX, minY, minZ), Direction.DOWN, -1419412));
+
+        triangles.add(new Triangle(
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(minX, minY, maxZ), Direction.DOWN, -2419412));
+
+        // Top face
+        triangles.add(new Triangle(
+                new Vector3f(maxX, maxY, maxZ),
+                new Vector3f(minX, maxY, minZ),
+                new Vector3f(maxX, maxY, minZ), Direction.UP, 6315465));
+
+        triangles.add(new Triangle(
+                new Vector3f(minX, maxY, minZ),
+                new Vector3f(maxX, maxY, maxZ),
+                new Vector3f(minX, maxY, maxZ), Direction.UP, 5315465));
+
+        // Front face
+        triangles.add(new Triangle(
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(minX, maxY, minZ),
+                new Vector3f(maxX, maxY, minZ), Direction.NORTH, -32522));
+
+        triangles.add(new Triangle(
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(maxX, maxY, minZ),
+                new Vector3f(maxX, minY, minZ), Direction.NORTH, 432522));
+
+        // Back face
+        triangles.add(new Triangle(
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(maxX, maxY, maxZ),
+                new Vector3f(minX, maxY, maxZ), Direction.SOUTH, 832453));
+
+        triangles.add(new Triangle(
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(minX, maxY, maxZ),
+                new Vector3f(minX, minY, maxZ), Direction.SOUTH, -832453));
+
+        // Left face
+        triangles.add(new Triangle(
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(minX, minY, maxZ),
+                new Vector3f(minX, maxY, maxZ), Direction.EAST, -52151));
+
+        triangles.add(new Triangle(
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(minX, maxY, maxZ),
+                new Vector3f(minX, maxY, minZ), Direction.EAST, 252151));
+
+        // Right face
+        triangles.add(new Triangle(
+                new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, maxY, minZ),
+                new Vector3f(maxX, maxY, maxZ), Direction.WEST, 41245));
+
+        triangles.add(new Triangle(
+                new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, maxY, maxZ),
+                new Vector3f(maxX, minY, maxZ), Direction.WEST, 141245));
 
         return triangles;
     }
 
     public int intersect(Vector3f origin, Vector3f direction, Vector3f offset) {
-        var allTextures = collectTextures();
-        var e = collectElements();
-        for (var element: e) {
-            var tris = generateCubeTriangles(element.from, element.to);
+        for (var element: allElements) {
+            var l = new Vector3f(-0.5f);
+            var tris = generateCubeTriangles(element.from.div(16, new Vector3f()).add(l).add(offset), element.to.div(16, new Vector3f()).add(l).add(offset));
+
+            Triangle triangle = null;
+            Triangle.TriangleHit hit = null;
+            float smallestT = Float.MAX_VALUE;
             for (var tri: tris) {
-                var res = tri.rayIntersect(origin.sub(offset, new Vector3f()), new Vector3f(direction));
-                if (res != null) {
-                    var uv = res.getUV();
-                    var face = res.getDirection().toString().toLowerCase();
+                var res = tri.rayIntersect(origin, direction);
+                if (res != null && res.getT() < smallestT) {
+                    smallestT = res.getT();
+                    triangle = tri;
+                    hit = res;
+                }
+            }
 
-                    RPElement.TextureInfo ti = element.faces.get(face);
-if (ti == null)
-    System.out.println("FOOKIN FACE: "+face);
+            if (hit != null) {
+                var uv = hit.getUV();
+                var face = hit.getDirection().toString().toLowerCase(); // to help determine which texture to use
+                RPElement.TextureInfo ti = element.faces.get(face);
 
-                    var texKey = ti.texture.replace("#","");
+                if (ti == null)
+                    continue; // no face, skip
 
-                    //resolve texture key in case of placeholders (starting with #)
-                    while (allTextures.containsKey(texKey)) {
-                        texKey = allTextures.get(texKey).getPath();
+                var texKey = ti.texture.replace("#","");
+
+                //resolve texture key in case of placeholders (starting with #)
+                while (textureMap.containsKey(texKey)) {
+                    texKey = textureMap.get(texKey).getPath();
+                }
+
+                byte[] data = RPHelper.loadTexture(texKey);
+                if (data != null) {
+                    BufferedImage img = null;
+                    try {
+                        img = ImageIO.read(new ByteArrayInputStream(data));
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        return CanvasColor.ORANGE_NORMAL.getRgbColor();
                     }
 
-                    byte[] data = RPHelper.loadTexture(texKey);
-                    if (data != null) {
-                        BufferedImage img = null;
-                        try {
-                            img = ImageIO.read(new ByteArrayInputStream(data));
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                            return -1;
-                        }
-
-                        int imgData = img.getRGB((int) (img.getWidth() * uv.x), (int) (img.getHeight() * uv.y));
-                        return imgData;
-                    }
+                    boolean debug = false;
+                    int imgData = debug ? triangle.color : img.getRGB((int) ((img.getWidth()-1) * uv.x), (int) ((img.getHeight()-1) * uv.y));
+                    return imgData;
                 }
             }
         }
 
-        return -1;
+        return CanvasColor.PURPLE_HIGH.getRgbColor();
+    }
+
+    public RPModel rotate(RPBlockState.Variant v) {
+
+        if (true) return this;
+        for (var e: allElements) {
+            e.from.div(16);
+            e.from.sub(new Vector3f(0.5f));
+            e.to.div(16);
+            e.to.sub(new Vector3f(0.5f));
+
+            if (v.x != 0) {
+                e.from.rotateX(v.x * Mth.DEG_TO_RAD);
+                e.to.rotateX(v.x * Mth.DEG_TO_RAD);
+            }
+            if (v.y != 0) {
+                e.from.rotateY(v.y * Mth.DEG_TO_RAD);
+                e.to.rotateY(v.y * Mth.DEG_TO_RAD);
+            }
+            if (v.z != 0) {
+                e.from.rotateZ(v.z * Mth.DEG_TO_RAD);
+                e.to.rotateZ(v.z * Mth.DEG_TO_RAD);
+            }
+
+            e.from.add(new Vector3f(-0.5f));
+            e.from.mul(16);
+
+            e.to.add(new Vector3f(-0.5f));
+            e.to.mul(16);
+        }
+        return this;
     }
 }
