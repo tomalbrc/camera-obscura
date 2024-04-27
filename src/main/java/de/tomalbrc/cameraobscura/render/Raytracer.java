@@ -4,6 +4,7 @@ import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -17,10 +18,12 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.joml.Vector3f;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
@@ -77,12 +80,11 @@ public class Raytracer {
             }
 
             BlockState blockState = level.getBlockState(result.getBlockPos());
-            MapColor col;
-            col = blockState.getMapColor(level, result.getBlockPos());
+            MapColor mapColor = blockState.getMapColor(level, result.getBlockPos());
 
-            CanvasColor cc = CanvasColor.from(col, MapColor.Brightness.NORMAL);
+            CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
 
-            int finalColor = cc.getRgbColor();
+            int finalColor = canvasColor.getRgbColor();
 
             if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA) && !(blockState.getBlock() instanceof BaseEntityBlock)) {
                 RPModel rpModel = RPHelper.loadModel(blockState);
@@ -93,19 +95,9 @@ public class Raytracer {
                     Map<String, ResourceLocation> textures = rpModel.collectTextures();
 
                     // TODO: find ray intersection in model geometry aka cubes
-
-                    byte[] data = RPHelper.loadTexture(textures.values().iterator().next().getPath());
-                    if (data != null) {
-                        var out = new ByteArrayInputStream(data);
-                        var img = ImageIO.read(out);
-
-                        var imgData = img.getRGB(level.random.nextInt(0, 15), level.random.nextInt(0, 15));
-                        if (img.getColorModel().getPixelSize() == 8) {
-                            finalColor = ColorHelper.multiplyColor(cc.getRgbColor(), imgData);
-                        } else {
-                            finalColor = imgData;
-                        }
-                    }
+                    int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), result.getBlockPos().getCenter().toVector3f());
+                    finalColor = imgData;
+//                             finalColor = ColorHelper.multiplyColor(canvasColor.getRgbColor(), imgData);
                 }
             }
 

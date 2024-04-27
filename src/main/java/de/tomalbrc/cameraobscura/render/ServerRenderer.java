@@ -36,8 +36,8 @@ public class ServerRenderer {
             for (int y = 0; y < 128; y++) {
                 int index = x+128*y;
                 Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
-                rayTraceVector = rayTraceVector.scale(256).add(eyes);
-                this.image.set(x,y,raytracer.trace(eyes, rayTraceVector));
+                rayTraceVector = rayTraceVector.scale(128).add(eyes);
+                this.image.set(x,y, raytracer.trace(eyes, rayTraceVector));
             }
         }
 
