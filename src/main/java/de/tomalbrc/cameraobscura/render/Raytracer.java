@@ -3,14 +3,13 @@ package de.tomalbrc.cameraobscura.render;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
-import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -18,12 +17,11 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import org.joml.Vector3f;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
@@ -32,9 +30,16 @@ public class Raytracer {
 
     private final Level level;
 
+    private final Map<BlockState, RPModel> stateModels;
+
+    BufferedImage GRASS_TEXTURE;
+    BufferedImage FOLIAGE_TEXTURE;
+
     public Raytracer(Level level) {
         this.level = level;
+        this.stateModels = new Reference2ObjectArrayMap<>();
 
+        this.loadColorMaps();
     }
 
     public int trace(Vec3 pos, Vec3 direction) throws IOException {
@@ -89,15 +94,26 @@ public class Raytracer {
             int finalColor = canvasColor.getRgbColor();
 
             if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA)) {
-                RPModel rpModel = RPHelper.loadModel(blockState);
+                RPModel rpModel;
+                if (!stateModels.containsKey(blockState)) {
+                    rpModel = RPHelper.loadModel(blockState);
+                    stateModels.put(blockState, rpModel);
+                } else {
+                    rpModel = stateModels.get(blockState);
+                }
+
+
 
                 if (rpModel == null) {
                     System.out.println("Could not load model: " + blockState.getBlock().getName().getString());
                 } else {
-                    //Map<String, ResourceLocation> textures = rpModel.collectTextures();
-
-                    // TODO: find ray intersection in model geometry aka cubes
                     int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), result.getBlockPos().getCenter().toVector3f());
+
+                    if (rpModel.wantsTint()) {
+                        var col = level.getBlockTint(result.getBlockPos(), Biome::getGrassColor);
+                        imgData = ColorHelper.multiplyColor(col != 0 ? col:0x33cc33, imgData);
+                    }
+
                     finalColor = imgData != -1 ? imgData : canvasColor.getRgbColor(); // fallback = mapcolor
 //                             finalColor = ColorHelper.multiplyColor(canvasColor.getRgbColor(), imgData);
                 }
@@ -115,5 +131,23 @@ public class Raytracer {
         }
 
         return -1;
+    }
+
+
+    private void loadColorMaps() {
+        try {
+            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/grass")));
+            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/foliage")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int grassColor(Level level, BlockPos blockPos) {
+        /*double d = (double)Mth.clamp(climateSettings.temperature, 0.0F, 1.0F);
+        double e = (double)Mth.clamp(climateSettings.downfall, 0.0F, 1.0F);
+        return GrassColor.get(d, e);
+        */
+        return 0;
     }
 }

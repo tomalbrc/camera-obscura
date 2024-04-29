@@ -58,7 +58,7 @@ public class RPHelper {
             }
 
             if (entry.getKey().isEmpty() || state == blockState) {
-                return RPHelper.loadModel(entry.getValue().model.getPath()).prepare().rotate(entry.getValue());
+                return RPHelper.loadModel(entry.getValue().model.getPath()).prepare().rotate(entry.getValue()).buildGeometry();
             }
         }
         return null;
