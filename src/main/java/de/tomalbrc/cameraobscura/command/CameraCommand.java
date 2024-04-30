@@ -65,8 +65,10 @@ public class CameraCommand {
 //        }, source.getServer());
 
 
+        long startTime = System.nanoTime();
+// ... the code being measured ...
 
-        new Thread(() -> {
+        //new Thread(() -> {
             CanvasImage mapImage = null;
             try {
                 mapImage = new ServerRenderer(player, 256,256).render();
@@ -75,12 +77,22 @@ public class CameraCommand {
 
                 var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
                 items.forEach(player::addItem);
-                source.sendSuccess(() -> Component.literal("Done!"), false);
-            } catch (IOException e) {
+
+                long durationInMillis = (System.nanoTime() - startTime) / 1000000;
+
+                long millis = durationInMillis % 1000;
+                long second = (durationInMillis / 1000) % 60;
+
+                String time = String.format("%d.%d seconds", second, millis);
+
+                source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+
+
+            } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
-        }, "obscurarenderer").start();
+        //}, "obscurarenderer").start();
 
 
 

@@ -2,12 +2,17 @@ package de.tomalbrc.cameraobscura.render;
 
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
+import de.tomalbrc.cameraobscura.world.BlockIterator;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
@@ -32,6 +37,8 @@ public class Raytracer {
 
     private final Map<BlockState, RPModel> stateModels;
 
+    private final BlockIterator iterator;
+
     BufferedImage GRASS_TEXTURE;
     BufferedImage FOLIAGE_TEXTURE;
 
@@ -40,29 +47,45 @@ public class Raytracer {
         this.stateModels = new Reference2ObjectArrayMap<>();
 
         this.loadColorMaps();
+
+        this.iterator = new BlockIterator(level);
     }
 
-    public int trace(Vec3 pos, Vec3 direction) throws IOException {
+    public int trace(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
-        BlockHitResult result =             this.level.clip(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
-        BlockHitResult resultWithLiquids =  this.level.clip(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, CollisionContext.empty()));
+        BlockHitResult result =             this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        BlockHitResult resultWithLiquids =  this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, CollisionContext.empty()));
+        BlockHitResult resultWithoutTransparent =  this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty()));
 
+        var c1 = colorFromRaycast(pos, direction, resultWithLiquids, result);
+        if (c1 == -1) {
+            // cast again without transparent objects. ideally we would have a list or something else to iterate through the hit blocks
+            c1 = colorFromRaycast(pos, direction, resultWithLiquids, resultWithoutTransparent);
+        }
+
+        return c1 == -1 ? 0 :c1;
+    }
+
+    private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockHitResult resultWithLiquids, BlockHitResult result) {
         // Color change for liquids
         boolean lava = false;
         boolean water = false;
         double[] tint = new double[] { 1,1,1 }; // maybe separate for shade?
         boolean transparentWater = true;
         boolean shadows = true;
-
         if (transparentWater) {
             if (resultWithLiquids != null) {
                 var fs = this.level.getBlockState(resultWithLiquids.getBlockPos()).getFluidState();
                 if (fs.is(Fluids.WATER) || fs.is(Fluids.FLOWING_WATER)) {
-                    tint = WATER_TINT;
+                    tint[0] = WATER_TINT[0];
+                    tint[1] = WATER_TINT[1];
+                    tint[2] = WATER_TINT[2];
                     water = true;
                 }
                 if (fs.is(Fluids.LAVA) || fs.is(Fluids.FLOWING_LAVA)) {
-                    tint = LAVA_TINT;
+                    tint[0] = LAVA_TINT[0];
+                    tint[1] = LAVA_TINT[1];
+                    tint[2] = LAVA_TINT[2];
                     lava = true;
                 }
             }
@@ -86,8 +109,9 @@ public class Raytracer {
                 }
             }
 
-            BlockState blockState = level.getBlockState(result.getBlockPos());
-            MapColor mapColor = blockState.getMapColor(level, result.getBlockPos());
+            BlockPos blockPos = result.getBlockPos();
+            BlockState blockState = level.getBlockState(blockPos);
+            MapColor mapColor = blockState.getMapColor(level, blockPos);
 
             CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
 
@@ -102,16 +126,17 @@ public class Raytracer {
                     rpModel = stateModels.get(blockState);
                 }
 
-
-
                 if (rpModel == null) {
                     System.out.println("Could not load model: " + blockState.getBlock().getName().getString());
                 } else {
-                    int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), result.getBlockPos().getCenter().toVector3f());
+                    int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
 
-                    if (rpModel.wantsTint()) {
-                        var col = level.getBlockTint(result.getBlockPos(), Biome::getGrassColor);
-                        imgData = ColorHelper.multiplyColor(col != 0 ? col:0x33cc33, imgData);
+                    if (blockState.canOcclude() && imgData == -1) {
+                        imgData = 0x00ffffff;
+                    }
+                    else if (imgData == -1 || (imgData>>24 & 0xff) == 0) {
+                        // dont allow non-hits or transparent hits -> we will try to use another raycast result for the color
+                        return -1;
                     }
 
                     finalColor = imgData != -1 ? imgData : canvasColor.getRgbColor(); // fallback = mapcolor
@@ -119,12 +144,12 @@ public class Raytracer {
                 }
             }
 
-            int col2 = ColorHelper.multiplyColor(finalColor, ColorHelper.packColor(tint));
+            int tintedColor = ColorHelper.multiplyColor(finalColor, ColorHelper.packColor(tint));
             if (!transparentWater || lava) {
-                col2 = ColorHelper.packColor(tint);
+                tintedColor = ColorHelper.packColor(tint);
             }
 
-            return col2;
+            return tintedColor;
         } else if (resultWithLiquids != null) {
             // TODO: lava/water check
             return ColorHelper.packColor(WATER_TINT);
@@ -141,13 +166,5 @@ public class Raytracer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private int grassColor(Level level, BlockPos blockPos) {
-        /*double d = (double)Mth.clamp(climateSettings.temperature, 0.0F, 1.0F);
-        double e = (double)Mth.clamp(climateSettings.downfall, 0.0F, 1.0F);
-        return GrassColor.get(d, e);
-        */
-        return 0;
     }
 }

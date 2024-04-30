@@ -3,6 +3,7 @@ package de.tomalbrc.cameraobscura.render;
 import com.google.gson.annotations.SerializedName;
 import org.joml.Vector3f;
 
+import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public class RPElement {
@@ -14,5 +15,7 @@ public class RPElement {
         @SerializedName("tintindex")
         int tintIndex = -1;
         String texture;
+
+        transient BufferedImage bufferedImage;
     }
 }

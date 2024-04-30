@@ -1,12 +1,15 @@
 package de.tomalbrc.cameraobscura.render;
 
+import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -18,16 +21,16 @@ import java.util.List;
 import java.util.Map;
 
 public class RPModel {
-    private static int DEFAULT_COLOR = CanvasColor.PURPLE_HIGH.getRgbColor();
+    private static int DEFAULT_COLOR = -1;
     private ResourceLocation parent;
     private Map<String, String> textures;
     private List<RPElement> elements;
 
     //---
 
-    private Map<String, ResourceLocation> textureMap;
-    private List<RPElement> allElements;
-    private List<Triangle> modelTriangles = new ObjectArrayList<>();
+    transient private Map<String, ResourceLocation> textureMap;
+    transient private List<RPElement> allElements;
+    transient private List<Triangle> modelTriangles = new ObjectArrayList<>();
 
     public RPModel prepare() {
         this.textureMap = collectTextures();
@@ -98,117 +101,131 @@ public class RPModel {
         float minY = element.from.y;
         float minZ = element.from.z;
 
+        var corner00 = new Vector2f(0,0);
+        var corner10 = new Vector2f(1,0);
+        var corner11 = new Vector2f(1,1);
+        var corner01 = new Vector2f(0,1);
+
         // Bottom face
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(maxX, minY, minZ),
-                new Vector2f(1,1),
-                new Vector2f(0,0),
-                new Vector2f(1,0), Direction.DOWN, -1419412));
+                corner11,
+                corner00,
+                corner10, -1419412));
 
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(minX, minY, maxZ),
-                new Vector2f(0,0),
-                new Vector2f(1,1),
-                new Vector2f(0,1), Direction.DOWN, -2419412));
+                corner00,
+                corner11,
+                corner01, -2419412));
 
         // Top face
         triangles.add(new Triangle(
                 new Vector3f(maxX, maxY, minZ),
                 new Vector3f(minX, maxY, minZ),
                 new Vector3f(maxX, maxY, maxZ),
-                new Vector2f(1,1),
-                new Vector2f(0,0),
-                new Vector2f(1,0), Direction.UP, 6315465));
+                corner00,
+                corner11,
+                corner10,
+                6315465));
 
         triangles.add(new Triangle(
                 new Vector3f(minX, maxY, maxZ),
                 new Vector3f(maxX, maxY, maxZ),
                 new Vector3f(minX, maxY, minZ),
-                new Vector2f(0,0),
-                new Vector2f(1,1),
-                new Vector2f(0,1), Direction.UP, 5315465));
+                corner11,
+                corner00,
+                corner01,
+                5315465));
 
         // Front face
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(minX, maxY, minZ),
                 new Vector3f(maxX, maxY, minZ),
-                new Vector2f(0,0),
-                new Vector2f(0,1),
-                new Vector2f(1,1), Direction.NORTH, -32522));
+                corner10,
+                corner00,
+                corner11,
+                -32522));
 
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(maxX, maxY, minZ),
                 new Vector3f(maxX, minY, minZ),
-                new Vector2f(0,0),
-                new Vector2f(1,1),
-                new Vector2f(1,0), Direction.NORTH, 432522));
+                corner00,
+                corner01,
+                corner11,
+                432522));
 
         // Back face
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(maxX, maxY, maxZ),
                 new Vector3f(minX, maxY, maxZ),
-                new Vector2f(1,0),
-                new Vector2f(1,1),
-                new Vector2f(0,1), Direction.SOUTH, 832453));
+                corner10,
+                corner00,
+                corner11, 832453));
 
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(minX, maxY, maxZ),
                 new Vector3f(minX, minY, maxZ),
-                new Vector2f(1,0),
-                new Vector2f(0,1),
-                new Vector2f(0,0), Direction.SOUTH, -832453));
+                corner00,
+                corner01,
+                corner11, -832453));
 
         // Left face
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(minX, minY, maxZ),
                 new Vector3f(minX, maxY, maxZ),
-                new Vector2f(0,0),
-                new Vector2f(0,1),
-                new Vector2f(1,1), Direction.EAST, -52151));
+                corner11,
+                corner10,
+                corner01,
+                -52151));
 
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(minX, maxY, maxZ),
                 new Vector3f(minX, maxY, minZ),
-                new Vector2f(0,0),
-                new Vector2f(1,1),
-                new Vector2f(1,0), Direction.EAST, 252151));
+                corner10,
+                corner00,
+                corner01,
+                252151));
 
         // Right face
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, minZ),
                 new Vector3f(maxX, maxY, minZ),
                 new Vector3f(maxX, maxY, maxZ),
-                new Vector2f(0,0),
-                new Vector2f(1,0),
-                new Vector2f(1,1), Direction.WEST, 41245));
+                corner10,
+                corner00,
+                corner11,
+                41245));
 
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, minZ),
                 new Vector3f(maxX, maxY, maxZ),
                 new Vector3f(maxX, minY, maxZ),
-                new Vector2f(0,0),
-                new Vector2f(1,1),
-                new Vector2f(0,1), Direction.WEST, 141245));
+                corner00,
+                corner01,
+                corner11,
+                141245));
 
         triangles.forEach(triangle -> triangle.element = element);
 
         return triangles;
     }
 
-    public int intersect(Vector3f origin, Vector3f direction, Vector3f offset) {
+    public int intersect(Vector3f origin, Vector3f direction, Vector3f offset, BlockState blockState) {
         Triangle triangle = null;
         Triangle.TriangleHit hit = null;
         float smallestT = Float.MAX_VALUE;
+
         for (var tri: modelTriangles) {
             var res = tri.hitAlt(origin.sub(offset, new Vector3f()), direction);
             if (res != null && res.getT() < smallestT) {
@@ -235,15 +252,27 @@ public class RPModel {
             byte[] data = RPHelper.loadTexture(texKey);
             if (data != null) {
                 BufferedImage img = null;
-                try {
-                    img = ImageIO.read(new ByteArrayInputStream(data));
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    return CanvasColor.ORANGE_NORMAL.getRgbColor();
+                if (ti.bufferedImage != null) {
+                    img = ti.bufferedImage;
+                } else {
+                    try {
+                        img = ImageIO.read(new ByteArrayInputStream(data));
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        return CanvasColor.ORANGE_NORMAL.getRgbColor();
+                    }
+                    ti.bufferedImage = img;
                 }
 
                 boolean debug = false;
-                int imgData = debug ? triangle.color : img.getRGB((int) ((img.getWidth()) * uv.x), (int) ((img.getHeight()) * uv.y));
+                int s = (int) (img.getWidth() * uv.x);
+                int t = (int) (img.getHeight() * uv.y);
+                int imgData = debug ? triangle.color : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
+
+                if (ti.tintIndex != -1 && BlockColors.get(blockState) != -1) {
+                    imgData = FastColor.ARGB32.multiply(imgData, BlockColors.get(blockState));
+                }
+
                 return imgData;
             }
         }

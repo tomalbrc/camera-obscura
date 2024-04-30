@@ -19,12 +19,11 @@ public class Triangle {
     private final Vector3f v0v2;
 
     private final Vector3f N;
-    private final Direction cubeFace;
     public final int color;
 
     public RPElement element;
 
-    public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, Direction cubeFace, int color) {
+    public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, int color) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
@@ -35,11 +34,9 @@ public class Triangle {
 
         this.v0v1 = v1.sub(v0, new Vector3f());
         this.v0v2 = v2.sub(v0, new Vector3f());
-        this.N = v0v1.cross(v0v2,  new Vector3f()); // N
+        this.N = v0v1.cross(v0v2,  new Vector3f()).normalize(); // N
 
         this.color = color;
-
-        this.cubeFace = cubeFace;
     }
 
     // Function to check ray intersection with the triangle (Möller-Trumbore algorithm)
