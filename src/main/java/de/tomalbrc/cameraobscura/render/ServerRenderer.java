@@ -40,6 +40,9 @@ public class ServerRenderer {
 
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
+        var time = (this.player.level().dayTime()%24000) / 24000.f;
+        System.out.println("daytime: " + time);
+
         Raytracer raytracer = new Raytracer(this.player.level());
 
         // loop through every pixel on map

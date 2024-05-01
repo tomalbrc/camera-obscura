@@ -73,8 +73,8 @@ public class Raytracer {
 
         if ((color >> 24 & 0xff) < 255) {
             // apply sky and clouds
-            var time = this.level.getDayTime();
-            color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time / 24000.f));
+            var time = (this.level.dayTime()%24000) / 24000.f;
+            color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time));
         }
 
 
@@ -134,14 +134,14 @@ public class Raytracer {
                 System.out.println("Could not load/find model: " + blockState.getBlock().getName().getString());
             } else {
                 RPModel.ModelHitResult modelHitResult = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
-                if (modelHitResult.direction() != null && blockState.canOcclude()) result.blockPos().relative(modelHitResult.direction());
+                if (modelHitResult.direction() != null && blockState.isSolidRender(level, result.blockPos())) result.blockPos().relative(modelHitResult.direction());
                 finalColor = modelHitResult.color();
             }
         }
 
         if (shadows && !water) {
             int lightLevel = level.getBrightness(LightLayer.BLOCK, lightPos);
-            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(this.level.dayTime() / 24000.0 * 13)), (int)(this.level.dimensionType().ambientLight()*15)),15);
+            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(this.level.getTimeOfDay(0) * 13)), (int)(this.level.dimensionType().ambientLight()*15)),15);
 
             for(int i = 1; i < tint.length; i++) {
                 tint[i] = tint[i] * (lightLevel / 15.);

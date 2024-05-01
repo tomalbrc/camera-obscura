@@ -71,7 +71,7 @@ public class BlockIterator {
             BlockState blockState = this.cachedBlockState(blockPos);
             FluidState fluidState = this.cachedFluidState(blockPos);
 
-            if (!blockState.canOcclude() || blockState.isAir()) {
+            if (!blockState.isSolidRender(level, blockPos) || blockState.isAir()) {
                 if (!blockState.isAir())
                     list.add(new WorldHitResult(new BlockPos(blockPos), blockState, fluidState));
 

@@ -4,6 +4,7 @@ import de.tomalbrc.cameraobscura.render.RPBlockState;
 import de.tomalbrc.cameraobscura.util.BlockColors;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
+import de.tomalbrc.cameraobscura.util.TextureHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -290,8 +291,8 @@ public class RPModel {
                 // animated textures...
                 int realHeight = img.getHeight() / (img.getHeight()/img.getWidth());
 
-                //if (textureInfo.uv != null)
-                //    uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
+                if (textureInfo.uv != null)
+                    uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
 
                 boolean debug = false; // only render triangle colors during debug
                 int s = (int) (width * uv.x);
