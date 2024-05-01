@@ -1,8 +1,8 @@
 package de.tomalbrc.cameraobscura.world;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -14,14 +14,15 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.joml.Vector2i;
 
 import java.util.List;
 import java.util.Map;
 
-
 public class BlockIterator {
+    public record WorldHitResult(BlockPos blockPos, BlockState blockState, FluidState fluidState) {}
+
     private final Level level;
 
     private final Map<Vector2i, LevelChunk> cachedChunks;
@@ -63,25 +64,31 @@ public class BlockIterator {
         }
     }
 
-    public BlockHitResult raycast(ClipContext clipContext) {
-        return BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, (context, blockPos) -> {
+    public List<WorldHitResult> raycast(ClipContext clipContext) {
+        List<WorldHitResult> list = new ObjectArrayList<>();
+
+        WorldHitResult hitResult = BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, (context, blockPos) -> {
             BlockState blockState = this.cachedBlockState(blockPos);
             FluidState fluidState = this.cachedFluidState(blockPos);
-            Vec3 vec3 = context.getFrom();
-            Vec3 vec32 = context.getTo();
-            VoxelShape voxelShape = context.getBlockShape(blockState, this.level, blockPos);
-            BlockHitResult blockHitResult = this.level.clipWithInteractionOverride(vec3, vec32, blockPos, voxelShape, blockState);
-            VoxelShape voxelShape2 = context.getFluidShape(fluidState, this.level, blockPos);
-            BlockHitResult blockHitResult2 = voxelShape2.clip(vec3, vec32, blockPos);
-            double d = blockHitResult == null ? Double.MAX_VALUE : context.getFrom().distanceToSqr(blockHitResult.getLocation());
-            double e = blockHitResult2 == null ? Double.MAX_VALUE : context.getFrom().distanceToSqr(blockHitResult2.getLocation());
-            return d <= e ? blockHitResult : blockHitResult2;
-        }, (clipContextx) -> {
-            Vec3 vec3 = clipContextx.getFrom().subtract(clipContextx.getTo());
-            return BlockHitResult.miss(clipContextx.getTo(), Direction.getNearest(vec3.x, vec3.y, vec3.z), BlockPos.containing(clipContextx.getTo()));
-        });
-    }
 
-    record TestResult(BlockState blockState, FluidState fluidState) {
+            if (!blockState.canOcclude() || blockState.isAir()) {
+                if (!blockState.isAir())
+                    list.add(new WorldHitResult(new BlockPos(blockPos), blockState, fluidState));
+
+                return null; // keep searching
+            }
+
+            Vec3 from = context.getFrom();
+            Vec3 to = context.getTo();
+
+            BlockHitResult blockHitResult = this.level.clipWithInteractionOverride(from, to, blockPos, Shapes.block(), blockState);
+
+            return blockHitResult != null ? new WorldHitResult(new BlockPos(blockPos), blockState, fluidState) : null;
+        }, (clipContextx) -> null);
+
+        if (hitResult != null)
+            list.add(hitResult);
+
+        return list;
     }
 }

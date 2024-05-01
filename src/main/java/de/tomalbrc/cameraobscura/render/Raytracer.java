@@ -1,25 +1,21 @@
 package de.tomalbrc.cameraobscura.render;
 
+import de.tomalbrc.cameraobscura.render.model.RPModel;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
+import de.tomalbrc.cameraobscura.util.MiscColors;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.FoliageColor;
-import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
@@ -27,12 +23,10 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
-    static double[] WATER_TINT = new double[] { .3, .3, 1 };
-    static double[] LAVA_TINT = new double[] { 1, .3, .3 };
-
     private final Level level;
 
     private final Map<BlockState, RPModel> stateModels;
@@ -53,109 +47,118 @@ public class Raytracer {
 
     public int trace(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
-        BlockHitResult result =             this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
-        BlockHitResult resultWithLiquids =  this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, CollisionContext.empty()));
-        BlockHitResult resultWithoutTransparent =  this.iterator.raycast(new ClipContext(pos, scaledDir, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        List<BlockIterator.WorldHitResult> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, null, CollisionContext.empty()));
 
-        var c1 = colorFromRaycast(pos, direction, resultWithLiquids, result);
-        if (c1 == -1) {
-            // cast again without transparent objects. ideally we would have a list or something else to iterate through the hit blocks
-            c1 = colorFromRaycast(pos, direction, resultWithLiquids, resultWithoutTransparent);
+        int color = 0x00ffffff;
+
+        boolean hasHitWater = false; // only get water color once
+
+        for (int i = 0; i < result.size(); i++) {
+            boolean waterState = result.get(i).fluidState().is(Fluids.WATER) || result.get(i).fluidState().is(Fluids.FLOWING_WATER);
+
+            if (hasHitWater && waterState)
+                continue; // only trace water once, maybe should be done
+
+            hasHitWater |= waterState;
+
+            var c1 = ColorHelper.unpackColor(color);
+            var c2 = ColorHelper.unpackColor(colorFromRaycast(pos, direction, result.get(i)));
+
+            color = ColorHelper.packColor(ColorHelper.alphaComposite(c1, c2));
+
+            if ((color >> 24 & 0xff) >= 255)
+                return color;
         }
 
-        return c1 == -1 ? 0 :c1;
+
+        if ((color >> 24 & 0xff) < 255) {
+            // apply sky and clouds
+            var time = this.level.getDayTime();
+            color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time / 24000.f));
+        }
+
+
+        // color may contain transparency if no sky color was set (or may be black)
+        return color;
     }
 
-    private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockHitResult resultWithLiquids, BlockHitResult result) {
+    private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
         // Color change for liquids
         boolean lava = false;
         boolean water = false;
-        double[] tint = new double[] { 1,1,1 }; // maybe separate for shade?
+        double[] tint = new double[] { 1, 1,1,1 }; // maybe separate for shade?
         boolean transparentWater = true;
         boolean shadows = true;
         if (transparentWater) {
-            if (resultWithLiquids != null) {
-                var fs = this.level.getBlockState(resultWithLiquids.getBlockPos()).getFluidState();
+            if (result.fluidState() != null && !result.fluidState().isEmpty()) {
+                var fs = result.fluidState();
                 if (fs.is(Fluids.WATER) || fs.is(Fluids.FLOWING_WATER)) {
-                    tint[0] = WATER_TINT[0];
-                    tint[1] = WATER_TINT[1];
-                    tint[2] = WATER_TINT[2];
+                    tint[0] = MiscColors.WATER_TINT[0];
+                    tint[1] = MiscColors.WATER_TINT[1];
+                    tint[2] = MiscColors.WATER_TINT[2];
+                    tint[3] = MiscColors.WATER_TINT[3];
                     water = true;
                 }
                 if (fs.is(Fluids.LAVA) || fs.is(Fluids.FLOWING_LAVA)) {
-                    tint[0] = LAVA_TINT[0];
-                    tint[1] = LAVA_TINT[1];
-                    tint[2] = LAVA_TINT[2];
+                    tint[0] = MiscColors.LAVA_TINT[0];
+                    tint[1] = MiscColors.LAVA_TINT[1];
+                    tint[2] = MiscColors.LAVA_TINT[2];
+                    tint[3] = MiscColors.LAVA_TINT[3];
                     lava = true;
                 }
             }
         }
 
-        if (result != null) {
-            int lightLevel = Math.max(this.level.getLightEngine().getRawBrightness(result.getBlockPos().relative(result.getDirection()), 0), (this.level.dimensionType().hasCeiling()?13:water?4:0));
+        BlockPos blockPos = result.blockPos();
+        BlockState blockState = level.getBlockState(blockPos);
+        MapColor mapColor = blockState.getMapColor(level, blockPos);
 
-            if (result.getDirection() != Direction.UP) {
-                lightLevel -= 2;
-                if (result.getDirection() == Direction.EAST || result.getDirection() == Direction.WEST || result.getDirection() == Direction.DOWN) {
-                    lightLevel -= 1;
-                }
-            }
-            lightLevel = Mth.clamp(lightLevel, 4,15);
+        CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
 
-            if (shadows) {
-                double shadowLevel = 15.0;
-                for(int i = 0; i < tint.length; i++) {
-                    tint[i] = tint[i] * (lightLevel / shadowLevel);
-                }
-            }
-
-            BlockPos blockPos = result.getBlockPos();
-            BlockState blockState = level.getBlockState(blockPos);
-            MapColor mapColor = blockState.getMapColor(level, blockPos);
-
-            CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
-
-            int finalColor = canvasColor.getRgbColor();
-
-            if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA)) {
-                RPModel rpModel;
-                if (!stateModels.containsKey(blockState)) {
-                    rpModel = RPHelper.loadModel(blockState);
-                    stateModels.put(blockState, rpModel);
-                } else {
-                    rpModel = stateModels.get(blockState);
-                }
-
-                if (rpModel == null) {
-                    System.out.println("Could not load model: " + blockState.getBlock().getName().getString());
-                } else {
-                    int imgData = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
-
-                    if (blockState.canOcclude() && imgData == -1) {
-                        imgData = 0x00ffffff;
-                    }
-                    else if (imgData == -1 || (imgData>>24 & 0xff) == 0) {
-                        // dont allow non-hits or transparent hits -> we will try to use another raycast result for the color
-                        return -1;
-                    }
-
-                    finalColor = imgData != -1 ? imgData : canvasColor.getRgbColor(); // fallback = mapcolor
-//                             finalColor = ColorHelper.multiplyColor(canvasColor.getRgbColor(), imgData);
-                }
-            }
-
-            int tintedColor = ColorHelper.multiplyColor(finalColor, ColorHelper.packColor(tint));
-            if (!transparentWater || lava) {
-                tintedColor = ColorHelper.packColor(tint);
-            }
-
-            return tintedColor;
-        } else if (resultWithLiquids != null) {
-            // TODO: lava/water check
-            return ColorHelper.packColor(WATER_TINT);
+        int finalColor = canvasColor.getRgbColor();
+        if (water) {
+            finalColor |= 0xff_000000;
         }
 
-        return -1;
+        BlockPos lightPos = result.blockPos();
+        if (!blockState.isAir() && !water && !blockState.is(Blocks.LAVA)) {
+            RPModel rpModel;
+            if (!stateModels.containsKey(blockState)) {
+                rpModel = RPHelper.loadModel(blockState);
+                stateModels.put(blockState, rpModel);
+            } else {
+                rpModel = stateModels.get(blockState);
+            }
+
+            if (rpModel == null) {
+                System.out.println("Could not load/find model: " + blockState.getBlock().getName().getString());
+            } else {
+                RPModel.ModelHitResult modelHitResult = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
+                if (modelHitResult.direction() != null && blockState.canOcclude()) result.blockPos().relative(modelHitResult.direction());
+                finalColor = modelHitResult.color();
+            }
+        }
+
+        if (shadows && !water) {
+            int lightLevel = level.getBrightness(LightLayer.BLOCK, lightPos);
+            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(this.level.dayTime() / 24000.0 * 13)), (int)(this.level.dimensionType().ambientLight()*15)),15);
+
+            for(int i = 1; i < tint.length; i++) {
+                tint[i] = tint[i] * (lightLevel / 15.);
+            }
+        }
+
+        // Apply tint
+        int tintedColor;
+        if (!transparentWater || lava) {
+            tintedColor = ColorHelper.packColor(tint);
+        } else {
+            tintedColor = ColorHelper.packColor(
+                    ColorHelper.multiplyColor(ColorHelper.unpackColor(finalColor), tint)
+            );
+        }
+
+        return tintedColor;
     }
 
 

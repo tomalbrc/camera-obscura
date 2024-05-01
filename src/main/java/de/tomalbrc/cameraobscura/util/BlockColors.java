@@ -1,9 +1,12 @@
-package de.tomalbrc.cameraobscura.render;
+package de.tomalbrc.cameraobscura.util;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class BlockColors {
@@ -36,13 +39,13 @@ public class BlockColors {
         colors.put(Blocks.VINE, (blockState) -> FoliageColor.getDefaultColor());
         colors.put(Blocks.MANGROVE_LEAVES, (blockState) -> FoliageColor.getDefaultColor());
 
-        colors.put(Blocks.WATER, (blockState) -> -1);
+        //colors.put(Blocks.WATER, (blockState) -> -1);
         colors.put(Blocks.BUBBLE_COLUMN, (blockState) -> -1);
         colors.put(Blocks.WATER_CAULDRON, (blockState) -> -1);
 
         colors.put(Blocks.REDSTONE_WIRE, (blockState) -> RedStoneWireBlock.getColorForPower(blockState.getValue(RedStoneWireBlock.POWER)));
 
-        colors.put(Blocks.SUGAR_CANE, (blockState) -> GrassColor.getDefaultColor());
+        //colors.put(Blocks.SUGAR_CANE, (blockState) -> GrassColor.getDefaultColor());
 
         colors.put(Blocks.ATTACHED_MELON_STEM, (blockState) -> 14731036);
         colors.put(Blocks.ATTACHED_PUMPKIN_STEM, (blockState) -> 14731036);

@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.joml.Vector3d;
 
 import javax.imageio.ImageIO;
@@ -51,7 +50,7 @@ public class ServerRenderer {
 
                 var col = raytracer.trace(eyes, rayTraceVector);
 
-                imgFile.setRGB(x, y, col == -1 ? 0 : col);
+                imgFile.setRGB(x, y, col);
                 this.image.set(x,y, CanvasUtils.findClosestColor(col));
             }
         }

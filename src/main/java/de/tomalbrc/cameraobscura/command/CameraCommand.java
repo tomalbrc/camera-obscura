@@ -26,7 +26,6 @@ import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -66,7 +65,6 @@ public class CameraCommand {
 
 
         long startTime = System.nanoTime();
-// ... the code being measured ...
 
         //new Thread(() -> {
             CanvasImage mapImage = null;
@@ -79,15 +77,11 @@ public class CameraCommand {
                 items.forEach(player::addItem);
 
                 long durationInMillis = (System.nanoTime() - startTime) / 1000000;
-
                 long millis = durationInMillis % 1000;
                 long second = (durationInMillis / 1000) % 60;
-
-                String time = String.format("%d.%d seconds", second, millis);
+                String time = String.format("%d.%02d seconds", second, millis);
 
                 source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
-
-
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

@@ -1,5 +1,7 @@
-package de.tomalbrc.cameraobscura.render;
+package de.tomalbrc.cameraobscura.render.model;
 
+import de.tomalbrc.cameraobscura.render.RPBlockState;
+import de.tomalbrc.cameraobscura.util.BlockColors;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RPModel {
-    private static int DEFAULT_COLOR = -1;
+    private static int TRANSPARENT_COLOR = 0x00_00_00_00;
     private ResourceLocation parent;
     private Map<String, String> textures;
     private List<RPElement> elements;
@@ -31,6 +33,10 @@ public class RPModel {
     transient private Map<String, ResourceLocation> textureMap;
     transient private List<RPElement> allElements;
     transient private List<Triangle> modelTriangles = new ObjectArrayList<>();
+
+    //---
+    public record ModelHitResult(int color, Direction direction) {}
+    //---
 
     public RPModel prepare() {
         this.textureMap = collectTextures();
@@ -101,27 +107,40 @@ public class RPModel {
         float minY = element.from.y;
         float minZ = element.from.z;
 
-        var corner00 = new Vector2f(0,0);
-        var corner10 = new Vector2f(1,0);
-        var corner11 = new Vector2f(1,1);
-        var corner01 = new Vector2f(0,1);
+        var list = new Vector2f[]{
+                new Vector2f(0,0),
+                new Vector2f(1,0),
+                new Vector2f(1,1),
+                new Vector2f(0,1)
+        };
+
+        // change offset: (int)(rotationInDegrees/90)
+        // vanilla "only" supports 90° rotations for textures
+        int offset = 0;
+
+        var corner00 = list[(0+offset)%4];
+        var corner10 = list[(1+offset)%4];
+        var corner11 = list[(2+offset)%4];
+        var corner01 = list[(3+offset)%4];
 
         // Bottom face
         triangles.add(new Triangle(
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(maxX, minY, minZ),
+                corner01,
                 corner11,
-                corner00,
-                corner10, -1419412));
+                corner10,
+                -1419412));
 
         triangles.add(new Triangle(
                 new Vector3f(minX, minY, minZ),
                 new Vector3f(maxX, minY, maxZ),
                 new Vector3f(minX, minY, maxZ),
+                corner10,
                 corner00,
-                corner11,
-                corner01, -2419412));
+                corner01,
+                -2419412));
 
         // Top face
         triangles.add(new Triangle(
@@ -221,11 +240,12 @@ public class RPModel {
         return triangles;
     }
 
-    public int intersect(Vector3f origin, Vector3f direction, Vector3f offset, BlockState blockState) {
+    public ModelHitResult intersect(Vector3f origin, Vector3f direction, Vector3f offset, BlockState blockState) {
         Triangle triangle = null;
         Triangle.TriangleHit hit = null;
         float smallestT = Float.MAX_VALUE;
 
+        // FIXME: prevents self intersection of the model, with other triangles, no good
         for (var tri: modelTriangles) {
             var res = tri.hitAlt(origin.sub(offset, new Vector3f()), direction);
             if (res != null && res.getT() < smallestT) {
@@ -237,13 +257,14 @@ public class RPModel {
 
         if (hit != null) {
             Vector2f uv = hit.getUV();
-            String face = hit.getDirection().toString().toLowerCase(); // to help determine which texture to use
-            RPElement.TextureInfo ti = triangle.element.faces.get(face);
+            Direction normalDir = hit.getDirection(); // normal direction of the hit triangle
+            String face = normalDir.toString().toLowerCase(); // to help determine which texture to use
+            RPElement.TextureInfo textureInfo = triangle.element.faces.get(face);
 
-            if (ti == null)
-                return DEFAULT_COLOR; // no face, skip
+            if (textureInfo == null)
+                return new ModelHitResult(TRANSPARENT_COLOR, normalDir); // no face to render, skip
 
-            String texKey = ti.texture.replace("#","");
+            String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
             while (textureMap.containsKey(texKey)) {
                 texKey = textureMap.get(texKey).getPath();
@@ -252,36 +273,56 @@ public class RPModel {
             byte[] data = RPHelper.loadTexture(texKey);
             if (data != null) {
                 BufferedImage img = null;
-                if (ti.bufferedImage != null) {
-                    img = ti.bufferedImage;
+                if (textureInfo.bufferedImage != null) {
+                    img = textureInfo.bufferedImage;
                 } else {
                     try {
                         img = ImageIO.read(new ByteArrayInputStream(data));
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        return CanvasColor.ORANGE_NORMAL.getRgbColor();
+                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir);
                     }
-                    ti.bufferedImage = img;
+                    textureInfo.bufferedImage = img;
                 }
 
-                boolean debug = false;
-                int s = (int) (img.getWidth() * uv.x);
-                int t = (int) (img.getHeight() * uv.y);
+
+                int width = img.getWidth();
+                // animated textures...
+                int realHeight = img.getHeight() / (img.getHeight()/img.getWidth());
+
+                //if (textureInfo.uv != null)
+                //    uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
+
+                boolean debug = false; // only render triangle colors during debug
+                int s = (int) (width * uv.x);
+                int t = (int) (realHeight * uv.y);
+
                 int imgData = debug ? triangle.color : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
 
-                if (ti.tintIndex != -1 && BlockColors.get(blockState) != -1) {
-                    imgData = FastColor.ARGB32.multiply(imgData, BlockColors.get(blockState));
+                if (img.getType() == 10) {
+                    var xx = ColorHelper.unpackColor(imgData);
+                    xx[1] /= 1.4;
+                    xx[2] /= 1.4;
+                    xx[3] /= 1.4;
+                    imgData = ColorHelper.packColor(xx);
                 }
 
-                return imgData;
+                int blockStateCol = BlockColors.get(blockState);
+
+                // Apply block specific tint, but only if this face has a tintIndex
+                if (textureInfo.tintIndex != -1 && blockStateCol != -1) {
+                    imgData = FastColor.ARGB32.multiply(imgData, blockStateCol);
+                }
+
+                return new ModelHitResult(imgData, normalDir);
             }
         }
 
-        return DEFAULT_COLOR;
+        // no intersections
+        return new ModelHitResult(TRANSPARENT_COLOR, null);
     }
 
     public RPModel rotate(RPBlockState.Variant v) {
-        // TODO: rotation cube, get new corners and rotate direction
         if (true) return this;
         for (RPElement e: allElements) {
             if (v.x != 0) {
@@ -296,6 +337,17 @@ public class RPModel {
                 e.from.rotateZ(v.z * Mth.DEG_TO_RAD);
                 e.to.rotateZ(v.z * Mth.DEG_TO_RAD);
             }
+
+            e.from = new Vector3f(
+                    Math.min(e.from.x, e.to.x),
+                    Math.min(e.from.y, e.to.y),
+                    Math.min(e.from.z, e.to.z)
+            );
+            e.to = new Vector3f(
+                    Math.max(e.from.x, e.to.x),
+                    Math.max(e.from.y, e.to.y),
+                    Math.max(e.from.z, e.to.z)
+            );
         }
         return this;
     }

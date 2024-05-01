@@ -1,4 +1,4 @@
-package de.tomalbrc.cameraobscura.render;
+package de.tomalbrc.cameraobscura.render.model;
 
 import net.minecraft.core.Direction;
 import org.joml.Vector2f;
@@ -130,6 +130,11 @@ public class Triangle {
             this.t = t;
             this.uv = uv;
             this.normal = normal;
+        }
+
+        public Direction getDirection(Vector3f blockStateRotation) {
+            // TODO: block state rotations
+            return Direction.fromDelta((int) normal.x(), (int) normal.y(), (int) normal.z());
         }
 
         public Direction getDirection() {
