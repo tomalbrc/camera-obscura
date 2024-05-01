@@ -123,28 +123,29 @@ public class Raytracer {
         BlockPos lightPos = result.blockPos();
         if (!blockState.isAir() && !water && !blockState.is(Blocks.LAVA)) {
             RPModel rpModel;
-            if (!stateModels.containsKey(blockState)) {
+            if (!this.stateModels.containsKey(blockState)) {
                 rpModel = RPHelper.loadModel(blockState);
-                stateModels.put(blockState, rpModel);
+                this.stateModels.put(blockState, rpModel);
             } else {
                 rpModel = stateModels.get(blockState);
             }
 
             if (rpModel == null) {
-                System.out.println("Could not load/find model: " + blockState.getBlock().getName().getString());
+                System.out.println("Could not load or find model: " + blockState.getBlock().getName().getString());
             } else {
                 RPModel.ModelHitResult modelHitResult = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
-                if (modelHitResult.direction() != null && blockState.isSolidRender(level, result.blockPos())) result.blockPos().relative(modelHitResult.direction());
+                if (modelHitResult.direction() != null && blockState.isSolidRender(level, result.blockPos()))
+                    lightPos = result.blockPos().relative(modelHitResult.direction());
                 finalColor = modelHitResult.color();
             }
         }
 
         if (shadows && !water) {
-            int lightLevel = level.getBrightness(LightLayer.BLOCK, lightPos);
+            float lightLevel = this.level.getBrightness(LightLayer.BLOCK, lightPos);
             lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(this.level.getTimeOfDay(0) * 13)), (int)(this.level.dimensionType().ambientLight()*15)),15);
 
             for(int i = 1; i < tint.length; i++) {
-                tint[i] = tint[i] * (lightLevel / 15.);
+                tint[i] = tint[i] * (lightLevel / 15.f);
             }
         }
 
