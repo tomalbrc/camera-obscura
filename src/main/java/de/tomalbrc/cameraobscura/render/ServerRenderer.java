@@ -39,10 +39,6 @@ public class ServerRenderer {
         List<Vector3d> rays = buildRayMap(this.player);
 
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-        var depthBuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-
-        var time = (this.player.level().dayTime()%24000) / 24000.f;
-        System.out.println("daytime: " + time);
 
         Raytracer raytracer = new Raytracer(this.player.level());
 
@@ -53,10 +49,8 @@ public class ServerRenderer {
                 Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
 
                 var res = raytracer.trace(eyes, rayTraceVector);
-                int depth = (int)(res.depth()*255);
 
-                imgFile.setRGB(x, y, res.color());
-                depthBuffer.setRGB(x, y, FastColor.ARGB32.color(depth, depth, depth, depth));
+                imgFile.setRGB(x, y, res);
             }
         }
 

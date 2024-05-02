@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
-    public record ColorWithDepth(int color, float depth) {}
-
     private static Vector3f SUN = new Vector3f(-1,2,1).normalize();
 
     private final Level level;
@@ -46,12 +44,26 @@ public class Raytracer {
         this.iterator = new BlockIterator(level);
     }
 
-    public ColorWithDepth trace(Vec3 pos, Vec3 direction) {
+    public int trace(Vec3 pos, Vec3 direction) {
+        var color = traceSingle(pos, direction);
+        // ambient occlusion
+
+        if ((color >> 24 & 0xff) < 255) {
+            // apply sky and clouds
+            var time = (this.level.dayTime()%24000) / 24000.f;
+            color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time));
+        }
+
+        // color may contain transparency if no sky color was set (or may be black)
+        return color;
+    }
+
+    private int traceSingle(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
         List<BlockIterator.WorldHitResult> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, CollisionContext.empty()));
 
         int color = 0x00ffffff;
-        float depth = 1.f;
+        Vector3f normal = null;
 
         boolean hasHitWater = false; // only get water color once
 
@@ -64,31 +76,22 @@ public class Raytracer {
             hasHitWater |= waterState;
 
             var rayRes = colorFromRaycast(pos, direction, result.get(i));
-            depth = rayRes.depth;
 
             var c1 = ColorHelper.unpackColor(color);
-            var c2 = ColorHelper.unpackColor(rayRes.color);
+            var c2 = ColorHelper.unpackColor(rayRes);
 
             color = ColorHelper.packColor(ColorHelper.alphaComposite(c1, c2));
 
             if ((color >> 24 & 0xff) >= 255)
-                return new ColorWithDepth(color, depth);
+                return color;
         }
 
-        if ((color >> 24 & 0xff) < 255) {
-            // apply sky and clouds
-            var time = (this.level.dayTime()%24000) / 24000.f;
-            color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time));
-        }
-
-        // color may contain transparency if no sky color was set (or may be black)
-        return new ColorWithDepth(color, depth);
+        return color;
     }
 
-    private ColorWithDepth colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
+    private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
         // Color change for liquids
         boolean lava = false;
-        boolean water = false;
         double[] tint = new double[] { 1, 1,1,1 }; // maybe separate for shade?
         boolean transparentWater = true;
         boolean shadows = true;
@@ -100,7 +103,6 @@ public class Raytracer {
                     tint[1] = MiscColors.WATER_TINT[1];
                     tint[2] = MiscColors.WATER_TINT[2];
                     tint[3] = MiscColors.WATER_TINT[3];
-                    water = true;
                 }
                 if (fs.is(Fluids.LAVA) || fs.is(Fluids.FLOWING_LAVA)) {
                     tint[0] = MiscColors.LAVA_TINT[0];
@@ -118,7 +120,6 @@ public class Raytracer {
 
         CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
 
-        float depth = (float)pos.distanceTo(new Vec3(result.blockPos().getX(), result.blockPos().getY(), result.blockPos().getZ()));
         int modelColor = canvasColor.getRgbColor();
 
         BlockPos lightPos = result.blockPos();
@@ -151,8 +152,6 @@ public class Raytracer {
 
                     modelColor = modelHitResult.color();
 
-                    depth = modelHitResult.t();
-
                     // some shading from a global light source
                     var normal = new Vector3f(modelHitResult.direction().getNormal().getX(), modelHitResult.direction().getNormal().getY(), modelHitResult.direction().getNormal().getZ());
                     float b = Math.max(0, normal.dot(SUN));
@@ -183,6 +182,6 @@ public class Raytracer {
             );
         }
 
-        return new ColorWithDepth(tintedColor, depth/128);
+        return tintedColor;
     }
 }

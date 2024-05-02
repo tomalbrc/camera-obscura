@@ -267,7 +267,7 @@ public class TriangleModel implements RenderModel {
 
             // transparent face
             if (textureInfo == null)
-                return new ModelHitResult(MiscColors.TRANSPARENT_COLOR, normalDir, hit.getT()); // no face to render, is transparent, skip
+                return new ModelHitResult(MiscColors.TRANSPARENT_COLOR, normalDir); // no face to render, is transparent, skip
 
             String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
@@ -285,7 +285,7 @@ public class TriangleModel implements RenderModel {
                         img = ImageIO.read(new ByteArrayInputStream(data));
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir, hit.getT());
+                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir);
                     }
                     this.textureCache.put(texKey, img);
                 }
@@ -317,7 +317,7 @@ public class TriangleModel implements RenderModel {
                     imgData = FastColor.ARGB32.multiply(imgData, textureTint);
                 }
 
-                return new ModelHitResult(imgData, normalDir, hit.getT());
+                return new ModelHitResult(imgData, normalDir);
             }
         }
 
