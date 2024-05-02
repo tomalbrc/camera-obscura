@@ -69,7 +69,8 @@ public class CameraCommand {
         //new Thread(() -> {
             CanvasImage mapImage = null;
             try {
-                mapImage = new ServerRenderer(player, 256,256).render();
+                int size = 512;
+                mapImage = new ServerRenderer(player, size,size).render();
 
                 source.sendSuccess(() -> Component.literal("Took a photo!"), false);
 

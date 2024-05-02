@@ -1,5 +1,10 @@
 package de.tomalbrc.cameraobscura.render.model;
 
-public interface RenderModel {
+import net.minecraft.core.Direction;
+import org.joml.Vector3f;
 
+public interface RenderModel {
+    public record ModelHitResult(int color, Direction direction, float t) {}
+
+    public RenderModel.ModelHitResult intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint);
 }

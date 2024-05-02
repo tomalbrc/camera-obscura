@@ -1,6 +1,8 @@
 package de.tomalbrc.cameraobscura.util;
 
 public class MiscColors {
+    public static int TRANSPARENT_COLOR = 0x00_00_00_00;
+
     // ARGB
     public static double[] WATER_TINT = new double[] { 0.6, .3, .3, 1 };
     // ARGB

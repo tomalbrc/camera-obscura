@@ -1,8 +1,11 @@
-package de.tomalbrc.cameraobscura.render.model;
+package de.tomalbrc.cameraobscura.render.model.triangle;
 
+import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import net.minecraft.core.Direction;
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 public class Triangle {
 
@@ -18,10 +21,10 @@ public class Triangle {
     private final Vector3f v0v1;
     private final Vector3f v0v2;
 
-    private final Vector3f N;
+    private final Vector3fc N;
     public final int color;
 
-    public RPElement element;
+    public RPElement.TextureInfo textureInfo;
 
     public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, int color) {
         this.v0 = v0;
@@ -37,6 +40,10 @@ public class Triangle {
         this.N = v0v1.cross(v0v2,  new Vector3f()).normalize(); // N
 
         this.color = color;
+    }
+
+    public Vector3fc getNormal() {
+        return N;
     }
 
     // Function to check ray intersection with the triangle (Möller-Trumbore algorithm)
@@ -122,11 +129,11 @@ public class Triangle {
 
     static public class TriangleHit {
         private final float t; // Distance along the ray
-        private final Vector2f uv;
+        private final Vector2fc uv;
 
-        private final Vector3f normal;
+        private final Vector3fc normal;
 
-        public TriangleHit(float t, Vector2f uv, Vector3f normal) {
+        public TriangleHit(float t, Vector2fc uv, Vector3fc normal) {
             this.t = t;
             this.uv = uv;
             this.normal = normal;
@@ -141,7 +148,7 @@ public class Triangle {
             return Direction.fromDelta((int) normal.x(), (int) normal.y(), (int) normal.z());
         }
 
-        public Vector2f getUV() {
+        public Vector2fc getUV() {
             return this.uv;
         }
 

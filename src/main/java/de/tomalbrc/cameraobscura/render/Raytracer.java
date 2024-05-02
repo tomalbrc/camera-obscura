@@ -1,6 +1,9 @@
 package de.tomalbrc.cameraobscura.render;
 
-import de.tomalbrc.cameraobscura.render.model.RPModel;
+import de.tomalbrc.cameraobscura.render.model.RenderModel;
+import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
+import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
+import de.tomalbrc.cameraobscura.util.BlockColors;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.MiscColors;
 import de.tomalbrc.cameraobscura.util.RPHelper;
@@ -18,58 +21,59 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.joml.Vector3f;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
+    public record ColorWithDepth(int color, float depth) {}
+
+    private static Vector3f SUN = new Vector3f(-1,2,1).normalize();
+
     private final Level level;
 
     private final Map<BlockState, RPModel> stateModels;
+    private final Map<BlockState, RenderModel> renderModels;
 
     private final BlockIterator iterator;
-
-    BufferedImage GRASS_TEXTURE;
-    BufferedImage FOLIAGE_TEXTURE;
 
     public Raytracer(Level level) {
         this.level = level;
         this.stateModels = new Reference2ObjectArrayMap<>();
-
-        this.loadColorMaps();
+        this.renderModels = new Reference2ObjectArrayMap<>();
 
         this.iterator = new BlockIterator(level);
     }
 
-    public int trace(Vec3 pos, Vec3 direction) {
+    public ColorWithDepth trace(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
-        List<BlockIterator.WorldHitResult> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, null, CollisionContext.empty()));
+        List<BlockIterator.WorldHitResult> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, CollisionContext.empty()));
 
         int color = 0x00ffffff;
+        float depth = 1.f;
 
         boolean hasHitWater = false; // only get water color once
 
         for (int i = 0; i < result.size(); i++) {
             boolean waterState = result.get(i).fluidState().is(Fluids.WATER) || result.get(i).fluidState().is(Fluids.FLOWING_WATER);
 
-            if (hasHitWater && waterState)
+            if (hasHitWater && waterState && result.get(i).blockState().is(Blocks.WATER))
                 continue; // only trace water once, maybe should be done
 
             hasHitWater |= waterState;
 
+            var rayRes = colorFromRaycast(pos, direction, result.get(i));
+            depth = rayRes.depth;
+
             var c1 = ColorHelper.unpackColor(color);
-            var c2 = ColorHelper.unpackColor(colorFromRaycast(pos, direction, result.get(i)));
+            var c2 = ColorHelper.unpackColor(rayRes.color);
 
             color = ColorHelper.packColor(ColorHelper.alphaComposite(c1, c2));
 
             if ((color >> 24 & 0xff) >= 255)
-                return color;
+                return new ColorWithDepth(color, depth);
         }
-
 
         if ((color >> 24 & 0xff) < 255) {
             // apply sky and clouds
@@ -77,12 +81,11 @@ public class Raytracer {
             color = ColorHelper.alphaComposite(color, ColorHelper.interpolateColors(MiscColors.SKY_COLORS, time));
         }
 
-
         // color may contain transparency if no sky color was set (or may be black)
-        return color;
+        return new ColorWithDepth(color, depth);
     }
 
-    private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
+    private ColorWithDepth colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
         // Color change for liquids
         boolean lava = false;
         boolean water = false;
@@ -110,39 +113,60 @@ public class Raytracer {
         }
 
         BlockPos blockPos = result.blockPos();
-        BlockState blockState = level.getBlockState(blockPos);
-        MapColor mapColor = blockState.getMapColor(level, blockPos);
+        BlockState blockState = this.level.getBlockState(blockPos);
+        MapColor mapColor = blockState.getMapColor(this.level, blockPos);
 
         CanvasColor canvasColor = CanvasColor.from(mapColor, MapColor.Brightness.NORMAL);
 
-        int finalColor = canvasColor.getRgbColor();
-        if (water) {
-            finalColor |= 0xff_000000;
-        }
+        float depth = (float)pos.distanceTo(new Vec3(result.blockPos().getX(), result.blockPos().getY(), result.blockPos().getZ()));
+        int modelColor = canvasColor.getRgbColor();
 
         BlockPos lightPos = result.blockPos();
-        if (!blockState.isAir() && !water && !blockState.is(Blocks.LAVA)) {
+        if (!blockState.isAir() && !blockState.is(Blocks.WATER) && !blockState.is(Blocks.LAVA)) {
             RPModel rpModel;
             if (!this.stateModels.containsKey(blockState)) {
                 rpModel = RPHelper.loadModel(blockState);
                 this.stateModels.put(blockState, rpModel);
             } else {
-                rpModel = stateModels.get(blockState);
+                rpModel = this.stateModels.get(blockState);
             }
 
             if (rpModel == null) {
                 System.out.println("Could not load or find model: " + blockState.getBlock().getName().getString());
             } else {
-                RPModel.ModelHitResult modelHitResult = rpModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockState);
-                if (modelHitResult.direction() != null && blockState.isSolidRender(level, result.blockPos()))
-                    lightPos = result.blockPos().relative(modelHitResult.direction());
-                finalColor = modelHitResult.color();
+                RenderModel renderModel;
+                if (!this.renderModels.containsKey(blockState)) {
+                    renderModel = new TriangleModel(rpModel);
+                    this.renderModels.put(blockState, renderModel);
+                } else {
+                    renderModel = this.renderModels.get(blockState);
+                }
+
+                int blockColor = BlockColors.get(this.level, blockState, blockPos);
+
+                RenderModel.ModelHitResult modelHitResult = renderModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor);
+                if (modelHitResult != null) {
+                    if (modelHitResult.direction() != null && blockState.isSolidRender(this.level, result.blockPos()))
+                        lightPos = result.blockPos().relative(modelHitResult.direction());
+
+                    modelColor = modelHitResult.color();
+
+                    depth = modelHitResult.t();
+
+                    // some shading from a global light source
+                    var normal = new Vector3f(modelHitResult.direction().getNormal().getX(), modelHitResult.direction().getNormal().getY(), modelHitResult.direction().getNormal().getZ());
+                    float b = Math.max(0, normal.dot(SUN));
+                    for(int i = 1; i < tint.length; i++) {
+                        tint[i] = tint[i] * (b/3.f+0.7f); // scale from 0.75 to 1.03333
+                    }
+                }
             }
         }
 
-        if (shadows && !water) {
+        if (shadows) {
             float lightLevel = this.level.getBrightness(LightLayer.BLOCK, lightPos);
-            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(this.level.getTimeOfDay(0) * 13)), (int)(this.level.dimensionType().ambientLight()*15)),15);
+            //var time = (this.level.dayTime()%24000) / 24000.f;
+            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(level.getTimeOfDay(0) * 14)), (int)(this.level.dimensionType().ambientLight()*15)),15);
 
             for(int i = 1; i < tint.length; i++) {
                 tint[i] = tint[i] * (lightLevel / 15.f);
@@ -151,24 +175,14 @@ public class Raytracer {
 
         // Apply tint
         int tintedColor;
-        if (!transparentWater || lava) {
+        if (!transparentWater || lava || blockState.is(Blocks.WATER)) {
             tintedColor = ColorHelper.packColor(tint);
         } else {
             tintedColor = ColorHelper.packColor(
-                    ColorHelper.multiplyColor(ColorHelper.unpackColor(finalColor), tint)
+                    ColorHelper.multiplyColor(ColorHelper.unpackColor(modelColor), tint)
             );
         }
 
-        return tintedColor;
-    }
-
-
-    private void loadColorMaps() {
-        try {
-            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/grass")));
-            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/foliage")));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new ColorWithDepth(tintedColor, depth/128);
     }
 }

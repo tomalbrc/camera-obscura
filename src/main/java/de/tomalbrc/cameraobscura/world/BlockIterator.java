@@ -72,8 +72,9 @@ public class BlockIterator {
             FluidState fluidState = this.cachedFluidState(blockPos);
 
             if (!blockState.isSolidRender(level, blockPos) || blockState.isAir()) {
-                if (!blockState.isAir())
+                if (!blockState.isAir()) {
                     list.add(new WorldHitResult(new BlockPos(blockPos), blockState, fluidState));
+                }
 
                 return null; // keep searching
             }

@@ -1,9 +1,9 @@
 package de.tomalbrc.cameraobscura.render;
 
 import eu.pb4.mapcanvas.api.core.CanvasImage;
-import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +39,7 @@ public class ServerRenderer {
         List<Vector3d> rays = buildRayMap(this.player);
 
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+        var depthBuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
         var time = (this.player.level().dayTime()%24000) / 24000.f;
         System.out.println("daytime: " + time);
@@ -51,10 +52,11 @@ public class ServerRenderer {
                 int index = x+height*y;
                 Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
 
-                var col = raytracer.trace(eyes, rayTraceVector);
+                var res = raytracer.trace(eyes, rayTraceVector);
+                int depth = (int)(res.depth()*255);
 
-                imgFile.setRGB(x, y, col);
-                this.image.set(x,y, CanvasUtils.findClosestColor(col));
+                imgFile.setRGB(x, y, res.color());
+                depthBuffer.setRGB(x, y, FastColor.ARGB32.color(depth, depth, depth, depth));
             }
         }
 

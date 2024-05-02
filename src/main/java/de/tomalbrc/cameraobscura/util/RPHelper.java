@@ -6,7 +6,7 @@ import de.tomalbrc.cameraobscura.json.VariantDeserializer;
 import de.tomalbrc.cameraobscura.json.Vector3fDeserializer;
 import de.tomalbrc.cameraobscura.json.Vector4iDeserializer;
 import de.tomalbrc.cameraobscura.render.RPBlockState;
-import de.tomalbrc.cameraobscura.render.model.RPModel;
+import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
@@ -34,9 +34,11 @@ public class RPHelper {
         return gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
     }
 
-    public static RPModel loadModel(String path) {
+    public static RPModel loadModel(String path, Vector3f blockRotation) {
         byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
-        return gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPModel.class);
+        RPModel model = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPModel.class);
+        model.blockRotation = blockRotation;
+        return model;
     }
 
     public static byte[] loadTexture(String path) {
@@ -61,7 +63,7 @@ public class RPHelper {
             }
 
             if (entry.getKey().isEmpty() || state == blockState) {
-                return RPHelper.loadModel(entry.getValue().model.getPath()).prepare().rotate(entry.getValue()).buildGeometry();
+                return RPHelper.loadModel(entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z));
             }
         }
         return null;

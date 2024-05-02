@@ -4,8 +4,7 @@
   "package": "de.tomalbrc.cameraobscura.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-  ],
-  "client": [
+    "BiomeAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,10 +1,11 @@
 package de.tomalbrc.cameraobscura.util;
 
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector4i;
 
 public class TextureHelper {
-    public static Vector2f remapUV(Vector2f uv, Vector4i quadUV, int textureWidth, int textureHeight) {
+    public static Vector2f remapUV(Vector2fc uv, Vector4i quadUV, int textureWidth, int textureHeight) {
         int quadSMin = quadUV.x();
         int quadTMin = quadUV.y();
         int quadSMax = quadUV.z();
