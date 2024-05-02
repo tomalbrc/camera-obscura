@@ -25,6 +25,9 @@ public class BlockColors {
         try {
             GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/grass")));
             FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/foliage")));
+
+            GrassColor.init(GRASS_TEXTURE.getRGB(0, 0, GRASS_TEXTURE.getWidth(), GRASS_TEXTURE.getHeight(), null, 0, GRASS_TEXTURE.getWidth()));
+            FoliageColor.init(FOLIAGE_TEXTURE.getRGB(0, 0, FOLIAGE_TEXTURE.getWidth(), FOLIAGE_TEXTURE.getHeight(), null, 0, FOLIAGE_TEXTURE.getWidth()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -38,8 +41,6 @@ public class BlockColors {
 
     public static void init() {
         loadColorMaps();
-        GrassColor.init(GRASS_TEXTURE.getRGB(0, 0, GRASS_TEXTURE.getWidth(), GRASS_TEXTURE.getHeight(), null, 0, GRASS_TEXTURE.getWidth()));
-        FoliageColor.init(FOLIAGE_TEXTURE.getRGB(0, 0, FOLIAGE_TEXTURE.getWidth(), FOLIAGE_TEXTURE.getHeight(), null, 0, FOLIAGE_TEXTURE.getWidth()));
 
         BlockColorProvider grassColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(level.getBiome(blockPos).value())).invokeGetGrassColor();
         BlockColorProvider foliageColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(level.getBiome(blockPos).value())).invokeGetFoliageColorFromTexture();
@@ -65,8 +66,8 @@ public class BlockColors {
         colors.put(Blocks.MANGROVE_LEAVES, foliageColor);
 
         //colors.put(Blocks.WATER, (blockState) -> -1);
-        colors.put(Blocks.BUBBLE_COLUMN, (level, blockState, blockPos) -> -1);
-        colors.put(Blocks.WATER_CAULDRON, (level, blockState, blockPos) -> -1);
+        //colors.put(Blocks.BUBBLE_COLUMN, (level, blockState, blockPos) -> -1);
+        //colors.put(Blocks.WATER_CAULDRON, (level, blockState, blockPos) -> -1);
 
         colors.put(Blocks.REDSTONE_WIRE, (level, blockState, blockPos) -> RedStoneWireBlock.getColorForPower(blockState.getValue(RedStoneWireBlock.POWER)));
 

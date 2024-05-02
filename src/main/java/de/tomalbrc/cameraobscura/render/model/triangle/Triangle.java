@@ -22,9 +22,11 @@ public class Triangle {
     private final Vector3f v0v2;
 
     private final Vector3fc N;
-    public final int color;
+
+    private final int color;
 
     public RPElement.TextureInfo textureInfo;
+    public boolean shade;
 
     public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, int color) {
         this.v0 = v0;
@@ -40,6 +42,12 @@ public class Triangle {
         this.N = v0v1.cross(v0v2,  new Vector3f()).normalize(); // N
 
         this.color = color;
+
+        this.shade = true;
+    }
+
+    public int getColor() {
+        return this.color;
     }
 
     public Vector3fc getNormal() {
@@ -48,57 +56,6 @@ public class Triangle {
 
     // Function to check ray intersection with the triangle (Möller-Trumbore algorithm)
     public TriangleHit rayIntersect(Vector3f orig, Vector3f dir) {
-        float u,v;
-
-        // compute the plane's normal
-        float denom = N.dot(N);
-
-        // Step 1: finding P
-
-        // check if the ray and plane are parallel.
-        float NdotRayDirection = N.dot(dir);
-        if (Math.abs(NdotRayDirection) < 0.0001) // almost 0
-            return null; // they are parallel so they don't intersect!
-
-        // compute d parameter using equation 2
-        float d = -N.dot(v0);
-
-        // compute t (equation 3)
-        float t = -(N.dot(orig) + d) / NdotRayDirection;
-        // check if the triangle is behind the ray
-        if (t < 0) return null; // the triangle is behind
-
-        // compute the intersection point using equation 1
-        Vector3f P = orig.add(dir.mul(t, new Vector3f()), new Vector3f());
-
-        // Step 2: inside-outside test
-        Vector3f C; // vector perpendicular to triangle's plane
-
-        // edge 0
-        Vector3f vp0 = P.sub(v0, new Vector3f());
-        Vector3f edge0 = v1.sub(v0, new Vector3f());
-        C = edge0.cross(vp0, new Vector3f());
-        if (N.dot(C) < 0) return null; // P is on the right side
-
-        // edge 1
-        Vector3f edge1 = v2.sub(v1, new Vector3f());
-        Vector3f vp1 = P.sub(v1, new Vector3f());
-        C = edge1.cross(vp1);
-        if ((u = N.dot(C)) < 0)  return null; // P is on the right side
-
-        // edge 2
-        Vector3f edge2 = v0.sub(v2, new Vector3f());
-        Vector3f vp2 = P.sub(v2, new Vector3f());
-        C = edge2.cross(vp2, new Vector3f());
-        if ((v = N.dot(C)) < 0) return null; // P is on the right side;
-
-        u /= denom;
-        v /= denom;
-
-        return new TriangleHit(t, new Vector2f(u,v), this.N);
-    }
-
-    public TriangleHit hitAlt(Vector3f orig, Vector3f dir) {
         Vector3f pvec = dir.cross(v0v2, new Vector3f());
         float det = v0v1.dot(pvec);
 
@@ -127,35 +84,13 @@ public class Triangle {
         return new TriangleHit(t, new Vector2f(uCoord, vCoord), this.N);
     }
 
-    static public class TriangleHit {
-        private final float t; // Distance along the ray
-        private final Vector2fc uv;
-
-        private final Vector3fc normal;
-
-        public TriangleHit(float t, Vector2fc uv, Vector3fc normal) {
-            this.t = t;
-            this.uv = uv;
-            this.normal = normal;
-        }
-
-        public Direction getDirection(Vector3f blockStateRotation) {
-            // TODO: block state rotations
-            return Direction.fromDelta((int) normal.x(), (int) normal.y(), (int) normal.z());
-        }
-
+    public record TriangleHit(
+            float t, // Distance along the ray
+            Vector2fc uv,
+            Vector3fc normal
+    ) {
         public Direction getDirection() {
             return Direction.fromDelta((int) normal.x(), (int) normal.y(), (int) normal.z());
         }
-
-        public Vector2fc getUV() {
-            return this.uv;
-        }
-
-        public float getT() {
-            return t;
-        }
     }
 }
-
-// Class to hold information about the ray-triangle intersection

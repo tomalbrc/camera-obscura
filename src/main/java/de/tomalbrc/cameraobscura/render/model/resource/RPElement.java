@@ -11,6 +11,8 @@ public class RPElement {
     public Vector3f to;
     public Map<String, TextureInfo> faces;
 
+    public boolean shade;
+
     public static class TextureInfo {
         @SerializedName("tintindex")
         public int tintIndex = -1;

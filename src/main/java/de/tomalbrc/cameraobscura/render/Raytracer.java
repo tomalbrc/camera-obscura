@@ -153,10 +153,12 @@ public class Raytracer {
                     modelColor = modelHitResult.color();
 
                     // some shading from a global light source
-                    var normal = new Vector3f(modelHitResult.direction().getNormal().getX(), modelHitResult.direction().getNormal().getY(), modelHitResult.direction().getNormal().getZ());
-                    float b = Math.max(0, normal.dot(SUN));
-                    for(int i = 1; i < tint.length; i++) {
-                        tint[i] = tint[i] * (b/3.f+0.7f); // scale from 0.75 to 1.03333
+                    if (modelHitResult.shade()) {
+                        var normal = new Vector3f(modelHitResult.direction().getNormal().getX(), modelHitResult.direction().getNormal().getY(), modelHitResult.direction().getNormal().getZ());
+                        float b = Math.max(0, normal.dot(SUN));
+                        for(int i = 1; i < tint.length; i++) {
+                            tint[i] = tint[i] * (b/3.f+0.7f); // scale from 0.75 to 1.03333
+                        }
                     }
                 }
             }

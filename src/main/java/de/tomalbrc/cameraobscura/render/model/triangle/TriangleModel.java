@@ -3,13 +3,13 @@ package de.tomalbrc.cameraobscura.render.model.triangle;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
-import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.MiscColors;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
@@ -30,7 +30,6 @@ public class TriangleModel implements RenderModel {
     private List<Triangle> modelTriangles = new ObjectArrayList<>();
 
     private final Map<String, ResourceLocation> textureMap;
-
 
     public TriangleModel(RPModel rpModel) {
         for (var element: rpModel.collectElements()) {
@@ -238,12 +237,13 @@ public class TriangleModel implements RenderModel {
                     (int) n.z()
             );
             if (d != null) triangle.textureInfo = element.faces.get(d.getName());
+            triangle.shade = element.shade;
         }
 
         return triangles;
     }
 
-    Map<String, BufferedImage> textureCache = new Object2ObjectArrayMap<>();
+    static Map<String, BufferedImage> textureCache = new Object2ObjectArrayMap<>();
 
     public RenderModel.ModelHitResult intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint) {
         Triangle triangle = null;
@@ -252,22 +252,22 @@ public class TriangleModel implements RenderModel {
 
         // FIXME: prevents self intersection of the model, with other triangles, no good
         for (var tri: modelTriangles) {
-            var res = tri.hitAlt(origin.sub(offset, new Vector3f()), direction);
-            if (res != null && res.getT() < smallestT) {
-                smallestT = res.getT();
+            var res = tri.rayIntersect(origin.sub(offset, new Vector3f()), direction);
+            if (res != null && res.t() < smallestT) {
+                smallestT = res.t();
                 triangle = tri;
                 hit = res;
             }
         }
 
         if (hit != null) {
-            Vector2fc uv = hit.getUV();
+            Vector2fc uv = hit.uv();
             Direction normalDir = hit.getDirection(); // normal direction of the hit triangle
             RPElement.TextureInfo textureInfo = triangle.textureInfo;
 
             // transparent face
             if (textureInfo == null)
-                return new ModelHitResult(MiscColors.TRANSPARENT_COLOR, normalDir); // no face to render, is transparent, skip
+                return new ModelHitResult(MiscColors.TRANSPARENT_COLOR, normalDir, triangle.shade); // no face to render, is transparent, skip
 
             String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
@@ -278,18 +278,20 @@ public class TriangleModel implements RenderModel {
             byte[] data = RPHelper.loadTexture(texKey);
             if (data != null) {
                 BufferedImage img = null;
-                if (this.textureCache.get(texKey) != null) {
+                if (this.textureCache.containsKey(texKey)) {
                     img = this.textureCache.get(texKey);
                 } else {
                     try {
                         img = ImageIO.read(new ByteArrayInputStream(data));
+                        if (img.getType() == 10) {
+                            img = TextureHelper.darkenGrayscale(img);
+                        }
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir);
+                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir, triangle.shade);
                     }
                     this.textureCache.put(texKey, img);
                 }
-
 
                 int width = img.getWidth();
                 // animated textures...
@@ -302,22 +304,14 @@ public class TriangleModel implements RenderModel {
                 int s = (int) (width * uv.x());
                 int t = (int) (realHeight * uv.y());
 
-                int imgData = debug ? triangle.color : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
-
-                if (img.getType() == 10) { // hmmm
-                    var xx = ColorHelper.unpackColor(imgData);
-                    xx[1] /= 1.4;
-                    xx[2] /= 1.4;
-                    xx[3] /= 1.4;
-                    imgData = ColorHelper.packColor(xx);
-                }
+                int imgData = debug ? triangle.getColor() : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
 
                 // Apply block specific tint, but only if this face has a tintIndex
                 if (textureInfo.tintIndex != -1 && textureTint != -1) {
                     imgData = FastColor.ARGB32.multiply(imgData, textureTint);
                 }
 
-                return new ModelHitResult(imgData, normalDir);
+                return new ModelHitResult(imgData, normalDir, triangle.shade);
             }
         }
 
