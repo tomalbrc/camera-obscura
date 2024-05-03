@@ -1,11 +1,11 @@
 package de.tomalbrc.cameraobscura.render;
 
+import de.tomalbrc.cameraobscura.color.BlockColors;
+import de.tomalbrc.cameraobscura.color.MiscColors;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
-import de.tomalbrc.cameraobscura.util.BlockColors;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
-import de.tomalbrc.cameraobscura.util.MiscColors;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
-    private static Vector3f SUN = new Vector3f(-1,2,1).normalize();
+    private static Vector3f SUN = new Vector3f(-1,-2,1).normalize();
 
     private final Level level;
 
@@ -92,9 +92,9 @@ public class Raytracer {
     private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHitResult result) {
         // Color change for liquids
         boolean lava = false;
-        double[] tint = new double[] { 1, 1,1,1 }; // maybe separate for shade?
+        double[] tint = new double[] { 1., 1,1,1 };
         boolean transparentWater = true;
-        boolean shadows = true;
+        boolean blockLight = true;
         if (transparentWater) {
             if (result.fluidState() != null && !result.fluidState().isEmpty()) {
                 var fs = result.fluidState();
@@ -150,27 +150,31 @@ public class Raytracer {
                     if (modelHitResult.direction() != null && blockState.isSolidRender(this.level, result.blockPos()))
                         lightPos = result.blockPos().relative(modelHitResult.direction());
 
-                    modelColor = modelHitResult.color();
 
                     // some shading from a global light source
                     if (modelHitResult.shade()) {
+                        var pc = ColorHelper.unpackColor(modelHitResult.color());
                         var normal = new Vector3f(modelHitResult.direction().getNormal().getX(), modelHitResult.direction().getNormal().getY(), modelHitResult.direction().getNormal().getZ());
                         float b = Math.max(0, normal.dot(SUN));
-                        for(int i = 1; i < tint.length; i++) {
-                            tint[i] = tint[i] * (b/3.f+0.7f); // scale from 0.75 to 1.03333
+                        for(int i = 1; i < pc.length; i++) {
+                            pc[i] = (pc[i] * (b/2.f+0.5f)); // scale from 0.5 to 1
                         }
+                        modelColor = ColorHelper.packColor(pc);
+                    } else {
+                        modelColor = modelHitResult.color();
                     }
                 }
             }
         }
 
-        if (shadows) {
-            float lightLevel = this.level.getBrightness(LightLayer.BLOCK, lightPos);
-            //var time = (this.level.dayTime()%24000) / 24000.f;
-            lightLevel = Mth.clamp(lightLevel, Math.max(Math.max(2, (int)(level.getTimeOfDay(0) * 14)), (int)(this.level.dimensionType().ambientLight()*15)),15);
+        if (blockLight) {
+            int lightLevel = Math.max(
+                    level.getBrightness(LightLayer.SKY, lightPos) - level.getSkyDarken(),
+                    level.getBrightness(LightLayer.BLOCK, lightPos)
+            );
 
-            for(int i = 1; i < tint.length; i++) {
-                tint[i] = tint[i] * (lightLevel / 15.f);
+            for (int i = 1; i < tint.length; i++) {
+                tint[i] = tint[i] * (Mth.clamp(lightLevel+2, 2, 17)/17.f);
             }
         }
 

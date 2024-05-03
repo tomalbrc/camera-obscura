@@ -1,6 +1,7 @@
-package de.tomalbrc.cameraobscura.util;
+package de.tomalbrc.cameraobscura.color;
 
 import de.tomalbrc.cameraobscura.mixin.BiomeAccessor;
+import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.FoliageColor;

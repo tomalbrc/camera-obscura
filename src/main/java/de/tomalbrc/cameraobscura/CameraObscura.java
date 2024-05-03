@@ -1,7 +1,7 @@
 package de.tomalbrc.cameraobscura;
 
+import de.tomalbrc.cameraobscura.color.BlockColors;
 import de.tomalbrc.cameraobscura.command.CameraCommand;
-import de.tomalbrc.cameraobscura.util.BlockColors;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 

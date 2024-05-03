@@ -7,6 +7,7 @@ import de.tomalbrc.cameraobscura.json.Vector3fDeserializer;
 import de.tomalbrc.cameraobscura.json.Vector4iDeserializer;
 import de.tomalbrc.cameraobscura.render.RPBlockState;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
+import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
@@ -24,7 +25,7 @@ public class RPHelper {
     private static ResourcePackBuilder resourcePackBuilder = PolymerResourcePackUtils.createBuilder(Path.of("a/b"));
     final private static Gson gson = new GsonBuilder()
             .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
-            .registerTypeAdapter(RPBlockState.Variant.class, new VariantDeserializer())
+            .registerTypeAdapter(Variant.class, new VariantDeserializer())
             .registerTypeAdapter(Vector3f.class, new Vector3fDeserializer())
             .registerTypeAdapter(Vector4i.class, new Vector4iDeserializer())
             .create();
