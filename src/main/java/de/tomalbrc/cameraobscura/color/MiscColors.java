@@ -8,7 +8,5 @@ public class MiscColors {
     // ARGB
     public static double[] LAVA_TINT = new double[] { 1, 1, .3, .3 };
 
-    // TODO
-    public static int[] SKY_COLORS = new int[]{0xff_add8e6, 0xff_000000, 0xff_add8e6};
     public static int SKY_COLOR = 0xff_7AA8FF;
 }
