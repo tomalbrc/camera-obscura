@@ -1,12 +1,10 @@
 package de.tomalbrc.cameraobscura.render.model.triangle;
 
-import de.tomalbrc.cameraobscura.color.MiscColors;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
-import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
@@ -18,19 +16,28 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class TriangleModel implements RenderModel {
-    private List<Triangle> modelTriangles = new ObjectArrayList<>();
+    private final List<Triangle> modelTriangles = new ObjectArrayList<>();
 
-    private final Map<String, ResourceLocation> textureMap;
+    private final Map<String, ResourceLocation> textureMap = new Object2ObjectArrayMap<>();
 
-    public TriangleModel(RPModel rpModel) {
+    public TriangleModel(RPModel.View... rpModel) {
+        for (int i = 0; i < rpModel.length; i++) {
+            this.readModel(rpModel[i]);
+        }
+    }
+
+    public TriangleModel combine(TriangleModel other) {
+        modelTriangles.addAll(other.modelTriangles);
+        textureMap.putAll(other.textureMap);
+        return this;
+    }
+
+    private void readModel(RPModel.View rpModel) {
         for (var element: rpModel.collectElements()) {
             var from = new Vector3f(element.from);
             var to = new Vector3f(element.to);
@@ -39,16 +46,23 @@ public class TriangleModel implements RenderModel {
             from.div(16).sub(posOffset);
             to.div(16).sub(posOffset);
 
-            //rotate(from, to, rpModel.blockRotation);
+            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation()));
+            for (int i = 0; i < tris.size(); i++) {
+                var rot = rpModel.blockRotation().mul(Mth.DEG_TO_RAD, new Vector3f());
+                tris.get(i).rotate(new Quaternionf().rotateXYZ(rot.x, rot.y, rot.z));
+            }
 
-            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation));
             if (tris != null)
                 this.modelTriangles.addAll(tris);
         }
-        textureMap = rpModel.collectTextures();
+        this.textureMap.putAll(rpModel.collectTextures());
     }
 
     public void rotate(Vector3f from, Vector3f to, Vector3f v) {
+        for (int i = 0; i < modelTriangles.size(); i++) {
+            Triangle t;
+        }
+
         if (v.x != 0) {
             from.rotateX(v.x * Mth.DEG_TO_RAD);
             to.rotateX(v.x * Mth.DEG_TO_RAD);
@@ -244,29 +258,30 @@ public class TriangleModel implements RenderModel {
 
     static Map<String, BufferedImage> textureCache = new Object2ObjectArrayMap<>();
 
-    public RenderModel.ModelHitResult intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint) {
-        Triangle triangle = null;
-        Triangle.TriangleHit hit = null;
-        float smallestT = Float.MAX_VALUE;
+    public List<ModelHit> intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint) {
 
-        // FIXME: prevents self intersection of the model, with other triangles, no good
-        for (var tri: modelTriangles) {
-            var res = tri.rayIntersect(origin.sub(offset, new Vector3f()), direction);
-            if (res != null && res.t() < smallestT) {
-                smallestT = res.t();
-                triangle = tri;
-                hit = res;
+        List<Triangle.TriangleHit> hitList = new ObjectArrayList<>();
+        List<ModelHit> modelHitList = new ObjectArrayList<>();
+
+        for (int i = 0; i < this.modelTriangles.size(); i++) {
+            var res = this.modelTriangles.get(i).rayIntersect(origin.sub(offset, new Vector3f()), direction);
+            if (res != null) {
+                hitList.add(res);
             }
         }
 
-        if (hit != null) {
+        hitList.sort((a,b) -> Float.compare(a.t(), b.t()));
+
+        for (int i = 0; i < hitList.size(); i++) {
+            var hit = hitList.get(i);
+            var triangle = hit.triangle();
+
             Vector2fc uv = hit.uv();
             Direction normalDir = hit.getDirection(); // normal direction of the hit triangle
             RPElement.TextureInfo textureInfo = triangle.textureInfo;
 
             // transparent face
-            if (textureInfo == null)
-                return new ModelHitResult(MiscColors.TRANSPARENT_COLOR, normalDir, triangle.shade); // no face to render, is transparent, skip
+            if (textureInfo == null) continue;
 
             String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
@@ -274,47 +289,30 @@ public class TriangleModel implements RenderModel {
                 texKey = textureMap.get(texKey).getPath();
             }
 
-            byte[] data = RPHelper.loadTexture(texKey);
-            if (data != null) {
-                BufferedImage img = null;
-                if (this.textureCache.containsKey(texKey)) {
-                    img = this.textureCache.get(texKey);
-                } else {
-                    try {
-                        img = ImageIO.read(new ByteArrayInputStream(data));
-                        if (img.getType() == 10) {
-                            img = TextureHelper.darkenGrayscale(img);
-                        }
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                        return new ModelHitResult(CanvasColor.PURPLE_NORMAL.getRgbColor(), normalDir, triangle.shade);
-                    }
-                    this.textureCache.put(texKey, img);
-                }
+            BufferedImage img = RPHelper.loadTextureImage(texKey);
+            if (img == null) continue;
 
-                int width = img.getWidth();
-                // animated textures...
-                int realHeight = img.getHeight() / (img.getHeight()/img.getWidth());
+            int width = img.getWidth();
+            // animated textures...
+            int realHeight = img.getHeight() / (img.getHeight()/img.getWidth());
 
-                if (textureInfo.uv != null)
-                    uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
+            if (textureInfo.uv != null)
+                uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
 
-                boolean debug = false; // only render triangle colors during debug
-                int s = (int) (width * uv.x());
-                int t = (int) (realHeight * uv.y());
+            boolean debug = false; // only render triangle colors during debug
+            int s = (int) (width * uv.x());
+            int t = (int) (realHeight * uv.y());
 
-                int imgData = debug ? triangle.getColor() : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
+            int imgData = debug ? triangle.getColor() : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
 
-                // Apply block specific tint, but only if this face has a tintIndex
-                if (textureInfo.tintIndex != -1 && textureTint != -1) {
-                    imgData = FastColor.ARGB32.multiply(imgData, textureTint);
-                }
-
-                return new ModelHitResult(imgData, normalDir, triangle.shade);
+            // Apply block specific tint, but only if this face has a tintIndex
+            if (textureInfo.tintIndex != -1 && textureTint != -1) {
+                imgData = FastColor.ARGB32.multiply(imgData, textureTint);
             }
+
+            modelHitList.add(new ModelHit(imgData, normalDir, triangle.shade));
         }
 
-        // no intersections
-        return null;
+        return modelHitList;
     }
 }

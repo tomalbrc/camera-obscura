@@ -28,6 +28,23 @@ public class ColorHelper {
         };
     }
 
+    public static int multiplyColor(int c1, int c2) {
+        var a = (c1 >> 24 & 0xff)/255.f * (c2 >> 24 & 0xff)/255.f;
+        var r = (c1 >> 16 & 0xff)/255.f * (c2 >> 16 & 0xff)/255.f;
+        var g = (c1 >> 8 & 0xff)/255.f * (c2 >> 8 & 0xff)/255.f;
+        var b = (c1 & 0xff)/255.f * (c2 & 0xff)/255.f;
+
+        return (int)(a*255) << 24 | (int)(r*255) << 16 | (int)(g*255) << 8 | (int)(b*255);
+    }
+
+    public static int multiplyColor(int c1, float scale) {
+        var r = (c1 >> 16 & 0xff)/255.f * scale;
+        var g = (c1 >> 8 & 0xff)/255.f * scale;
+        var b = (c1 & 0xff)/255.f * scale;
+
+        return (c1 >> 24 & 0xff) | (int)(r*255) << 16 | (int)(g*255) << 8 | (int)(b*255);
+    }
+
     public static int alphaComposite(int color1, int color2) {
         return packColor(alphaComposite(unpackColor(color1), unpackColor(color2)));
     }
@@ -55,20 +72,20 @@ public class ColorHelper {
         return result;
     }
 
-    public static int interpolateColors(int[] SKY_COLORS, float fraction) {
+    public static int interpolateColors(int[] colors, float fraction) {
         if (fraction <= 0)
-            return SKY_COLORS[0];
+            return colors[0];
         else if (fraction >= 1)
-            return SKY_COLORS[SKY_COLORS.length - 1];
+            return colors[colors.length - 1];
 
-        float segmentSize = 1.0f / (SKY_COLORS.length - 1);
+        float segmentSize = 1.0f / (colors.length - 1);
         float segment = fraction / segmentSize;
         int index1 = (int) Math.floor(segment);
-        int index2 = Math.min(index1 + 1, SKY_COLORS.length - 1);
+        int index2 = Math.min(index1 + 1, colors.length - 1);
         float segmentFraction = segment - index1;
 
-        int color1 = SKY_COLORS[index1];
-        int color2 = SKY_COLORS[index2];
+        int color1 = colors[index1];
+        int color2 = colors[index2];
 
         double[] color1Array = ColorHelper.unpackColor(color1);
         double[] color2Array = ColorHelper.unpackColor(color2);

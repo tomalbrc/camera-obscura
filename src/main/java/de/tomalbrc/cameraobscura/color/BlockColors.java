@@ -66,7 +66,7 @@ public class BlockColors {
         colors.put(Blocks.VINE, foliageColor);
         colors.put(Blocks.MANGROVE_LEAVES, foliageColor);
 
-        //colors.put(Blocks.WATER, (blockState) -> -1);
+        //colors.put(Blocks.WATER, (level, blockState, blockPos) -> 0x3F76E4);
         //colors.put(Blocks.BUBBLE_COLUMN, (level, blockState, blockPos) -> -1);
         //colors.put(Blocks.WATER_CAULDRON, (level, blockState, blockPos) -> -1);
 
@@ -74,8 +74,8 @@ public class BlockColors {
 
         //colors.put(Blocks.SUGAR_CANE, (blockState) -> GrassColor.getDefaultColor());
 
-        colors.put(Blocks.ATTACHED_MELON_STEM, (level, blockState, blockPos) -> 14731036);
-        colors.put(Blocks.ATTACHED_PUMPKIN_STEM, (level, blockState, blockPos) -> 14731036);
+        colors.put(Blocks.ATTACHED_MELON_STEM, (level, blockState, blockPos) -> 0xE0C71C);
+        colors.put(Blocks.ATTACHED_PUMPKIN_STEM, (level, blockState, blockPos) -> 0xE0C71C);
 
         colors.put(Blocks.MELON_STEM, (level, blockState, blockPos) -> {
             int j = blockState.getValue(StemBlock.AGE);
@@ -92,7 +92,7 @@ public class BlockColors {
             return k << 16 | l << 8 | m;
         });
 
-        colors.put(Blocks.LILY_PAD, (level, blockState, blockPos) -> 2129968);
+        colors.put(Blocks.LILY_PAD, (level, blockState, blockPos) -> 0x208030);
     }
 
     public static int get(Level level, BlockState blockState, BlockPos blockPos) {

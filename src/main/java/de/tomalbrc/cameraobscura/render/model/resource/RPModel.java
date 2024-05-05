@@ -10,47 +10,60 @@ import java.util.List;
 import java.util.Map;
 
 public class RPModel {
-    private ResourceLocation parent;
-    private Map<String, String> textures;
-    private List<RPElement> elements;
-    public transient Vector3f blockRotation;
+    public ResourceLocation parent;
+    public Map<String, String> textures;
+    public List<RPElement> elements;
 
-    public Map<String, ResourceLocation> collectTextures() {
-        Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
-        for (Map.Entry<String, String> entry : this.textures.entrySet()) {
-            collectedTextures.put(entry.getKey(), new ResourceLocation(entry.getValue().replace("#", "")));
-        }
-
-        ResourceLocation parent = this.parent;
-        while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
-            var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
-            if (child != null) {
-                if (child.textures != null) child.textures.forEach((key,value) -> {
-                    collectedTextures.put(key, new ResourceLocation(value.replace("#","")));
-                });
-
-                parent = child.parent;
-            } else {
-                break;
+    public record View(RPModel model, Vector3f blockRotation) {
+        public Map<String, ResourceLocation> collectTextures() {
+            Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
+            for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
+                collectedTextures.put(entry.getKey(), new ResourceLocation(entry.getValue().replace("#", "")));
             }
-        }
-        return collectedTextures;
-    }
 
-    public List<RPElement> collectElements() {
-        List<RPElement> elementsList = new ObjectArrayList<>();
-        if (this.elements != null) elementsList.addAll(this.elements);
+            ResourceLocation parent = this.model.parent;
+            while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
+                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
+                if (child != null) {
+                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> {
+                        collectedTextures.put(key, new ResourceLocation(value.replace("#","")));
+                    });
 
-        ResourceLocation parent = this.parent;
-        while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
-            var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
-            if (child != null) {
-                if (child.elements != null) elementsList.addAll(child.elements);
-                parent = child.parent;
-            } else {
-                break;
+                    parent = child.model.parent;
+                } else {
+                    break;
+                }
             }
+            return collectedTextures;
         }
-        return elementsList;
+
+        public List<RPElement> collectElements() {
+            if (this.model.elements != null) {
+                return this.model.elements;
+            }
+
+            ResourceLocation parent = this.model.parent;
+            while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
+                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
+                if (child != null) {
+                    if (child.model.elements != null) {
+                        return child.model.elements;
+                    }
+                    parent = child.model.parent;
+                } else {
+                    break;
+                }
+            }
+            return new ObjectArrayList<>();
+        }
+
+        public RPModel.View combine(RPModel.View other) {
+            RPModel model1 = new RPModel();
+            model1.parent = this.model.parent;
+            model1.elements = this.collectElements();
+            model1.elements.addAll(other.collectElements());
+            model1.textures = this.model().textures;
+            return new RPModel.View(model1, this.blockRotation);
+        }
     }
 }

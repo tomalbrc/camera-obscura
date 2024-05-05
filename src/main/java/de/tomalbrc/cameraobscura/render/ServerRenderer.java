@@ -3,7 +3,6 @@ package de.tomalbrc.cameraobscura.render;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -82,20 +81,19 @@ public class ServerRenderer {
     }
 
     public List<Vector3d> buildRayMap(Player player) {
-        Vector3d direction = new Vector3d(player.getLookAngle().toVector3f()).normalize(); // Get normalized direction vector
-
         double yawRad = (player.yHeadRot+90) * Mth.DEG_TO_RAD;
         double pitchRad = -player.xRotO * Mth.DEG_TO_RAD;
 
         // this is incorrect but the math is not mathing when using 0,0,-1...
         Vector3d baseVec = new Vector3d(1, 0, 0);
 
+        // from viewer to screen to worldspace
         Vector3d lowerLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
         Vector3d upperLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
         Vector3d lowerRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
         Vector3d upperRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
 
-        List<Vector3d> rays = new ObjectArrayList<>((int) (width * height));
+        List<Vector3d> rays = new ObjectArrayList<>(width * height);
 
         Vector3d leftFraction = new Vector3d(upperLeft).sub(lowerLeft).mul(1.0 / (height - 1.0));
         Vector3d rightFraction = new Vector3d(upperRight).sub(lowerRight).mul(1.0 / (height - 1.0));

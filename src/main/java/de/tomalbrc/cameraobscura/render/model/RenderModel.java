@@ -3,8 +3,13 @@ package de.tomalbrc.cameraobscura.render.model;
 import net.minecraft.core.Direction;
 import org.joml.Vector3f;
 
-public interface RenderModel {
-    public record ModelHitResult(int color, Direction direction, boolean shade) {}
+import java.util.List;
 
-    public RenderModel.ModelHitResult intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint);
+public interface RenderModel {
+
+    record ModelHit(int color, Direction direction, boolean shade) {}
+
+    List<ModelHit> intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint);
+
+    record View(RenderModel renderModel, RenderModel renderModelWithWater) {}
 }

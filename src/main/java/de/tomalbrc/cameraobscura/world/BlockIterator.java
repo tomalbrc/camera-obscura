@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -21,7 +22,20 @@ import java.util.List;
 import java.util.Map;
 
 public class BlockIterator {
-    public record WorldHitResult(BlockPos blockPos, BlockState blockState, FluidState fluidState) {}
+    public record WorldHit(BlockPos blockPos, BlockState blockState, FluidState fluidState) {
+        public boolean isWater() {
+            if (fluidState != null && !fluidState.isEmpty()) {
+                return fluidState.is(FluidTags.WATER);
+            }
+            return false;
+        }
+        public boolean isLava() {
+            if (fluidState != null && !fluidState.isEmpty()) {
+                return fluidState.is(FluidTags.LAVA);
+            }
+            return false;
+        }
+    }
 
     private final Level level;
 
@@ -64,16 +78,16 @@ public class BlockIterator {
         }
     }
 
-    public List<WorldHitResult> raycast(ClipContext clipContext) {
-        List<WorldHitResult> list = new ObjectArrayList<>();
+    public List<WorldHit> raycast(ClipContext clipContext) {
+        List<WorldHit> list = new ObjectArrayList<>();
 
-        WorldHitResult hitResult = BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, (context, blockPos) -> {
+        WorldHit hitResult = BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, (context, blockPos) -> {
             BlockState blockState = this.cachedBlockState(blockPos);
             FluidState fluidState = this.cachedFluidState(blockPos);
 
             if (!blockState.isSolidRender(level, blockPos) || blockState.isAir()) {
                 if (!blockState.isAir()) {
-                    list.add(new WorldHitResult(new BlockPos(blockPos), blockState, fluidState));
+                    list.add(new WorldHit(new BlockPos(blockPos), blockState, fluidState));
                 }
 
                 return null; // keep searching
@@ -84,7 +98,7 @@ public class BlockIterator {
 
             BlockHitResult blockHitResult = this.level.clipWithInteractionOverride(from, to, blockPos, Shapes.block(), blockState);
 
-            return blockHitResult != null ? new WorldHitResult(new BlockPos(blockPos), blockState, fluidState) : null;
+            return blockHitResult != null ? new WorldHit(new BlockPos(blockPos), blockState, fluidState) : null;
         }, (clipContextx) -> null);
 
         if (hitResult != null)

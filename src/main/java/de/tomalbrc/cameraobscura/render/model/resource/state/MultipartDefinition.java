@@ -11,11 +11,11 @@ public class MultipartDefinition {
     public Condition when; // under those conditions
 
     public Variant get(BlockState blockState) {
-        if (this.when.AND != null) this.when.AND.forEach(x -> {
+        if (this.when != null && this.when.AND != null) this.when.AND.forEach(x -> {
             //x.
         });
 
-        return null;
+        return apply;
     }
 
     public static class Condition {
