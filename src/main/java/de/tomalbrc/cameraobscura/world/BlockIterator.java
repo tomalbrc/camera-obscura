@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BlockIterator {
-    public record WorldHit(BlockPos blockPos, BlockState blockState, FluidState fluidState) {
+    public record WorldHit(BlockPos blockPos, BlockState blockState, FluidState fluidState, FluidState fluidStateAbove) {
         public boolean isWater() {
             if (fluidState != null && !fluidState.isEmpty()) {
                 return fluidState.is(FluidTags.WATER);
@@ -46,12 +46,28 @@ public class BlockIterator {
         this.cachedChunks = new Object2ObjectArrayMap<>();
     }
 
+    public void preloadChunks(BlockPos center) {
+        if (Thread.currentThread().getId() == 1)
+            return;
+
+        int xc = SectionPos.blockToSectionCoord(center.getX());
+        int zc = SectionPos.blockToSectionCoord(center.getZ());
+
+        int radius = 128/16+1;
+        for (int z = -radius; z <= radius; z++) {
+            for (int x = -radius; x <= radius; x++) {
+                this.getChunkAt(new Vector2i(x+xc, z+zc));
+            }
+        }
+    }
+
     private LevelChunk getChunkAt(Vector2i pos) {
         LevelChunk chunk = null;
         if (this.cachedChunks.containsKey(pos)) {
             chunk = this.cachedChunks.get(pos);
         } else {
             chunk = this.level.getChunk(pos.x, pos.y);
+            cachedChunks.put(pos, chunk);
         }
         return chunk;
     }
@@ -84,10 +100,14 @@ public class BlockIterator {
         WorldHit hitResult = BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, (context, blockPos) -> {
             BlockState blockState = this.cachedBlockState(blockPos);
             FluidState fluidState = this.cachedFluidState(blockPos);
+            FluidState fluidStateAbove = null;
+            if (!fluidState.isEmpty()) {
+                fluidStateAbove = this.cachedFluidState(blockPos.above());
+            }
 
             if (!blockState.isSolidRender(level, blockPos) || blockState.isAir()) {
                 if (!blockState.isAir()) {
-                    list.add(new WorldHit(new BlockPos(blockPos), blockState, fluidState));
+                    list.add(new WorldHit(new BlockPos(blockPos), blockState, fluidState, fluidStateAbove));
                 }
 
                 return null; // keep searching
@@ -98,7 +118,7 @@ public class BlockIterator {
 
             BlockHitResult blockHitResult = this.level.clipWithInteractionOverride(from, to, blockPos, Shapes.block(), blockState);
 
-            return blockHitResult != null ? new WorldHit(new BlockPos(blockPos), blockState, fluidState) : null;
+            return blockHitResult != null ? new WorldHit(new BlockPos(blockPos), blockState, fluidState, fluidStateAbove) : null;
         }, (clipContextx) -> null);
 
         if (hitResult != null)

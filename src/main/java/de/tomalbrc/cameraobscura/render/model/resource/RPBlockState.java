@@ -1,4 +1,4 @@
-package de.tomalbrc.cameraobscura.render;
+package de.tomalbrc.cameraobscura.render.model.resource;
 
 import de.tomalbrc.cameraobscura.render.model.resource.state.MultipartDefinition;
 import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;

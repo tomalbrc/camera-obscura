@@ -46,11 +46,13 @@ public class TriangleModel implements RenderModel {
             from.div(16).sub(posOffset);
             to.div(16).sub(posOffset);
 
+            //rotate(from, to, rpModel.blockRotation());
+
             List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation()));
-            for (int i = 0; i < tris.size(); i++) {
-                var rot = rpModel.blockRotation().mul(Mth.DEG_TO_RAD, new Vector3f());
-                tris.get(i).rotate(new Quaternionf().rotateXYZ(rot.x, rot.y, rot.z));
-            }
+            //for (int i = 0; i < tris.size(); i++) {
+            //    var rot = rpModel.blockRotation().mul(Mth.DEG_TO_RAD, new Vector3f());
+                //tris.get(i).rotate(new Quaternionf().rotateXYZ(rot.x(), rot.y(), rot.z()).normalize());
+            //}
 
             if (tris != null)
                 this.modelTriangles.addAll(tris);
@@ -104,6 +106,7 @@ public class TriangleModel implements RenderModel {
                 new Vector2f(1,1),
                 new Vector2f(0,1)
         };
+
 
         // change offset: (int)(rotationInDegrees/90)
         // vanilla "only" supports 90° rotations for textures
@@ -256,8 +259,6 @@ public class TriangleModel implements RenderModel {
         return triangles;
     }
 
-    static Map<String, BufferedImage> textureCache = new Object2ObjectArrayMap<>();
-
     public List<ModelHit> intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint) {
 
         List<Triangle.TriangleHit> hitList = new ObjectArrayList<>();
@@ -273,8 +274,8 @@ public class TriangleModel implements RenderModel {
         hitList.sort((a,b) -> Float.compare(a.t(), b.t()));
 
         for (int i = 0; i < hitList.size(); i++) {
-            var hit = hitList.get(i);
-            var triangle = hit.triangle();
+            Triangle.TriangleHit hit = hitList.get(i);
+            Triangle triangle = hit.triangle();
 
             Vector2fc uv = hit.uv();
             Direction normalDir = hit.getDirection(); // normal direction of the hit triangle

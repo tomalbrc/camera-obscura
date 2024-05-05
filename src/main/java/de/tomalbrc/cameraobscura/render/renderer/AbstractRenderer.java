@@ -1,61 +1,26 @@
-package de.tomalbrc.cameraobscura.render;
+package de.tomalbrc.cameraobscura.render.renderer;
 
-import eu.pb4.mapcanvas.api.core.CanvasImage;
+import de.tomalbrc.cameraobscura.render.Raytracer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.LivingEntity;
 import org.joml.Vector3d;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
-public class ServerRenderer {
-    private static final double FOV_YAW_DEG = 53;
-    private static final double FOV_PITCH_DEG = 40;
+public abstract class AbstractRenderer<T> implements Renderer<T> {
+    protected final int width;
+    protected final int height;
 
-    private static final double FOV_YAW_RAD = Math.toRadians(FOV_YAW_DEG);
-    private static final double FOV_PITCH_RAD = Math.toRadians(FOV_PITCH_DEG);
+    protected final LivingEntity entity;
+    protected final Raytracer raytracer;
 
-    private final int width;
-    private final int height;
-
-    private final ServerPlayer player;
-    private final CanvasImage image;
-    public ServerRenderer(ServerPlayer player, int width, int height) {
-        this.player = player;
-        this.image = new CanvasImage(width, height);
+    public AbstractRenderer(LivingEntity entity, int width, int height) {
+        this.entity = entity;
         this.width = width;
         this.height = height;
-    }
-
-    public CanvasImage render() throws IOException {
-        Vec3 eyes = this.player.getEyePosition();
-        List<Vector3d> rays = buildRayMap(this.player);
-
-        var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-
-        Raytracer raytracer = new Raytracer(this.player.level());
-
-        // loop through every pixel on map
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int index = x+height*y;
-                Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
-
-                var res = raytracer.trace(eyes, rayTraceVector);
-
-                imgFile.setRGB(x, y, res);
-            }
-        }
-
-        ImageIO.write(imgFile, "PNG", new File("/tmp/out.png"));
-
-        return this.image;
+        this.raytracer = new Raytracer(this.entity.level());
+        this.raytracer.preloadChunks(entity.getOnPos());
     }
 
     public static Vector3d yawPitchRotation(Vector3d base, double angleYaw, double anglePitch) {
@@ -76,13 +41,13 @@ public class ServerRenderer {
     }
 
     public static Vector3d doubleYawPitchRotation(Vector3d base, double firstYaw, double firstPitch, double secondYaw,
-                                                double secondPitch) {
+                                                  double secondPitch) {
         return yawPitchRotation(yawPitchRotation(base, firstYaw, firstPitch), secondYaw, secondPitch);
     }
 
-    public List<Vector3d> buildRayMap(Player player) {
-        double yawRad = (player.yHeadRot+90) * Mth.DEG_TO_RAD;
-        double pitchRad = -player.xRotO * Mth.DEG_TO_RAD;
+    protected List<Vector3d> buildRayMap(LivingEntity entity) {
+        double yawRad = (entity.yHeadRot+90) * Mth.DEG_TO_RAD;
+        double pitchRad = -entity.xRotO * Mth.DEG_TO_RAD;
 
         // this is incorrect but the math is not mathing when using 0,0,-1...
         Vector3d baseVec = new Vector3d(1, 0, 0);

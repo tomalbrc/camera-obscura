@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MultipartDefinition {
-    public Variant apply; // model to apply
+    public List<Variant> apply; // model to apply
 
     public Condition when; // under those conditions
 
@@ -15,7 +15,7 @@ public class MultipartDefinition {
             //x.
         });
 
-        return apply;
+        return apply.get(0);
     }
 
     public static class Condition {

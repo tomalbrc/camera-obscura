@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import de.tomalbrc.cameraobscura.render.ServerRenderer;
+import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.ChatFormatting;
@@ -18,92 +18,110 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class CameraCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> blockboy = Commands.literal("camera").requires(Permissions.require("camera-obscura.command", 1));
+        LiteralArgumentBuilder<CommandSourceStack> camera_obscura = Commands.literal("camera-obscura").requires(Permissions.require("camera-obscura.command", 1));
 
-        blockboy.executes(CameraCommand::createMap);
+        camera_obscura.executes(CameraCommand::createMapOfSourceForSource);
+        camera_obscura.then(Commands.literal("async").executes(CameraCommand::createMapAsyncOfSource));
 
-        LiteralCommandNode<CommandSourceStack> gestureNode = blockboy.build();
+        LiteralCommandNode<CommandSourceStack> gestureNode = camera_obscura.build();
 
         dispatcher.getRoot().addChild(gestureNode);
     }
 
-    private static int createMap(CommandContext<CommandSourceStack> context) {
+    private static int createMapOfSourceForSource(CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getPlayer() == null) {
+            context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
+        }
+
+        return createMap(context, context.getSource().getPlayer(), context.getSource().getPlayer());
+    }
+
+    private static int createMap(CommandContext<CommandSourceStack> context, LivingEntity entity, Player player) {
         CommandSourceStack source = context.getSource();
-
-        ServerPlayer player = source.getPlayer();
-
         source.sendSuccess(() -> Component.literal("Taking photo..."), false);
-
-//        CompletableFuture.supplyAsync(() -> {
-//            try {
-//                return new ServerRenderer(player).render();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            return null;
-//        }).thenAcceptAsync(mapImage -> {
-//            source.sendSuccess(() -> Component.literal("Took a photo!"), false);
-//
-//            var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
-//            player.addItem(items.get(0));
-//            source.sendSuccess(() -> Component.literal("Done!"), false);
-//        }, source.getServer());
-
 
         long startTime = System.nanoTime();
 
-        //new Thread(() -> {
-            CanvasImage mapImage = null;
+        CanvasImage mapImage = null;
+        try {
+            int size = 128;//512;
+            mapImage = new CanvasImageRenderer(player, size, size).render();
+            finalize(player, mapImage, source, startTime);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+    private static int createMapAsync(CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getPlayer() == null) {
+            context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
+        }
+
+        return createMapAsync(context, context.getSource().getPlayer(), context.getSource().getPlayer());
+    }
+
+    private static int createMapAsyncOfSource(CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getPlayer() == null) {
+            context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
+        }
+
+        return createMapAsync(context, context.getSource().getPlayer(), context.getSource().getPlayer());
+    }
+
+    private static int createMapAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, Player player) {
+        CommandSourceStack source = context.getSource();
+
+        source.sendSuccess(() -> Component.literal("Taking photo..."), false);
+        long startTime = System.nanoTime();
+
+        var renderer = new CanvasImageRenderer(entity, 128, 128);
+        CompletableFuture.supplyAsync(() -> {
             try {
-                int size = 512;
-                mapImage = new ServerRenderer(player, size,size).render();
-
-                source.sendSuccess(() -> Component.literal("Took a photo!"), false);
-
-                var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
-                items.forEach(player::addItem);
-
-                long durationInMillis = (System.nanoTime() - startTime) / 1000000;
-                long millis = durationInMillis % 1000;
-                long second = (durationInMillis / 1000) % 60;
-                String time = String.format("%d.%02d seconds", second, millis);
-
-                source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+                return renderer.render();
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new RuntimeException(e);
             }
-        //}, "obscurarenderer").start();
-
-
+            return null;
+        }).thenAcceptAsync(mapImage -> {
+            finalize(player, mapImage, source, startTime);
+        }, source.getServer());
 
         return Command.SINGLE_SUCCESS;
     }
 
+    private static void finalize(Player player, CanvasImage mapImage, CommandSourceStack source, long startTime) {
+        source.sendSuccess(() -> Component.literal("Took a photo!"), false);
 
-    private static CompletableFuture<BufferedImage> getImage(String input) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return new BufferedImage(128,128, BufferedImage.TYPE_INT_RGB);
-            } catch (Throwable e) {
-                e.printStackTrace();
-                return null;
-            }
-        });
+        var items = CameraCommand.toVanillaItems(mapImage, source.getLevel());
+
+        if (player != null) {
+            items.forEach(player::addItem);
+        } else if (source.getPlayer() != null) {
+            items.forEach(source.getPlayer()::addItem);
+        }
+
+        long durationInMillis = (System.nanoTime() - startTime) / 1000000;
+        long millis = durationInMillis % 1000;
+        long second = (durationInMillis / 1000) % 60;
+        String time = String.format("%d.%02d seconds", second, millis);
+
+        source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
     }
 
     public static List<ItemStack> toVanillaItems(CanvasImage image, ServerLevel level) {
@@ -131,7 +149,6 @@ public class CameraCommand {
                     }
                 }
 
-                // getMapName() = makeKey??????? TODO
                 level.setMapData(MapItem.makeKey(id), state);
 
                 var stack = new ItemStack(Items.FILLED_MAP);

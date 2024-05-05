@@ -17,14 +17,13 @@ import java.util.Map;
 public class BuiltinModels {
     static Int2ObjectOpenHashMap<RPModel.View> waterModels = new Int2ObjectOpenHashMap<>();
     static Int2ObjectOpenHashMap<RPModel.View> lavaModels = new Int2ObjectOpenHashMap<>();
-    public static RPModel.View liquidModel(FluidState fluidState) {
-        int height = fluidState.getAmount() * 2 - 1;
+    public static RPModel.View liquidModel(FluidState fluidState, FluidState fluidStateAbove) {
+        int height = fluidState.getAmount() * 2 - (fluidStateAbove != null && fluidStateAbove.is(fluidState.getType()) ? 0:1);
 
         if (fluidState.is(FluidTags.WATER) && waterModels.containsKey(height))
             return waterModels.get(height);
         if (fluidState.is(FluidTags.LAVA) && lavaModels.containsKey(height))
             return lavaModels.get(height);
-
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
@@ -224,5 +223,38 @@ public class BuiltinModels {
         element.faces.put("west", tiSide);
 
         return element;
+    }
+
+
+
+    static RPModel.View skyModel = null;
+    public static RPModel.View skyModel() {
+        if (skyModel != null)
+            return skyModel;
+
+        RPModel rpModel = new RPModel();
+        rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
+        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures.put("all", "minecraft:environment/clouds");
+        rpModel.elements = new ObjectArrayList<>();
+        var element = new RPElement();
+        element.from = new Vector3f(-128*64, 0,-128*64);
+        element.to = new Vector3f(128*64,0, 128*64);
+        element.faces = new Object2ObjectArrayMap<>();
+
+        var ti = new RPElement.TextureInfo();
+        ti.texture = "#all";
+        ti.uv = new Vector4i(0,0,32,32);
+
+        //element.faces.put("up", ti);
+        element.faces.put("down", ti);
+
+        rpModel.elements.add(element);
+
+        var view = new RPModel.View(rpModel, new Vector3f());
+
+        skyModel = view;
+
+        return view;
     }
 }

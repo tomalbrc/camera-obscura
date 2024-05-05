@@ -20,7 +20,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -45,6 +44,10 @@ public class Raytracer {
         this.iterator = new BlockIterator(level);
     }
 
+    public void preloadChunks(BlockPos center) {
+        this.iterator.preloadChunks(center);
+    }
+
     public int trace(Vec3 pos, Vec3 direction) {
         var color = traceSingle(pos, direction);
         // ambient occlusion
@@ -52,11 +55,19 @@ public class Raytracer {
         if ((color >> 24 & 0xff) == 0) {
             // apply sky and clouds
             // max of getSkyDarken is 11
-            float darkness = (level.getSkyDarken()) / 11.2f;
-            color = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
+
+            RPModel.View modelView = BuiltinModels.skyModel();
+            TriangleModel triangleModel = new TriangleModel(modelView);
+            List<RenderModel.ModelHit> hits = triangleModel.intersect(pos.toVector3f(), direction.toVector3f().mul(128), new Vector3f((int)pos.x(), 0, (int)pos.z), 0);
+            if (hits.size() >= 1) {
+                if ((hits.get(0).color() >> 24 & 0xff) > 0)
+                    color = ColorHelper.alphaComposite(color, (hits.get(0).color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
+            }
+
+            float darkness = (level.getSkyDarken()) / 12.f;
+            var skyColor = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
+            color = ColorHelper.alphaComposite(color, skyColor);
         }
-
-
 
         // color may contain transparency if no sky color was set (or may be black)
         return color;
@@ -64,6 +75,7 @@ public class Raytracer {
 
     private int traceSingle(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
+
         List<BlockIterator.WorldHit> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, CollisionContext.empty()));
 
         int color = 0x00ffffff;
@@ -87,12 +99,6 @@ public class Raytracer {
             var c2 = ColorHelper.unpackColor(rayRes);
 
             color = ColorHelper.packColor(ColorHelper.alphaComposite(c1, c2));
-
-            //if (isWater)
-            //    color = applyWaterTint(color);
-            //else
-            //if (result.get(i).isLava())
-            //    color = applyLavaTint(color);
 
             hasHitWater |= isWater;
 
@@ -121,9 +127,9 @@ public class Raytracer {
             RPModel.View rpModel = null;
 
             if (blockState.is(Blocks.WATER))
-                rpModel = BuiltinModels.liquidModel(result.fluidState());
+                rpModel = BuiltinModels.liquidModel(result.fluidState(), result.fluidStateAbove());
             else if (blockState.is(Blocks.LAVA))
-                rpModel = BuiltinModels.liquidModel(result.fluidState());
+                rpModel = BuiltinModels.liquidModel(result.fluidState(), result.fluidStateAbove());
             else if (blockState.is(Blocks.END_PORTAL))
                 rpModel = BuiltinModels.portalModel(true);
             else if (blockState.is(Blocks.END_GATEWAY))
@@ -141,12 +147,12 @@ public class Raytracer {
                 rpModels = ObjectArrayList.of(rpModel);
             }
 
-            if (rpModel == null && rpModels == null) {
+            if (rpModels == null) {
                 System.out.println("Could not load or find model: " + blockState.getBlock().getName().getString());
             } else {
-                RenderModel renderModel = this.getRenderModel(rpModels, blockState, result.fluidState(), allowWater);
+                RenderModel renderModel = this.getRenderModel(rpModels, result, allowWater);
 
-                int blockColor = BlockColors.get(this.level, blockState, blockPos);
+                int blockColor = result.isWater() ? 0xFF3F76E4 : BlockColors.get(this.level, blockState, blockPos);
 
                 List<RenderModel.ModelHit> hits = renderModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor);
                 for (int i = 0; i < hits.size(); i++) {
@@ -161,6 +167,11 @@ public class Raytracer {
                     if (modelHit.shade()) {
                         Vector3f normal = new Vector3f(modelHit.direction().getNormal().getX(), modelHit.direction().getNormal().getY(), modelHit.direction().getNormal().getZ());
                         modelColor = this.getShaded(modelColor, normal);
+                    }
+
+                    // no need to keep going, color is opaque
+                    if ((modelColor >> 24 & 0xff) >= 255) {
+                        break;
                     }
                 }
             }
@@ -186,23 +197,23 @@ public class Raytracer {
         return tintedColor;
     }
 
-    private RenderModel getRenderModel(List<RPModel.View> rpModel, BlockState blockState, FluidState fluidState, boolean allowWater) {
+    private RenderModel getRenderModel(List<RPModel.View> rpModel, BlockIterator.WorldHit result, boolean allowWater) {
         RenderModel.View renderModels = null;
-        if (!this.renderModels.containsKey(blockState)) {
+        if (!this.renderModels.containsKey(result.blockState())) {
             TriangleModel m1 = new TriangleModel(rpModel.get(0));
 
             for (int i = 1; i < rpModel.size(); i++) {
                 m1.combine(new TriangleModel(rpModel.get(i)));
             }
 
-            RenderModel m2 = new TriangleModel(BuiltinModels.liquidModel(fluidState)).combine(m1);
+            RenderModel m2 = new TriangleModel(BuiltinModels.liquidModel(result.fluidState(), result.fluidStateAbove())).combine(m1);
             renderModels = new RenderModel.View(m1, m2);
-            this.renderModels.put(blockState, renderModels);
+            this.renderModels.put(result.blockState(), renderModels);
         } else {
-            renderModels = this.renderModels.get(blockState);
+            renderModels = this.renderModels.get(result.blockState());
         }
 
-        boolean useWaterModel = renderModels.renderModelWithWater() != null && allowWater && !fluidState.isEmpty() && !blockState.is(Blocks.WATER);
+        boolean useWaterModel = renderModels.renderModelWithWater() != null && allowWater && !result.fluidState().isEmpty() && !result.blockState().is(Blocks.WATER);
         return useWaterModel ? renderModels.renderModelWithWater() : renderModels.renderModel();
     }
 
