@@ -4,12 +4,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
-    public BufferedImageRenderer(LivingEntity entity, int width, int height) {
-        super(entity, width, height);
+    public BufferedImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
+        super(entity, width, height, renderDistance);
     }
 
     public BufferedImage render() {
@@ -30,7 +33,12 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
             }
         }
 
-        //ImageIO.write(imgFile, "PNG", new File("/tmp/out.png"));
+        try {
+            ImageIO.write(imgFile, "PNG", new File("/tmp/out.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
         return imgFile;
     }

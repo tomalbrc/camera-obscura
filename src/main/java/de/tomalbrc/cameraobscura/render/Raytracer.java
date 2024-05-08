@@ -37,8 +37,11 @@ public class Raytracer {
 
     private final BlockIterator iterator;
 
-    public Raytracer(Level level) {
+    private final int distance;
+
+    public Raytracer(Level level, int distance) {
         this.level = level;
+        this.distance = distance;
         this.renderModels = new Reference2ObjectArrayMap<>();
 
         this.iterator = new BlockIterator(level);
@@ -50,22 +53,13 @@ public class Raytracer {
 
     public int trace(Vec3 pos, Vec3 direction) {
         var color = traceSingle(pos, direction);
-        // ambient occlusion
+        // todo: ambient occlusion
+        // maybe make a normal and depth buffer and calculate ssao,
+        // casting another (or multiple) rays may be too expensive
 
-        if ((color >> 24 & 0xff) == 0) {
+        if ((color >> 24 & 0xff) < 255) {
             // apply sky and clouds
-            // max of getSkyDarken is 11
-
-            RPModel.View modelView = BuiltinModels.skyModel();
-            TriangleModel triangleModel = new TriangleModel(modelView);
-            List<RenderModel.ModelHit> hits = triangleModel.intersect(pos.toVector3f(), direction.toVector3f().mul(128), new Vector3f((int)pos.x(), 0, (int)pos.z), 0);
-            if (hits.size() >= 1) {
-                if ((hits.get(0).color() >> 24 & 0xff) > 0)
-                    color = ColorHelper.alphaComposite(color, (hits.get(0).color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
-            }
-
-            float darkness = (level.getSkyDarken()) / 12.f;
-            var skyColor = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
+            var skyColor = skyColorWithClouds(pos, direction);
             color = ColorHelper.alphaComposite(color, skyColor);
         }
 
@@ -227,11 +221,20 @@ public class Raytracer {
         return ColorHelper.packColor(pc);
     }
 
-    private int applyWaterTint(int color) {
-        return ColorHelper.alphaComposite(color, ColorHelper.packColor(MiscColors.WATER_TINT));
-    }
+    private int skyColorWithClouds(Vec3 pos, Vec3 direction) {
+        RPModel.View modelView = BuiltinModels.skyModel();
+        TriangleModel triangleModel = new TriangleModel(modelView);
+        List<RenderModel.ModelHit> hits = triangleModel.intersect(pos.toVector3f(), direction.toVector3f().mul(this.distance), new Vector3f((int)pos.x(), 0, (int)pos.z), 0);
+        var color = 0;
+        if (hits.size() >= 1) {
+            // test if cloud was hit (transparent if not)
+            if ((hits.get(0).color() >> 24 & 0xff) > 0)
+                color = ColorHelper.alphaComposite(color, (hits.get(0).color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
+        }
 
-    private int applyLavaTint(int color) {
-        return ColorHelper.alphaComposite(color, ColorHelper.packColor(MiscColors.LAVA_TINT));
+        float darkness = (level.getSkyDarken()) / 12.f;
+        var skyColor = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
+
+        return skyColor;
     }
 }

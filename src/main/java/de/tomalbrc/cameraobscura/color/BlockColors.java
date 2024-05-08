@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
@@ -100,5 +101,9 @@ public class BlockColors {
             return colors.get(blockState.getBlock()).get(level, blockState, blockPos) | 0xff_00_00_00;
 
         return -1;
+    }
+
+    public static int biomeWaterColor(Biome biome) {
+        return biome.getWaterColor();
     }
 }

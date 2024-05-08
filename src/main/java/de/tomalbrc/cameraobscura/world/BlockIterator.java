@@ -1,6 +1,6 @@
 package de.tomalbrc.cameraobscura.world;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -43,7 +43,7 @@ public class BlockIterator {
 
     public BlockIterator(Level level) {
         this.level = level;
-        this.cachedChunks = new Object2ObjectArrayMap<>();
+        this.cachedChunks = new Object2ObjectOpenHashMap<>();
     }
 
     public void preloadChunks(BlockPos center) {

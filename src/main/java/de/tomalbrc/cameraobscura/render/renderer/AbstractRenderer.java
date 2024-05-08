@@ -15,11 +15,11 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
 
-    public AbstractRenderer(LivingEntity entity, int width, int height) {
+    public AbstractRenderer(LivingEntity entity, int width, int height, int renderDistance) {
         this.entity = entity;
         this.width = width;
         this.height = height;
-        this.raytracer = new Raytracer(this.entity.level());
+        this.raytracer = new Raytracer(this.entity.level(), renderDistance);
         this.raytracer.preloadChunks(entity.getOnPos());
     }
 

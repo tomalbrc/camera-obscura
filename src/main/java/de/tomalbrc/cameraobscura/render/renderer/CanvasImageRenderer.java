@@ -9,8 +9,8 @@ import org.joml.Vector3d;
 import java.util.List;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
-    public CanvasImageRenderer(LivingEntity entity, int width, int height) {
-        super(entity, width, height);
+    public CanvasImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
+        super(entity, width, height, renderDistance);
     }
 
     public CanvasImage render() {

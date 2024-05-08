@@ -5,7 +5,7 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -23,7 +23,7 @@ import java.util.Map;
 public class TriangleModel implements RenderModel {
     private final List<Triangle> modelTriangles = new ObjectArrayList<>();
 
-    private final Map<String, ResourceLocation> textureMap = new Object2ObjectArrayMap<>();
+    private final Map<String, ResourceLocation> textureMap = new Object2ObjectOpenHashMap<>();
 
     public TriangleModel(RPModel.View... rpModel) {
         for (int i = 0; i < rpModel.length; i++) {
@@ -49,10 +49,10 @@ public class TriangleModel implements RenderModel {
             //rotate(from, to, rpModel.blockRotation());
 
             List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation()));
-            //for (int i = 0; i < tris.size(); i++) {
-            //    var rot = rpModel.blockRotation().mul(Mth.DEG_TO_RAD, new Vector3f());
-                //tris.get(i).rotate(new Quaternionf().rotateXYZ(rot.x(), rot.y(), rot.z()).normalize());
-            //}
+            /*for (int i = 0; i < tris.size(); i++) {
+                var rot = rpModel.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
+                tris.get(i).rotate(new Quaternionf().rotateXYZ(rot.x(), rot.y(), rot.z()).normalize());
+            }*/
 
             if (tris != null)
                 this.modelTriangles.addAll(tris);
@@ -61,9 +61,9 @@ public class TriangleModel implements RenderModel {
     }
 
     public void rotate(Vector3f from, Vector3f to, Vector3f v) {
-        for (int i = 0; i < modelTriangles.size(); i++) {
-            Triangle t;
-        }
+        //for (int i = 0; i < modelTriangles.size(); i++) {
+        //    Triangle t;
+        //}
 
         if (v.x != 0) {
             from.rotateX(v.x * Mth.DEG_TO_RAD);
@@ -244,7 +244,7 @@ public class TriangleModel implements RenderModel {
                 141245));
 
 
-        var radNormalRot = normal.mul(Mth.DEG_TO_RAD, new Vector3f());
+        var radNormalRot = normal.mul(-Mth.DEG_TO_RAD, new Vector3f());
         for (Triangle triangle : triangles) {
             var n = triangle.getNormal().rotate(new Quaternionf().rotateXYZ(radNormalRot.x, radNormalRot.y, radNormalRot.z), new Vector3f());
             var d = Direction.fromDelta(
@@ -284,6 +284,8 @@ public class TriangleModel implements RenderModel {
             // transparent face
             if (textureInfo == null) continue;
 
+            uv = rotateUV(uv, new Vector2f(), textureInfo.rotation*Mth.DEG_TO_RAD);
+
             String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
             while (textureMap.containsKey(texKey)) {
@@ -315,5 +317,18 @@ public class TriangleModel implements RenderModel {
         }
 
         return modelHitList;
+    }
+
+    Vector2fc rotateUV(Vector2fc uv, Vector2fc pivot, float rotation) {
+        float sine = Mth.sin(rotation);
+        float cosine = Mth.cos(rotation);
+
+        Vector2f ruv = new Vector2f(uv);
+        ruv.sub(pivot);
+        ruv.x = uv.x() * cosine - uv.x() * sine;
+        ruv.y = uv.x() * sine + uv.y() * cosine;
+        ruv.add(pivot);
+
+        return ruv;
     }
 }

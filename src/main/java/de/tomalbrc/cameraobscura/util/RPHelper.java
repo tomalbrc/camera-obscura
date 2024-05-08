@@ -13,10 +13,8 @@ import de.tomalbrc.cameraobscura.render.model.resource.state.MultipartDefinition
 import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -39,9 +37,9 @@ public class RPHelper {
 
     // Cache resourcepack models
     private static Map<String, RPModel> modelResources = new Object2ObjectOpenHashMap<>();
-    private static Map<String, RPBlockState> blockStateResources = new Reference2ObjectArrayMap<>();
+    private static Map<String, RPBlockState> blockStateResources = new Object2ObjectOpenHashMap<>();
 
-    private static Map<String, BufferedImage> textureCache = new Object2ObjectArrayMap<>();
+    private static Map<String, BufferedImage> textureCache = new Object2ObjectOpenHashMap<>();
 
 
     final private static Gson gson = new GsonBuilder()

@@ -3,7 +3,6 @@ package de.tomalbrc.cameraobscura.util;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +26,7 @@ public class BuiltinModels {
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
-        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (fluidState.is(FluidTags.WATER)) {
             rpModel.textures.put("top", "minecraft:block/water_still");
             rpModel.textures.put("side", "minecraft:block/water_flow");
@@ -39,7 +38,7 @@ public class BuiltinModels {
         var element = new RPElement();
         element.from = new Vector3f(0,0,0);
         element.to = new Vector3f(16,height,16);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
         element.shade = false;
 
         var ti = new RPElement.TextureInfo();
@@ -82,7 +81,7 @@ public class BuiltinModels {
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
-        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (flat) {
             rpModel.textures.put("all", "minecraft:block/black_concrete");
         } else {
@@ -92,7 +91,7 @@ public class BuiltinModels {
         var element = new RPElement();
         element.from = new Vector3f(0,flat ? 12 : 0,0);
         element.to = new Vector3f(16,flat ? 12 : 16, 16);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
 
         var ti = new RPElement.TextureInfo();
         ti.texture = "#all";
@@ -129,13 +128,13 @@ public class BuiltinModels {
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
-        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", texture);
         rpModel.elements = new ObjectArrayList<>();
         var element = new RPElement();
         element.from = new Vector3f(1, 0,1);
         element.to = new Vector3f(15, 14, 15);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
 
         var ti = new RPElement.TextureInfo();
         ti.texture = "#all";
@@ -169,7 +168,7 @@ public class BuiltinModels {
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
-        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", "minecraft:entity/shulker/shulker");
         rpModel.elements = new ObjectArrayList<>();
 
@@ -187,7 +186,7 @@ public class BuiltinModels {
         var element = new RPElement();
         element.from = new Vector3f(0, 0,0);
         element.to = new Vector3f(16, 16, 16);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
 
         var ti = new RPElement.TextureInfo();
         ti.texture = "#all";
@@ -211,7 +210,7 @@ public class BuiltinModels {
         var element = new RPElement();
         element.from = new Vector3f(0, 0,0);
         element.to = new Vector3f(16, 16, 16);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
 
         var tiSide = new RPElement.TextureInfo();
         tiSide.texture = "#all";
@@ -234,13 +233,13 @@ public class BuiltinModels {
 
         RPModel rpModel = new RPModel();
         rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
-        rpModel.textures = new Object2ObjectArrayMap<>();
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", "minecraft:environment/clouds");
         rpModel.elements = new ObjectArrayList<>();
         var element = new RPElement();
         element.from = new Vector3f(-128*64, 0,-128*64);
         element.to = new Vector3f(128*64,0, 128*64);
-        element.faces = new Object2ObjectArrayMap<>();
+        element.faces = new Object2ObjectOpenHashMap<>();
 
         var ti = new RPElement.TextureInfo();
         ti.texture = "#all";

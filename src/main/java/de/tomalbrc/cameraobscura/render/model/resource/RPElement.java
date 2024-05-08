@@ -16,7 +16,10 @@ public class RPElement {
     public static class TextureInfo {
         @SerializedName("tintindex")
         public int tintIndex = -1;
+
         public String texture;
+
+        public int rotation;
 
         public Vector4i uv;
     }
