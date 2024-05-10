@@ -67,9 +67,9 @@ public class RPHelper {
         return resource;
     }
 
-    public static RPModel.View loadModel(String path, Vector3f blockRotation) {
+    public static RPModel.View loadModel(String path, Vector3f blockRotation, boolean uvlock) {
         if (modelResources.containsKey(path)) {
-            return new RPModel.View(modelResources.get(path), blockRotation);
+            return new RPModel.View(modelResources.get(path), blockRotation, uvlock);
         }
 
         byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
@@ -90,7 +90,7 @@ public class RPHelper {
                 }
             }
             modelResources.put(path, model);
-            return new RPModel.View(model, blockRotation);
+            return new RPModel.View(model, blockRotation, uvlock);
         }
         return null;
     }
@@ -127,14 +127,14 @@ public class RPHelper {
                 boolean matches = true;
                 if (!entry.getKey().isEmpty()) {
                     try {
-                        var blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), String.format("%s[%s]", BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath(), entry.getKey()), false);
+                        String str = String.format("%s[%s]", BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath(), entry.getKey());
+                        BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), str, false);
 
                         for (Map.Entry<Property<?>, Comparable<?>> propertyComparableEntry : blockResult.properties().entrySet()) {
                             if (!blockState.getValue(propertyComparableEntry.getKey()).equals(propertyComparableEntry.getValue())) {
                                 matches = false;
                             }
                         }
-
                     } catch (Exception e) {
                         e.printStackTrace();
                         return null;
@@ -142,7 +142,7 @@ public class RPHelper {
                 }
 
                 if (entry.getKey().isEmpty() || matches) {
-                    var model = RPHelper.loadModel(entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z));
+                    var model = RPHelper.loadModel(entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z), entry.getValue().uvlock);
                     return ObjectArrayList.of(model);
                 }
             }
@@ -158,7 +158,7 @@ public class RPHelper {
 
                 for (int i1 = 0; i1 < mp.apply.size(); i1++) {
                     var apply = mp.apply.get(i);
-                    var model = RPHelper.loadModel(modelPath.getPath(), new Vector3f(apply.x, apply.y, apply.z));
+                    var model = RPHelper.loadModel(modelPath.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
                     list.add(model);
                 }
             }

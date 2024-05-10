@@ -15,6 +15,7 @@ public class VariantDeserializer implements JsonDeserializer<Variant> {
 
             JsonObject jsonObject = json.getAsJsonObject();
             if (jsonObject.has("model")) variant.model = new ResourceLocation(jsonObject.get("model").getAsString());
+            if (jsonObject.has("uvlock")) variant.uvlock = jsonObject.get("uvlock").getAsBoolean();
             if (jsonObject.has("x")) variant.x = jsonObject.get("x").getAsInt();
             if (jsonObject.has("y")) variant.y = jsonObject.get("y").getAsInt();
             if (jsonObject.has("z")) variant.z = jsonObject.get("z").getAsInt();

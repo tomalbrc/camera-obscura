@@ -17,12 +17,14 @@ public class Triangle {
     private Vector3f v0v1;
     private Vector3f v0v2;
 
-    private Vector3fc N;
+    private Vector3fc normal;
 
     private final int color;
 
     public RPElement.TextureInfo textureInfo;
     public boolean shade;
+
+    private Direction direction;
 
     public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, int color) {
         this.v0 = v0;
@@ -33,24 +35,43 @@ public class Triangle {
         this.uv1 = uv1;
         this.uv2 = uv2;
 
-        this.recalc();
+        this.recalculateVectors();
+
+        this.setDirection(normal);
 
         this.color = color;
 
         this.shade = true;
     }
 
+    public void setDirection(Vector3fc dir) {
+        this.direction = Direction.fromDelta(
+                (int) dir.x(),
+                (int) dir.y(),
+                (int) dir.z()
+        );
+    }
+
+    public Direction getDirection() {
+        return this.direction;
+    }
+
     public void rotate(Quaternionf quaternionf) {
         this.v0.rotate(quaternionf);
         this.v1.rotate(quaternionf);
         this.v2.rotate(quaternionf);
-        this.recalc();
     }
 
-    public void recalc() {
+    public void translate(float x, float y, float z) {
+        this.v0.add(x, y, z);
+        this.v1.add(x, y, z);
+        this.v2.add(x, y, z);
+    }
+
+    public void recalculateVectors() {
         this.v0v1 = v1.sub(this.v0, new Vector3f());
         this.v0v2 = v2.sub(this.v0, new Vector3f());
-        this.N = v0v1.cross(this.v0v2,  new Vector3f()).normalize(); // N
+        this.normal = v0v1.cross(this.v0v2,  new Vector3f()).normalize(); // N
     }
 
     public int getColor() {
@@ -58,7 +79,7 @@ public class Triangle {
     }
 
     public Vector3fc getNormal() {
-        return N;
+        return normal;
     }
 
     // Function to check ray intersection with the triangle (Möller-Trumbore algorithm)
@@ -96,12 +117,5 @@ public class Triangle {
             Vector2fc uv,
             Triangle triangle
     ) {
-        public Direction getDirection() {
-            return Direction.fromDelta(
-                    (int) triangle.getNormal().x(),
-                    (int) triangle.getNormal().y(),
-                    (int) triangle.getNormal().z()
-            );
-        }
     }
 }

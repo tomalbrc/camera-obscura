@@ -4,5 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 
 public class Variant {
     public int x, y, z;
+    public boolean uvlock;
     public ResourceLocation model;
 }

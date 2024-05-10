@@ -14,7 +14,11 @@ public class RPModel {
     public Map<String, String> textures;
     public List<RPElement> elements;
 
-    public record View(RPModel model, Vector3f blockRotation) {
+    public record View(RPModel model, Vector3f blockRotation, boolean uvlock) {
+        public View(RPModel model, Vector3f blockRotation) {
+            this(model, blockRotation, false);
+        }
+
         public Map<String, ResourceLocation> collectTextures() {
             Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
             for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
@@ -23,7 +27,7 @@ public class RPModel {
 
             ResourceLocation parent = this.model.parent;
             while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
-                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
+                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation, this.uvlock);
                 if (child != null) {
                     if (child.model.textures != null) child.model.textures.forEach((key,value) -> {
                         collectedTextures.put(key, new ResourceLocation(value.replace("#","")));
@@ -44,7 +48,7 @@ public class RPModel {
 
             ResourceLocation parent = this.model.parent;
             while (parent != null && parent.getPath() != null && !parent.getPath().isEmpty()) {
-                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation);
+                var child = RPHelper.loadModel(parent.getPath(), this.blockRotation, this.uvlock);
                 if (child != null) {
                     if (child.model.elements != null) {
                         return child.model.elements;
@@ -63,7 +67,7 @@ public class RPModel {
             model1.elements = this.collectElements();
             model1.elements.addAll(other.collectElements());
             model1.textures = this.model().textures;
-            return new RPModel.View(model1, this.blockRotation);
+            return new RPModel.View(model1, this.blockRotation, this.uvlock);
         }
     }
 }
