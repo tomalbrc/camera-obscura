@@ -4,7 +4,7 @@ import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
 
     public CanvasImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        List<Vector3d> rays = buildRayMap(this.entity);
+        List<Vector3f> rays = buildRayMap(this.entity);
 
         CanvasImage image = new CanvasImage(width, height);
 

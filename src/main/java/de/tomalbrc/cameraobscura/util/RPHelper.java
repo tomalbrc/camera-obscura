@@ -2,10 +2,7 @@ package de.tomalbrc.cameraobscura.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.tomalbrc.cameraobscura.json.MultipartDefinitionDeserializer;
-import de.tomalbrc.cameraobscura.json.VariantDeserializer;
-import de.tomalbrc.cameraobscura.json.Vector3fDeserializer;
-import de.tomalbrc.cameraobscura.json.Vector4iDeserializer;
+import de.tomalbrc.cameraobscura.json.*;
 import de.tomalbrc.cameraobscura.render.model.resource.RPBlockState;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
@@ -21,12 +18,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.joml.Vector3f;
-import org.joml.Vector4i;
+import org.joml.Vector4f;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
@@ -46,8 +44,9 @@ public class RPHelper {
             .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
             .registerTypeAdapter(Variant.class, new VariantDeserializer())
             .registerTypeAdapter(MultipartDefinition.class, new MultipartDefinitionDeserializer())
+            .registerTypeAdapter(MultipartDefinition.Condition.class, new ConditionDeserializer())
             .registerTypeAdapter(Vector3f.class, new Vector3fDeserializer())
-            .registerTypeAdapter(Vector4i.class, new Vector4iDeserializer())
+            .registerTypeAdapter(Vector4f.class, new Vector4fDeserializer())
             .create();
 
     public static void clearCache() {
@@ -74,25 +73,30 @@ public class RPHelper {
 
         byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
         if (data != null) {
-            RPModel model = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPModel.class);
-            if (model.elements != null) {
-                for (int i = 0; i < model.elements.size(); i++) {
-                    RPElement element = model.elements.get(i);
-                    for (Map.Entry<String, RPElement.TextureInfo> stringTextureInfoEntry : element.faces.entrySet()) {
-                        if (stringTextureInfoEntry.getValue().uv == null) {
-                            stringTextureInfoEntry.getValue().uv = new Vector4i(
-                                    (int) element.from.x(),
-                                    (int) element.from.y(),
-                                    (int) element.to.x(),
-                                    (int) element.to.y());
-                        }
-                    }
-                }
-            }
+            RPModel model = loadModel(new ByteArrayInputStream(data));
             modelResources.put(path, model);
             return new RPModel.View(model, blockRotation, uvlock);
         }
         return null;
+    }
+
+    public static RPModel loadModel(InputStream inputStream) {
+        RPModel model = gson.fromJson(new InputStreamReader(inputStream), RPModel.class);
+        if (model.elements != null) {
+            for (int i = 0; i < model.elements.size(); i++) {
+                RPElement element = model.elements.get(i);
+                for (Map.Entry<String, RPElement.TextureInfo> stringTextureInfoEntry : element.faces.entrySet()) {
+                    if (stringTextureInfoEntry.getValue().uv == null) {
+                        stringTextureInfoEntry.getValue().uv = new Vector4f(
+                                element.from.x(),
+                                element.from.y(),
+                                element.to.x(),
+                                element.to.y());
+                    }
+                }
+            }
+        }
+        return model;
     }
 
     public static byte[] loadTexture(String path) {
@@ -150,16 +154,15 @@ public class RPHelper {
             ObjectArrayList<RPModel.View> list = new ObjectArrayList<>();
 
             int num = rpBlockState.multipart.size();
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < num; i++) {
                 MultipartDefinition mp = rpBlockState.multipart.get(i);
 
-                Variant mpVar = mp.get(blockState);
-                var modelPath = mpVar.model;
-
-                for (int i1 = 0; i1 < mp.apply.size(); i1++) {
-                    var apply = mp.apply.get(i);
-                    var model = RPHelper.loadModel(modelPath.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
-                    list.add(model);
+                if (mp.when == null || mp.when.canApply(blockState)) {
+                    for (int applyIndex = 0; applyIndex < mp.apply.size(); applyIndex++) {
+                        var apply = mp.apply.get(applyIndex);
+                        var model = RPHelper.loadModel(apply.model.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
+                        list.add(model);
+                    }
                 }
             }
             return list;

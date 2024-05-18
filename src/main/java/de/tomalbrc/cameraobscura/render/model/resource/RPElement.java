@@ -5,7 +5,7 @@ import net.minecraft.util.Mth;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.joml.Vector4i;
+import org.joml.Vector4f;
 
 import java.util.Map;
 
@@ -17,6 +17,8 @@ public class RPElement {
 
     public Map<String, TextureInfo> faces;
 
+    public String name;
+
     public boolean shade = true;
 
     public static class TextureInfo {
@@ -27,7 +29,17 @@ public class RPElement {
 
         public int rotation;
 
-        public Vector4i uv;
+        public Vector4f uv;
+
+        public TextureInfo(String texture, Vector4f uv, int rotation) {
+            this.texture = texture;
+            this.uv = uv;
+            this.rotation = rotation;
+        }
+
+        public TextureInfo() {
+
+        }
     }
 
     public static class Rotation {

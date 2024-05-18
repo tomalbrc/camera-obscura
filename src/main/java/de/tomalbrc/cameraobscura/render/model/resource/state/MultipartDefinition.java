@@ -6,41 +6,79 @@ import java.util.List;
 import java.util.Map;
 
 public class MultipartDefinition {
-    public List<Variant> apply; // model to apply
+    public List<Variant> apply; // models to apply
 
     public Condition when; // under those conditions
 
-    public Variant get(BlockState blockState) {
-        if (this.when != null && this.when.AND != null) this.when.AND.forEach(x -> {
-            //x.
-        });
-
-        return apply.get(0);
-    }
-
     public static class Condition {
-        public List<Condition> OR;
-        public List<Condition> AND;
+        public AndCondition AND;
+        public OrCondition OR;
 
         public Map<String, String> blockStateValues;
 
         public boolean canApply(BlockState blockState) {
-            for (Map.Entry<String, String> entry : blockStateValues.entrySet()) {
+            if (this.AND != null)
+                return this.AND.canApply(blockState);
+            else if (this.OR != null)
+                return this.OR.canApply(blockState);
+            else
+                return testMap(blockState, this.blockStateValues);
+        }
+
+        protected boolean testMap(BlockState blockState, Map<String, String> map) {
+            for (Map.Entry<String, String> entry : map.entrySet()) {
                 String propertyName = entry.getKey();
-                String valueKey = entry.getValue();
+                String[] valueKeys = entry.getValue().split("\\|");
 
                 var stateDefinition = blockState.getBlock().getStateDefinition();
 
                 var prop = stateDefinition.getProperty(propertyName);
-                var propVal = prop.getValue(valueKey);
-                if (!propVal.isPresent()) {
-                    throw new RuntimeException(String.format("Unknown value '%s' for property '%s' on '%s'", valueKey, propertyName, stateDefinition.getOwner()));
+                boolean match = false;
+                for (var valueKey : valueKeys) {
+                    var propVal = prop.getValue(valueKey);
+                    if (!propVal.isPresent()) {
+                        throw new RuntimeException(String.format("Unknown value '%s' for property '%s' on '%s'", valueKey, propertyName, stateDefinition.getOwner()));
+                    }
+
+                    var val = blockState.getValue(prop);
+                    if (propVal.get().equals(val)) {
+                        match = true;
+                    }
                 }
 
-                var val = blockState.getValue(prop);
-                if (val.equals(propVal)) {
-                    return true;
+                if (!match) {
+                    return false;
                 }
+            }
+
+            return true;
+        }
+    }
+
+    public static class AndCondition extends Condition {
+        public List<Map<String, String>> blockStateValueList;
+
+        @Override
+        public boolean canApply(BlockState blockState) {
+            for (int i = 0; i < blockStateValueList.size(); i++) {
+                boolean matches = testMap(blockState, blockStateValueList.get(i));
+                if (!matches)
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
+    public static class OrCondition extends Condition {
+        public List<Map<String, String>> blockStateValueList;
+
+        @Override
+        public boolean canApply(BlockState blockState) {
+            for (int i = 0; i < blockStateValueList.size(); i++) {
+                boolean matches = testMap(blockState, blockStateValueList.get(i));
+                if (matches)
+                    return true;
             }
 
             return false;

@@ -30,7 +30,7 @@ public class RPModel {
                 var child = RPHelper.loadModel(parent.getPath(), this.blockRotation, this.uvlock);
                 if (child != null) {
                     if (child.model.textures != null) child.model.textures.forEach((key,value) -> {
-                        collectedTextures.put(key, new ResourceLocation(value.replace("#","")));
+                        collectedTextures.putIfAbsent(key, new ResourceLocation(value.replace("#","")));
                     });
 
                     parent = child.model.parent;

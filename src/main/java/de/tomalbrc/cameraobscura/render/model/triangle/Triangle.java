@@ -63,9 +63,9 @@ public class Triangle {
     }
 
     public void translate(float x, float y, float z) {
-        this.v0.add(x, y, z);
-        this.v1.add(x, y, z);
-        this.v2.add(x, y, z);
+        this.v0.sub(x, y, z);
+        this.v1.sub(x, y, z);
+        this.v2.sub(x, y, z);
     }
 
     public void recalculateVectors() {

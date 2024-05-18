@@ -2,12 +2,9 @@ package de.tomalbrc.cameraobscura.render.renderer;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3d;
+import org.joml.Vector3f;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
@@ -17,7 +14,7 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
 
     public BufferedImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        List<Vector3d> rays = this.buildRayMap(this.entity);
+        List<Vector3f> rays = this.buildRayMap(this.entity);
 
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
@@ -31,13 +28,6 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
 
                 imgFile.setRGB(x, y, res);
             }
-        }
-
-        try {
-            ImageIO.write(imgFile, "PNG", new File("/tmp/out.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
 
         return imgFile;

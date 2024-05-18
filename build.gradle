@@ -20,14 +20,11 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation include("eu.pb4:map-canvas-api:${project.mapcanvas_version}")
-
-    modImplementation ("eu.pb4:polymer-resource-pack:${project.polymer_version}")
-    modImplementation ("eu.pb4:polymer-core:${project.polymer_version}")
-
+    modImplementation include("eu.pb4:polymer-resource-pack:${project.polymer_version}")
+    modImplementation include("eu.pb4:polymer-core:${project.polymer_version}")
     modImplementation include('me.lucko:fabric-permissions-api:0.2-SNAPSHOT')
 }
 

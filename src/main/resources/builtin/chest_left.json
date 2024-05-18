@@ -1,0 +1,99 @@
+{
+	"textures": {
+		"0": "entity/chest/normal_left"
+	},
+	"elements": [
+		{
+			"name": "base_left",
+			"from": [1, 0, 1],
+			"to": [16, 10, 15],
+			"rotation": {"angle": 0, "axis": "x", "origin": [7.5, -5, 16]},
+			"faces": {
+				"north": {"uv": [10.75, 8.25, 14.5, 10.75], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [0, 8.25, 3.5, 10.75], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [3.5, 8.25, 7.25, 10.75], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [7.25, 8.25, 10.75, 10.75], "rotation": 180, "texture": "#0"},
+				"up": {"uv": [11, 4.75, 7.25, 8.25], "texture": "#0"},
+				"down": {"uv": [7.25, 8.25, 3.5, 4.75], "texture": "#0"}
+			}
+		},
+		{
+			"name": "lid_left",
+			"from": [1, 9, 1],
+			"to": [16, 14, 15],
+			"rotation": {"angle": 0, "axis": "x", "origin": [7.5, 6.5, 14]},
+			"faces": {
+				"north": {"uv": [10.75, 3.5, 14.5, 4.75], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [0, 3.5, 3.5, 4.75], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [3.5, 3.5, 7.25, 4.75], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [7.25, 3.5, 10.75, 4.75], "rotation": 180, "texture": "#0"},
+				"up": {"uv": [11, 0, 7.25, 3.5], "texture": "#0"},
+				"down": {"uv": [7.25, 3.5, 3.5, 0], "texture": "#0"}
+			}
+		},
+		{
+			"name": "knob_left",
+			"from": [15, 7, 0],
+			"to": [16, 11, 1],
+			"rotation": {"angle": 0, "axis": "x", "origin": [0.5, 9, 21.5]},
+			"faces": {
+				"north": {"uv": [0.75, 0.25, 1, 1.25], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [0, 0.25, 0.25, 1.25], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [0.25, 0.25, 0.5, 1.25], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [0.5, 0.25, 0.75, 1.25], "rotation": 180, "texture": "#0"},
+				"up": {"uv": [0.75, 0, 0.5, 0.25], "texture": "#0"},
+				"down": {"uv": [0.5, 0.25, 0.25, 0], "texture": "#0"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "base_left",
+			"origin": [16, 0, 8],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": [0]
+		},
+		{
+			"name": "base_right",
+			"origin": [0, 0, 8],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": []
+		},
+		{
+			"name": "lid_left",
+			"origin": [16, 9, 7],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": [1]
+		},
+		{
+			"name": "lid_right",
+			"origin": [0, 9, 7],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": []
+		},
+		{
+			"name": "knob_left",
+			"origin": [16, 9, 7],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": [2]
+		},
+		{
+			"name": "knob_right",
+			"origin": [0, 9, 7],
+			"rotation": [-180, 0, 0],
+			"color": 0,
+			"nbt": "{}",
+			"children": []
+		}
+	]
+}

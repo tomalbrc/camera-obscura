@@ -326,7 +326,7 @@ public class TriangleModel implements RenderModel {
 
             int width = img.getWidth();
             // animated textures...
-            int realHeight = img.getHeight() / (img.getHeight()/img.getWidth());
+            int realHeight = (int)(img.getHeight() / (img.getHeight()/(float)img.getWidth()));
 
             if (textureInfo.uv != null)
                 uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);

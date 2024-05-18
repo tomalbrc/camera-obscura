@@ -46,14 +46,14 @@ public class BlockIterator {
         this.cachedChunks = new Object2ObjectOpenHashMap<>();
     }
 
-    public void preloadChunks(BlockPos center) {
+    public void preloadChunks(BlockPos center, int distance) {
         if (Thread.currentThread().getId() == 1)
             return;
 
         int xc = SectionPos.blockToSectionCoord(center.getX());
         int zc = SectionPos.blockToSectionCoord(center.getZ());
 
-        int radius = 128/16+1;
+        int radius = distance/16+1;
         for (int z = -radius; z <= radius; z++) {
             for (int x = -radius; x <= radius; x++) {
                 this.getChunkAt(new Vector2i(x+xc, z+zc));
