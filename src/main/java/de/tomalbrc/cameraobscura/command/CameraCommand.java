@@ -16,6 +16,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -28,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 import javax.imageio.ImageIO;
@@ -205,10 +207,10 @@ public class CameraCommand {
                     }
                 }
 
-                level.setMapData(MapItem.makeKey(id), state);
+                level.setMapData(id, state);
 
                 var stack = new ItemStack(Items.FILLED_MAP);
-                stack.getOrCreateTag().putInt("map", id);
+                stack.set(DataComponents.MAP_ID, id);
                 items.add(stack);
             }
         }
