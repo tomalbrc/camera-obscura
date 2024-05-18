@@ -10,7 +10,7 @@ Everything is rendered on the server.
 
 ## Item:
 
-The mod adds a Camera Item, for clients it looks and functions like a normal spyglass 
+The mod adds a Camera Item, for clients it looks and functions like a normal spyglass
 but has a custom name and consumes a map item or other, as specified in the configs.
 
 There is no recipe for the item (yet)
@@ -18,19 +18,19 @@ There is no recipe for the item (yet)
 ## Configs
 
 The config file will be created on first launch and is located in  
-`configs/camera-obscura.json`  
+`configs/camera-obscura.json`
 
 Example config with default values:
 ```json
 {
-"renderDistance": 128,
-"showSystemMessages": false,
-"renderAsyncMap": true,
-"renderAsyncImage": true,
-"cameraItem": "minecraft:spyglass",
-"cameraConsumesItem": true,
-"cameraConsumeItem": "minecraft:map",
-"commandPermissionLevel": 4
+  "renderDistance": 128,
+  "showSystemMessages": false,
+  "renderAsyncMap": true,
+  "renderAsyncImage": true,
+  "cameraItem": "minecraft:spyglass",
+  "cameraConsumesItem": true,
+  "cameraConsumeItem": "minecraft:map",
+  "commandPermissionLevel": 4
 }
 ```
 
@@ -53,13 +53,15 @@ Explanation:
 Takes a picture of the player running the command and gives the resulting map item to that player
 
 ---
+
 ```
 /camera-obscura <[Entity|Player]> <scale>
 ```
-Takes a picture as the source entity and gives the player the resulting maps, 
+Takes a picture as the source entity and gives the player the resulting maps,
 a scale of up to 3 (3x3 maps) can be specified optionally.
 
 ---
+
 ```
 /camera-obscura save
 ```
@@ -69,6 +71,7 @@ where imagename is the current date in the format
 `YYYY-MM-dd HH:mm:ss.SSS`
 
 ---
+
 ```
 /camera-obscura save <Entity> <scale>
 ```
@@ -83,18 +86,27 @@ Default image size is 128px * 128px
 
 Default Vanilla permission level is 4, this can be configured with commandPermissionLevel
 For luckperms, etc. - those should be self-explanatory:
+
 ---
+
 `camera-obscura.command`\
 `camera-obscura.command.scale`
+
 ---
+
 `camera-obscura.command.entity`\
 `camera-obscura.command.entity.scale`
+
 ---
+
 `camera-obscura.command.save`\
 `camera-obscura.command.save.scale`
+
 ---
+
 `camera-obscura.command.save.entity`\
 `camera-obscura.command.save.entity.scale`
+
 ---
 
 ## Known Issues:
