@@ -60,7 +60,7 @@ public class RPHelper {
             return blockStateResources.get(path);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/blockstates/" + path + ".json");
+        byte[] data = resourcePackBuilder.getDataOrVanilla("assets/minecraft/blockstates/" + path + ".json");
         var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
         blockStateResources.put(path, resource);
         return resource;
@@ -71,7 +71,7 @@ public class RPHelper {
             return new RPModel.View(modelResources.get(path), blockRotation, uvlock);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
+        byte[] data = resourcePackBuilder.getDataOrVanilla("assets/minecraft/models/" + path + ".json");
         if (data != null) {
             RPModel model = loadModel(new ByteArrayInputStream(data));
             modelResources.put(path, model);
@@ -100,7 +100,7 @@ public class RPHelper {
     }
 
     public static byte[] loadTexture(String path) {
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/textures/" + path + ".png");
+        byte[] data = resourcePackBuilder.getDataOrVanilla("assets/minecraft/textures/" + path + ".png");
         return data;
     }
 
@@ -109,7 +109,7 @@ public class RPHelper {
             return textureCache.get(path);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/textures/" + path + ".png");
+        byte[] data = resourcePackBuilder.getDataOrVanilla("assets/minecraft/textures/" + path + ".png");
         BufferedImage img = null;
 
         try {

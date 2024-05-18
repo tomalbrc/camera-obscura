@@ -17,6 +17,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -34,6 +37,7 @@ public class Raytracer {
     private static Vector3f SUN = new Vector3f(1, 2, 1).normalize();
 
     private final Level level;
+    private final Entity entity;
 
     private final Map<BlockState, RenderModel.View> renderModels;
 
@@ -43,8 +47,9 @@ public class Raytracer {
 
     private final int skyDarken;
 
-    public Raytracer(Level level, int distance) {
+    public Raytracer(Entity entity, Level level, int distance) {
         this.level = level;
+        this.entity = entity;
         this.distance = distance;
         this.renderModels = new Reference2ObjectArrayMap<>();
 
@@ -76,7 +81,7 @@ public class Raytracer {
     private int traceSingle(Vec3 pos, Vec3 direction) {
         var scaledDir = new Vec3(direction.x, direction.y, direction.z).scale(128).add(pos);
 
-        List<BlockIterator.WorldHit> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, CollisionContext.empty()));
+        List<BlockIterator.WorldHit> result = this.iterator.raycast(new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, this.entity));
 
         int color = 0x00ffffff;
         Vector3f normal = null;

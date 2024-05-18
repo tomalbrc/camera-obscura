@@ -20,7 +20,7 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         this.entity = entity;
         this.width = width;
         this.height = height;
-        this.raytracer = new Raytracer(this.entity.level(), renderDistance);
+        this.raytracer = new Raytracer(this.entity, this.entity.level(), renderDistance);
         this.raytracer.preloadChunks(entity.getOnPos());
     }
 
