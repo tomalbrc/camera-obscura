@@ -1,11 +1,12 @@
 # Camera Obscura
 
-![Camera Obscura Icon](src/main/resources/camera-obscura-icon.png "Camera Obscura Icon")
-
+![Camera Obscura Icon](https://github.com/tomalbrc/camera-obscura/raw/main/src/main/resources/camera-obscura-icon.png "Camera Obscura Icon")
 
 Take photos of your world / server!\
 When used on a server: no client side mods required!\
 Everything is rendered on the server.
+
+![Comparison](https://github.com/tomalbrc/camera-obscura/raw/main/comparison.png "Camera Obscura Icon")
 
 ## Item:
 
