@@ -51,7 +51,7 @@ public class CameraCommand {
                 .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.entity", 2))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(CameraCommand::createMapOfSourceForSource)
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.entity.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(CameraCommand::createMapOfSourceForSourceScaled))))
                 .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", 2))
                         .executes(x -> {
@@ -59,12 +59,12 @@ public class CameraCommand {
                                 CameraCommand.createImageAsync(x, livingEntity, 1);
                             return 0;
                         })
-                        .then(Commands.argument("source", EntityArgument.entity())
+                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.entity", ModConfig.getInstance().commandPermissionLevel))
                                 .executes(x -> createImageFromSource(x, 1))
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.entity.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(x -> createImageFromSource(x, IntegerArgumentType.getInteger(x, "scale")))
                                 ))
-                        .then(Commands.argument("scale", IntegerArgumentType.integer(1,20))
+                        .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.scale", ModConfig.getInstance().commandPermissionLevel))
                                 .executes(x -> {
                                     if (x.getSource().getEntity() instanceof LivingEntity livingEntity)
                                         CameraCommand.createImageAsync(x, livingEntity, IntegerArgumentType.getInteger(x, "scale"));
@@ -243,7 +243,7 @@ public class CameraCommand {
         var f = rendersDir.toFile();
         if (!f.exists()) f.mkdir();
 
-        String date = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
+        String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
         var file = rendersDir.resolve(date+".png").toFile();
 
         try {
