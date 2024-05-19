@@ -23,14 +23,14 @@ The config file will be created on first launch and is located in
 Example config with default values:
 ```json
 {
-  "renderDistance": 128,
-  "showSystemMessages": false,
-  "renderAsyncMap": true,
-  "renderAsyncImage": true,
-  "cameraItem": "minecraft:spyglass",
-  "cameraConsumesItem": true,
-  "cameraConsumeItem": "minecraft:map",
-  "commandPermissionLevel": 4
+"renderDistance": 128,
+"showSystemMessages": false,
+"renderAsyncMap": true,
+"renderAsyncImage": true,
+"cameraItem": "minecraft:spyglass",
+"cameraConsumesItem": true,
+"cameraConsumeItem": "minecraft:map",
+"commandPermissionLevel": 4
 }
 ```
 
@@ -63,12 +63,14 @@ a scale of up to 3 (3x3 maps) can be specified optionally.
 ---
 
 ```
-/camera-obscura save
+/camera-obscura save <scale>
 ```
 Takes a picture of the player running the command and saves it as png in  
 `renders/<imagename>.png`,  
 where imagename is the current date in the format  
-`YYYY-MM-dd HH:mm:ss.SSS`
+`YYYY-MM-dd HH:mm:ss.SSS`.
+A scale of up to 10 (1280px * 1280px) can be specified optionally.
+Default image size is 128px * 128px
 
 ---
 
@@ -76,10 +78,7 @@ where imagename is the current date in the format
 /camera-obscura save <Entity> <scale>
 ```
 
-Takes a picture as the source entity and gives the player the resulting maps,
-a scale of up to 10 (1280px * 1280px) can be specified optionally.
-
-Default image size is 128px * 128px
+Takes a picture as the source entity and saves it as PNG with optional scale of up to 10
 
 
 ## Permissions:
