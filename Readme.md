@@ -36,7 +36,7 @@ Example config with default values:
 
 Explanation:
 - `renderDistance`: Render distance in blocks
-- `showSystemMessages`: Flag wether system messages should be shown when a photo is being taken when run as command
+- `showSystemMessages`: Flag whether system messages should be shown when a photo is being taken when run as command
 - `renderAsyncMap`: Flag to render as map items asynchronously
 - `renderAsyncImage`: Flag to render PNG images asynchronously
 - `cameraItem`: Vanilla Item to use as camera item model/texture
@@ -122,5 +122,5 @@ For luckperms, etc. - those should be self-explanatory:
 
 ## How it works:
 
-The game assets are downloaded from mojangs servers and read to render the world using a raytracing.  
+The game assets are downloaded from mojangs servers and read to render the world using raytracing.  
 When the render is done, a Map item with the image is created or a png is saved to the `renders` folder.
