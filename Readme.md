@@ -4,13 +4,13 @@
 
 Take photos of your world / server!\
 When used on a server: no client side mods required!\
-Everything is rendered on the server.
+Everything is rendered on the server using simple raytracing.
 
 ![Comparison](https://github.com/tomalbrc/camera-obscura/raw/main/comparison.png "Camera Obscura Icon")
 
 ## Item:
 
-The mod adds a Camera Item, for clients it looks and functions like a normal spyglass 
+The mod adds a Camera Item, for clients it looks and functions like a normal spyglass
 but has a custom name and consumes a map item or other, as specified in the configs.
 
 There is no recipe for the item (yet)
@@ -18,7 +18,7 @@ There is no recipe for the item (yet)
 ## Configs
 
 The config file will be created on first launch and is located in  
-`configs/camera-obscura.json`  
+`configs/camera-obscura.json`
 
 Example config with default values:
 ```json
@@ -56,7 +56,7 @@ Takes a picture of the player running the command and gives the resulting map it
 ```
 /camera-obscura <[Entity|Player]> <scale>
 ```
-Takes a picture as the source entity and gives the player the resulting maps, 
+Takes a picture as the source entity and gives the player the resulting maps,
 a scale of up to 3 (3x3 maps) can be specified optionally.
 
 ---
@@ -83,27 +83,38 @@ Default image size is 128px * 128px
 /camera-obscura clear-cache
 ```
 
-Clears cache
+Clears the cache (textures, resourcepack models and blockstate definitions, cached triangle models)
 
 
 ## Permissions:
 
 Default Vanilla permission level is 4, this can be configured with commandPermissionLevel
 For luckperms, etc. - those should be self-explanatory:
+
 ---
+
 `camera-obscura.command`\
 `camera-obscura.command.scale`
+
 ---
+
 `camera-obscura.command.entity`\
 `camera-obscura.command.entity.scale`
+
 ---
+
 `camera-obscura.command.save`\
 `camera-obscura.command.save.scale`
+
 ---
+
 `camera-obscura.command.save.entity`\
 `camera-obscura.command.save.entity.scale`
+
 ---
+
 `camera-obscura.clear-cache`
+
 ---
 
 ## Known Issues:
