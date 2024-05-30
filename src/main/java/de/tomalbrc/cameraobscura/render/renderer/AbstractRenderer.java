@@ -24,60 +24,25 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         this.raytracer.preloadChunks(entity.getOnPos());
     }
 
-    public static final class Fast {
-
-        private static final float PI = 3.1415927f;
-        private static final float MINUS_PI = -PI;
-        private static final float DOUBLE_PI = PI * 2f;
-        private static final float PI_2 = PI / 2f;
-
-        private static final float CONST_1 = 4f / PI;
-        private static final float CONST_2 = 4f / (PI * PI);
-
-        public static final float sin(float x) {
-            if (x < MINUS_PI) {
-                x += DOUBLE_PI;
-            } else if (x > PI) {
-                x -= DOUBLE_PI;
-            }
-
-            return (x < 0f) ? (CONST_1 * x + CONST_2 * x * x)
-                    : (CONST_1 * x - CONST_2 * x * x);
-        }
-
-        public static final float cos(float x) {
-            if (x < MINUS_PI) {
-                x += DOUBLE_PI;
-            } else if (x > PI) {
-                x -= DOUBLE_PI;
-            }
-
-            x += PI_2;
-
-            if (x > PI) {
-                x -= DOUBLE_PI;
-            }
-
-            return (x < 0f) ? (CONST_1 * x + CONST_2 * x * x)
-                    : (CONST_1 * x - CONST_2 * x * x);
-        }
-    }
-
     public static Vector3f yawPitchRotation(Vector3f base, float angleYaw, float anglePitch) {
-        float oldX = base.x();
-        float oldY = base.y();
-        float oldZ = base.z();
+        double oldX = base.x();
+        double oldY = base.y();
+        double oldZ = base.z();
 
-        float sinOne = Fast.sin(angleYaw);
-        float sinTwo = Fast.sin(anglePitch);
-        float cosOne = Fast.cos(angleYaw);
-        float cosTwo = Fast.cos(anglePitch);
+        double sinOne = Math.sin(angleYaw);
+        double sinTwo = Math.sin(anglePitch);
+        double cosOne = Math.cos(angleYaw);
+        double cosTwo = Math.cos(anglePitch);
 
-        float newX = oldX * cosOne * cosTwo - oldY * cosOne * sinTwo - oldZ * sinOne;
-        float newY = oldX * sinTwo + oldY * cosTwo;
-        float newZ = oldX * sinOne * cosTwo - oldY * sinOne * sinTwo + oldZ * cosOne;
+        double newX = oldX * cosOne * cosTwo - oldY * cosOne * sinTwo - oldZ * sinOne;
+        double newY = oldX * sinTwo + oldY * cosTwo;
+        double newZ = oldX * sinOne * cosTwo - oldY * sinOne * sinTwo + oldZ * cosOne;
 
-        return new Vector3f(newX, newY, newZ);
+        return new Vector3f(
+                (float) newX,
+                (float) newY,
+                (float) newZ
+        );
     }
 
     public static Vector3f doubleYawPitchRotation(Vector3f base, float firstYaw, float firstPitch, float secondYaw,
