@@ -33,6 +33,9 @@ public class ModConfig {
     public int commandPermissionLevel = 4;
 
     public static ModConfig getInstance() {
+        if (instance == null) {
+            load();
+        }
         return instance;
     }
     public static void load() {
