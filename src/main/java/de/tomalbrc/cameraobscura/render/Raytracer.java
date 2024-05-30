@@ -35,7 +35,7 @@ public class Raytracer {
 
     private final Level level;
 
-    private final Map<BlockState, RenderModel.View> renderModels;
+    private static Map<BlockState, RenderModel.View> renderModels = new Reference2ObjectArrayMap<>();
 
     private final BlockIterator iterator;
 
@@ -46,11 +46,14 @@ public class Raytracer {
     public Raytracer(Level level, int distance) {
         this.level = level;
         this.distance = distance;
-        this.renderModels = new Reference2ObjectArrayMap<>();
 
         this.iterator = new BlockIterator(level);
 
         this.skyDarken = level.getSkyDarken();
+    }
+
+    public static void clearCache() {
+        renderModels.clear();
     }
 
     public void preloadChunks(BlockPos center) {
