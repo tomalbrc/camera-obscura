@@ -4,7 +4,7 @@
 
 Take photos of your world / server!\
 When used on a server: no client side mods required!\
-Everything is rendered on the server.
+Everything is rendered on the server using simple raytracing.
 
 ![Comparison](https://github.com/tomalbrc/camera-obscura/raw/main/comparison.png "Camera Obscura Icon")
 
@@ -85,7 +85,7 @@ Takes a picture as the source entity and saves it as PNG with optional scale of 
 /camera-obscura clear-cache
 ```
 
-Clears cache
+Clears the cache (textures, resourcepack models and blockstate definitions, cached triangle models)
 
 
 ## Permissions:
@@ -114,7 +114,9 @@ For luckperms, etc. - those should be self-explanatory:
 `camera-obscura.command.save.entity.scale`
 
 ---
+
 `camera-obscura.clear-cache`
+
 ---
 
 ## Known Issues:
