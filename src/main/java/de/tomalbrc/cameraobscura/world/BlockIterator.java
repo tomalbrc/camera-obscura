@@ -47,9 +47,6 @@ public class BlockIterator {
     }
 
     public void preloadChunks(BlockPos center, int distance) {
-        if (Thread.currentThread().getId() == 1)
-            return;
-
         int xc = SectionPos.blockToSectionCoord(center.getX());
         int zc = SectionPos.blockToSectionCoord(center.getZ());
 
