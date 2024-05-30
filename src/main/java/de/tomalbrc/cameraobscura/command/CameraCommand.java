@@ -8,8 +8,10 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
+import de.tomalbrc.cameraobscura.render.Raytracer;
 import de.tomalbrc.cameraobscura.render.renderer.BufferedImageRenderer;
 import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
+import de.tomalbrc.cameraobscura.util.RPHelper;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.loader.api.FabricLoader;
@@ -55,7 +57,7 @@ public class CameraCommand {
                                 .executes(CameraCommand::createMapOfSourceForSource)
                                 .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.entity.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(CameraCommand::createMapOfSourceForSourceScaled))))
-                .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", 2))
+                .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", ModConfig.getInstance().commandPermissionLevel))
                         .executes(x -> {
                             if (x.getSource().getEntity() instanceof LivingEntity livingEntity)
                                 CameraCommand.createImageAsync(x, livingEntity, 1);
@@ -74,6 +76,12 @@ public class CameraCommand {
                                 })
                         )
                 )
+                .then(Commands.literal("clear-cache").requires(Permissions.require("camera-obscura.command.clear-cache", 2))
+                        .executes(x -> {
+                            Raytracer.clearCache();
+                            RPHelper.clearCache();
+                            return 0;
+                        }))
                 .build();
 
         dispatcher.getRoot().addChild(node);
@@ -246,7 +254,7 @@ public class CameraCommand {
         if (!f.exists()) f.mkdir();
 
         String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
-        var file = rendersDir.resolve(date+".png").toFile();
+        var file = rendersDir.resolve("img"+".png").toFile();
 
         try {
             ImageIO.write(mapImage, "PNG", file);
