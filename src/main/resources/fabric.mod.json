@@ -13,7 +13,7 @@
   },
   "license": "LGPL-3.0",
   "icon": "camera-obscura-icon.png",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "de.tomalbrc.cameraobscura.CameraObscura"
