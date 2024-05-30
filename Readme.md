@@ -78,6 +78,13 @@ a scale of up to 10 (1280px * 1280px) can be specified optionally.
 
 Default image size is 128px * 128px
 
+---
+```
+/camera-obscura clear-cache
+```
+
+Clears cache
+
 
 ## Permissions:
 
@@ -96,6 +103,8 @@ For luckperms, etc. - those should be self-explanatory:
 `camera-obscura.command.save.entity`\
 `camera-obscura.command.save.entity.scale`
 ---
+`camera-obscura.clear-cache`
+---
 
 ## Known Issues:
 
@@ -103,7 +112,6 @@ For luckperms, etc. - those should be self-explanatory:
 - Entities are not rendered
 - Liquids are "blocky"
 - Hard lighting
-- The occasional "dead pixel"
 - No biome water colors
 - End Gateway and end portal blocks are pure black (they use the black concrete texture temporarily)
 - Models that are larger than a single block can get cut-off during rendering
@@ -111,5 +119,5 @@ For luckperms, etc. - those should be self-explanatory:
 
 ## How it works:
 
-The game assets are downloaded from mojangs servers and read to render the world using a raytracing.  
+The game assets are downloaded from mojangs servers and read to render the world using raytracing.  
 When the render is done, a Map item with the image is created or a png is saved to the `renders` folder.
