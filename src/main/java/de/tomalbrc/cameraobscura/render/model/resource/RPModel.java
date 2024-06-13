@@ -22,7 +22,7 @@ public class RPModel {
         public Map<String, ResourceLocation> collectTextures() {
             Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
             for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
-                collectedTextures.put(entry.getKey(), new ResourceLocation(entry.getValue().replace("#", "")));
+                collectedTextures.put(entry.getKey(), ResourceLocation.parse(entry.getValue().replace("#", "")));
             }
 
             ResourceLocation parent = this.model.parent;
@@ -30,7 +30,7 @@ public class RPModel {
                 var child = RPHelper.loadModel(parent.getPath(), this.blockRotation, this.uvlock);
                 if (child != null) {
                     if (child.model.textures != null) child.model.textures.forEach((key,value) -> {
-                        collectedTextures.putIfAbsent(key, new ResourceLocation(value.replace("#","")));
+                        collectedTextures.putIfAbsent(key, ResourceLocation.parse(value.replace("#","")));
                     });
 
                     parent = child.model.parent;

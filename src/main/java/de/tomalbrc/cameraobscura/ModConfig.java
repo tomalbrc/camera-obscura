@@ -27,9 +27,9 @@ public class ModConfig {
     public boolean renderAsyncMap = true;
     public boolean renderAsyncImage = true;
 
-    public ResourceLocation cameraItem = new ResourceLocation("minecraft:spyglass");
+    public ResourceLocation cameraItem = ResourceLocation.withDefaultNamespace("spyglass");
     public boolean cameraConsumesItem = true;
-    public ResourceLocation cameraConsumeItem = new ResourceLocation("minecraft:map");
+    public ResourceLocation cameraConsumeItem = ResourceLocation.withDefaultNamespace("map");
     public int commandPermissionLevel = 4;
 
     public static ModConfig getInstance() {

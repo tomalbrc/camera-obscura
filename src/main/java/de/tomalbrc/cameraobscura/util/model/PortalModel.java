@@ -11,7 +11,7 @@ import org.joml.Vector4f;
 public class PortalModel {
     public static RPModel.View get(boolean flat) {
         RPModel rpModel = new RPModel();
-        rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
+        rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (flat) {
             rpModel.textures.put("all", "minecraft:block/black_concrete");

@@ -20,7 +20,7 @@ public class CameraObscura implements ModInitializer {
 
         Registry.register(
                 BuiltInRegistries.ITEM,
-                new ResourceLocation("camera-obscura:camera"),
+                ResourceLocation.fromNamespaceAndPath("camera-obscura", "camera"),
                 new CameraItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE))
         );
 

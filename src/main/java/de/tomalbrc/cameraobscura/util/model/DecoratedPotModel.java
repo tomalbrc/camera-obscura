@@ -3,7 +3,6 @@ package de.tomalbrc.cameraobscura.util.model;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
-import net.minecraft.util.datafix.fixes.HeightmapRenamingFix;
 import org.joml.Vector3f;
 
 import java.util.Map;

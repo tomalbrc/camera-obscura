@@ -15,7 +15,7 @@ public class LiquidModel {
         int height = fluidState.getAmount() * 2 - (fluidStateAbove != null && fluidStateAbove.is(fluidState.getType()) ? 0:1);
 
         RPModel rpModel = new RPModel();
-        rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
+        rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (fluidState.is(FluidTags.WATER)) {
             rpModel.textures.put("top", "minecraft:block/water_still");

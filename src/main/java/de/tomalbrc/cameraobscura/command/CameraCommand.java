@@ -29,9 +29,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 import javax.imageio.ImageIO;
@@ -202,7 +200,7 @@ public class CameraCommand {
         for (int ys = 0; ys < ySections; ys++) {
             for (int xs = 0; xs < xSections; xs++) {
                 var id = level.getFreeMapId();
-                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, new ResourceLocation("camera-obscura", "generated")));
+                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath("camera-obscura", "generated")));
 
                 for (int xl = 0; xl < 128; xl++) {
                     for (int yl = 0; yl < 128; yl++) {

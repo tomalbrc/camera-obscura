@@ -112,7 +112,7 @@ public class BuiltinModels {
             return skyModel;
 
         RPModel rpModel = new RPModel();
-        rpModel.parent = new ResourceLocation("minecraft:block/cube_all");
+        rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", "minecraft:environment/clouds");
         rpModel.elements = new ObjectArrayList<>();
