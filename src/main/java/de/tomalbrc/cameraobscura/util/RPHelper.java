@@ -8,6 +8,7 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.render.model.resource.state.MultipartDefinition;
 import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -31,13 +32,14 @@ import java.util.List;
 import java.util.Map;
 
 public class RPHelper {
-    private static ResourcePackBuilder resourcePackBuilder = PolymerResourcePackUtils.createBuilder(Path.of("a/b"));
+    public static ResourcePackBuilder resourcePackBuilder;
+    private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("."));
 
     // Cache resourcepack models
-    private static Map<String, RPModel> modelResources = new Object2ObjectOpenHashMap<>();
-    private static Map<String, RPBlockState> blockStateResources = new Object2ObjectOpenHashMap<>();
+    private static final Map<String, RPModel> modelResources = new Object2ObjectOpenHashMap<>();
+    private static final Map<String, RPBlockState> blockStateResources = new Object2ObjectOpenHashMap<>();
 
-    private static Map<String, BufferedImage> textureCache = new Object2ObjectOpenHashMap<>();
+    private static final Map<String, BufferedImage> textureCache = new Object2ObjectOpenHashMap<>();
 
 
     final private static Gson gson = new GsonBuilder()
@@ -55,23 +57,27 @@ public class RPHelper {
         textureCache.clear();
     }
 
+    public static ResourcePackBuilder getBuilder() {
+        return resourcePackBuilder == null ? vanillaBuilder : resourcePackBuilder;
+    }
+
     public static RPBlockState loadBlockState(String path) {
         if (blockStateResources.containsKey(path)) {
             return blockStateResources.get(path);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/blockstates/" + path + ".json");
+        byte[] data = getBuilder().getDataOrSource("assets/minecraft/blockstates/" + path + ".json");
         var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
         blockStateResources.put(path, resource);
         return resource;
     }
 
-    public static RPModel.View loadModel(String path, Vector3f blockRotation, boolean uvlock) {
+    public static RPModel.View loadModel(String namespace, String path, Vector3f blockRotation, boolean uvlock) {
         if (modelResources.containsKey(path)) {
             return new RPModel.View(modelResources.get(path), blockRotation, uvlock);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/models/" + path + ".json");
+        byte[] data = getBuilder().getDataOrSource("assets/"+namespace+"/models/" + path + ".json");
         if (data != null) {
             RPModel model = loadModel(new ByteArrayInputStream(data));
             modelResources.put(path, model);
@@ -100,8 +106,7 @@ public class RPHelper {
     }
 
     public static byte[] loadTexture(String path) {
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/textures/" + path + ".png");
-        return data;
+        return getBuilder().getDataOrSource("assets/minecraft/textures/" + path + ".png");
     }
 
     public static BufferedImage loadTextureImage(String path) {
@@ -109,7 +114,7 @@ public class RPHelper {
             return textureCache.get(path);
         }
 
-        byte[] data = resourcePackBuilder.getDataOrSource("assets/minecraft/textures/" + path + ".png");
+        byte[] data = getBuilder().getDataOrSource("assets/minecraft/textures/" + path + ".png");
         BufferedImage img = null;
 
         try {
@@ -146,7 +151,7 @@ public class RPHelper {
                 }
 
                 if (entry.getKey().isEmpty() || matches) {
-                    var model = RPHelper.loadModel(entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z), entry.getValue().uvlock);
+                    var model = RPHelper.loadModel(entry.getValue().model.getNamespace(), entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z), entry.getValue().uvlock);
                     return ObjectArrayList.of(model);
                 }
             }
@@ -160,7 +165,7 @@ public class RPHelper {
                 if (mp.when == null || mp.when.canApply(blockState)) {
                     for (int applyIndex = 0; applyIndex < mp.apply.size(); applyIndex++) {
                         var apply = mp.apply.get(applyIndex);
-                        var model = RPHelper.loadModel(apply.model.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
+                        var model = RPHelper.loadModel(apply.model.getNamespace(), apply.model.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
                         list.add(model);
                     }
                 }
@@ -171,8 +176,18 @@ public class RPHelper {
         return null;
     }
     public static List<RPModel.View> loadModel(BlockState blockState) {
-        String blockName = BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath();
+        BlockState block = safePolymerBlockState(blockState);
+
+        String blockName = BuiltInRegistries.BLOCK.getKey(block.getBlock()).getPath();
         RPBlockState rpBlockState = RPHelper.loadBlockState(blockName);
-        return loadModel(rpBlockState, blockState);
+
+        return loadModel(rpBlockState, block);
+    }
+
+    private static BlockState safePolymerBlockState(BlockState blockState) {
+        if (blockState.getBlock() instanceof PolymerBlock polymerBlock) {
+            blockState = polymerBlock.getPolymerBlockState(blockState);
+        }
+        return blockState;
     }
 }
