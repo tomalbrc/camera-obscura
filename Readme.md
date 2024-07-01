@@ -36,7 +36,7 @@ Example config with default values:
 
 Explanation:
 - `renderDistance`: Render distance in blocks
-- `showSystemMessages`: Flag wether system messages should be shown when a photo is being taken when run as command
+- `showSystemMessages`: Flag whether system messages should be shown when a photo is being taken when run as command
 - `renderAsyncMap`: Flag to render as map items asynchronously
 - `renderAsyncImage`: Flag to render PNG images asynchronously
 - `cameraItem`: Vanilla Item to use as camera item model/texture
