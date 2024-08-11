@@ -33,7 +33,7 @@ import java.util.Map;
 
 public class RPHelper {
     public static ResourcePackBuilder resourcePackBuilder;
-    private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("."));
+    private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
     private static final Map<String, RPModel> modelResources = new Object2ObjectOpenHashMap<>();
