@@ -11,6 +11,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -19,6 +21,7 @@ import org.joml.Vector3f;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class TriangleModel implements RenderModel {
     private final List<Triangle> modelTriangles = new ObjectArrayList<>();
@@ -37,8 +40,8 @@ public class TriangleModel implements RenderModel {
         return this;
     }
 
-    private void readModel(RPModel.View rpModel) {
-        var elementList = rpModel.collectElements();
+    private void readModel(RPModel.View modelView) {
+        var elementList = modelView.collectElements();
         for (var element: elementList) {
             var from = new Vector3f(element.from);
             var to = new Vector3f(element.to);
@@ -48,30 +51,31 @@ public class TriangleModel implements RenderModel {
             to.div(16).sub(posOffset);
 
             Quaternionf elementRotation = null;
-            Vector3f ro = null;
-            float rol = 0;
+            Vector3f rotation = null;
+            float rotationLength = 0;
             if (element.rotation != null) {
                 elementRotation = element.rotation.toQuaternionf();
-                ro = element.rotation.getOrigin();
-                rol = element.rotation.getOrigin().length();
+                rotation = element.rotation.getOrigin();
+                rotationLength = element.rotation.getOrigin().length();
             }
 
-            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation()), rpModel.uvlock());
+            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(modelView.blockRotation()), modelView.uvlock());
             for (int i = 0; i < tris.size(); i++) {
                 var n = tris.get(i).getNormal().get(new Vector3f());
 
                 if (element.rotation != null) {
-                    if (rol > 0.f)
-                        tris.get(i).translate(ro.x, ro.y, ro.z);
+                    if (rotationLength > 0.f)
+                        tris.get(i).translate(rotation.x, rotation.y, rotation.z);
 
                     tris.get(i).rotate(elementRotation);
 
-                    if (rol > 0.f)
-                        tris.get(i).translate(-ro.x, -ro.y, -ro.z);
+                    if (rotationLength > 0.f)
+                        tris.get(i).translate(-rotation.x, -rotation.y, -rotation.z);
                 }
 
                 // rotate triangle vertices and normal (needed so we can get a "Direction" from the normal without taking element rotation into account)
-                var rot = rpModel.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
+                var rot = modelView.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
+
 
                 tris.get(i).rotate(new Quaternionf().rotateX(rot.x()));
                 n.rotate(new Quaternionf().rotateX(rot.x()));
@@ -84,12 +88,14 @@ public class TriangleModel implements RenderModel {
 
                 tris.get(i).recalculateVectors();
                 tris.get(i).setDirection(n);
+
+                tris.get(i).translate(modelView.offset().x(), modelView.offset().y(), modelView.offset().z());
             }
 
             if (tris != null)
                 this.modelTriangles.addAll(tris);
         }
-        this.textureMap.putAll(rpModel.collectTextures());
+        this.textureMap.putAll(modelView.collectTextures());
     }
 
     private List<Triangle> generateCubeTriangles(Vector3f from, Vector3f to, RPElement element, Vector3f normal, boolean uvlock) {

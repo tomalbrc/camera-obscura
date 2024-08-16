@@ -21,8 +21,10 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -169,22 +171,26 @@ public class CameraCommand {
     }
 
     private static void finalize(Player player, CanvasImage mapImage, CommandSourceStack source, long startTime) {
-        source.sendSuccess(() -> Component.literal("Took a photo!"), false);
+        if (mapImage != null) {
+            source.sendSuccess(() -> Component.literal("Took a photo!"), false);
 
-        var items = CameraCommand.mapItems(mapImage, source.getLevel());
+            var items = CameraCommand.mapItems(mapImage, source.getLevel());
 
-        if (player != null) {
-            items.forEach(player::addItem);
-        } else if (source.getPlayer() != null) {
-            items.forEach(source.getPlayer()::addItem);
-        }
+            if (player != null) {
+                items.forEach(player::addItem);
+            } else if (source.getPlayer() != null) {
+                items.forEach(source.getPlayer()::addItem);
+            }
 
-        if (ModConfig.getInstance().showSystemMessages) {
-            long durationInMillis = (System.nanoTime() - startTime) / 1000000;
-            long millis = durationInMillis % 1000;
-            long second = (durationInMillis / 1000) % 60;
-            String time = String.format("%d.%02d seconds", second, millis);
-            source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+            if (ModConfig.getInstance().showSystemMessages) {
+                long durationInMillis = (System.nanoTime() - startTime) / 1000000;
+                long millis = durationInMillis % 1000;
+                long secs = durationInMillis / 1000;
+                String time = secs > 0 ? String.format("%ds %dms", secs, millis) : String.format("%dms", millis);
+                source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+            }
+        } else {
+            source.sendSystemMessage(Component.literal("Something went wrong while trying to take a photo!").withColor(CommonColors.RED));
         }
     }
 
@@ -252,7 +258,7 @@ public class CameraCommand {
         if (!f.exists()) f.mkdir();
 
         String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
-        var file = rendersDir.resolve("img"+".png").toFile();
+        var file = rendersDir.resolve(date+".png").toFile();
 
         try {
             ImageIO.write(mapImage, "PNG", file);

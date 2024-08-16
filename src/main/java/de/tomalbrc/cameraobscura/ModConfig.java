@@ -26,6 +26,7 @@ public class ModConfig {
     public boolean showSystemMessages = false;
     public boolean renderAsyncMap = true;
     public boolean renderAsyncImage = true;
+    public boolean renderEntities = true;
 
     public ResourceLocation cameraItem = ResourceLocation.withDefaultNamespace("spyglass");
     public boolean cameraConsumesItem = true;

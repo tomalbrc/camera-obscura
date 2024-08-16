@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -21,7 +22,7 @@ import org.joml.Vector2i;
 import java.util.List;
 import java.util.Map;
 
-public class BlockIterator {
+public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit> {
     public record WorldHit(BlockPos blockPos, BlockState blockState, FluidState fluidState, FluidState fluidStateAbove) {
         public boolean isWater() {
             if (fluidState != null && !fluidState.isEmpty()) {
@@ -41,36 +42,10 @@ public class BlockIterator {
 
     private final Map<Vector2i, LevelChunk> cachedChunks;
 
-    public BlockIterator(Level level) {
+    public BlockIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks) {
+        super(level, cachedChunks);
         this.level = level;
-        this.cachedChunks = new Object2ObjectOpenHashMap<>();
-    }
-
-    public void preloadChunks(BlockPos center, int distance) {
-        int xc = SectionPos.blockToSectionCoord(center.getX());
-        int zc = SectionPos.blockToSectionCoord(center.getZ());
-
-        int radius = distance/16+1;
-        for (int z = -radius; z <= radius; z++) {
-            for (int x = -radius; x <= radius; x++) {
-                this.getChunkAt(new Vector2i(x+xc, z+zc));
-            }
-        }
-    }
-
-    private LevelChunk getChunkAt(Vector2i pos) {
-        LevelChunk chunk = null;
-        if (this.cachedChunks.containsKey(pos)) {
-            chunk = this.cachedChunks.get(pos);
-        } else {
-            chunk = this.level.getChunk(pos.x, pos.y);
-            cachedChunks.put(pos, chunk);
-        }
-        return chunk;
-    }
-
-    private LevelChunk getChunkAt(BlockPos blockPos) {
-        return this.getChunkAt(new Vector2i(SectionPos.blockToSectionCoord(blockPos.getX()), SectionPos.blockToSectionCoord(blockPos.getZ())));
+        this.cachedChunks = cachedChunks;
     }
 
     private FluidState cachedFluidState(BlockPos blockPos) {

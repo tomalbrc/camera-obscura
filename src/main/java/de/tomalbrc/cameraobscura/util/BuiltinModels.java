@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -19,7 +20,7 @@ public class BuiltinModels {
     static Int2ObjectOpenHashMap<RPModel.View> waterModels = new Int2ObjectOpenHashMap<>();
     static Int2ObjectOpenHashMap<RPModel.View> lavaModels = new Int2ObjectOpenHashMap<>();
     public static RPModel.View liquidModel(FluidState fluidState, FluidState fluidStateAbove) {
-        int height = fluidState.getAmount() * 2 - (fluidStateAbove != null && fluidStateAbove.is(fluidState.getType()) ? 0:1);
+        int height = (fluidState.getAmount()-1) * 2;
 
         if (fluidState.is(FluidTags.WATER) && waterModels.containsKey(height))
             return waterModels.get(height);
@@ -130,7 +131,7 @@ public class BuiltinModels {
 
         rpModel.elements.add(element);
 
-        var view = new RPModel.View(rpModel, new Vector3f());
+        var view = new RPModel.View(rpModel, Vec3.ZERO.toVector3f());
 
         skyModel = view;
 

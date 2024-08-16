@@ -1,11 +1,15 @@
 package de.tomalbrc.cameraobscura.render.renderer;
 
+import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
     public BufferedImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
@@ -14,21 +18,12 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
 
     public BufferedImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        List<Vector3f> rays = this.buildRayMap(this.entity);
-
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
-        // loop through every pixel on map
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int index = x+height*y;
-                Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
+        this.iterateRays(this.entity, (ray, x, y) -> {
+            imgFile.setRGB(x, y, raytracer.trace(eyes, ray));
 
-                var res = raytracer.trace(eyes, rayTraceVector);
-
-                imgFile.setRGB(x, y, res);
-            }
-        }
+        });
 
         return imgFile;
     }

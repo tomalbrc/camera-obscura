@@ -1,22 +1,34 @@
 package de.tomalbrc.cameraobscura.render.model.resource;
 
+import com.google.gson.annotations.SerializedName;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
 
 public class RPModel {
+    @SerializedName("texture_size")
+    public List<Integer> textureSize;
     public ResourceLocation parent;
     public Map<String, String> textures;
     public List<RPElement> elements;
 
-    public record View(RPModel model, Vector3f blockRotation, boolean uvlock) {
+    public record View(RPModel model, Vector3f blockRotation, Vector3f offset, boolean uvlock) {
+        public View(RPModel model, Vector3f blockRotation, Vector3f offset) {
+            this(model, blockRotation, offset, false);
+        }
+
+        public View(RPModel model, Vector3f blockRotation, boolean uvlock) {
+            this(model, blockRotation, Vec3.ZERO.toVector3f(), uvlock);
+        }
+
         public View(RPModel model, Vector3f blockRotation) {
-            this(model, blockRotation, false);
+            this(model, blockRotation, Vec3.ZERO.toVector3f(), false);
         }
 
         public Map<String, ResourceLocation> collectTextures() {

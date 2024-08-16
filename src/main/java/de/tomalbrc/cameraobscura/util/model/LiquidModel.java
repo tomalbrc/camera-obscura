@@ -7,12 +7,13 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class LiquidModel {
     public static RPModel.View get(FluidState fluidState, FluidState fluidStateAbove) {
-        int height = fluidState.getAmount() * 2 - (fluidStateAbove != null && fluidStateAbove.is(fluidState.getType()) ? 0:1);
+        int height = (fluidState.getAmount()-1) * 2;
 
         RPModel rpModel = new RPModel();
         rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
@@ -49,7 +50,7 @@ public class LiquidModel {
 
         rpModel.elements.add(element);
 
-        var view = new RPModel.View(rpModel, new Vector3f());
+        var view = new RPModel.View(rpModel, Vec3.ZERO.toVector3f());
         return view;
     }
 }

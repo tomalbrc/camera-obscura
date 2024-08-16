@@ -2,11 +2,19 @@ package de.tomalbrc.cameraobscura.render.renderer;
 
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.ThreadPerTaskExecutor;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
     public CanvasImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
@@ -15,21 +23,15 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
 
     public CanvasImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        List<Vector3f> rays = buildRayMap(this.entity);
+
+        List<CompletableFuture<Void>> futureList = new ObjectArrayList<>();
 
         CanvasImage image = new CanvasImage(width, height);
+        this.iterateRays(this.entity, (ray, x, y) -> {
+            image.set(x, y, CanvasUtils.findClosestColor(raytracer.trace(eyes, ray)));
+        });
 
-        // loop through every pixel on map
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int index = x+height*y;
-                Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
-
-                var res = raytracer.trace(eyes, rayTraceVector);
-
-                image.set(x, y, CanvasUtils.findClosestColor(res));
-            }
-        }
+        futureList.forEach(x-> x.complete(null));
 
         return image;
     }

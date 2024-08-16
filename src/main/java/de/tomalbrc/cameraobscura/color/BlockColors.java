@@ -4,6 +4,7 @@ import de.tomalbrc.cameraobscura.mixin.BiomeAccessor;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
@@ -49,6 +50,8 @@ public class BlockColors {
 
         colors.put(Blocks.LARGE_FERN, grassColor);
         colors.put(Blocks.TALL_GRASS, grassColor);
+
+        colors.put(Blocks.SUGAR_CANE, foliageColor);
 
         colors.put(Blocks.GRASS_BLOCK, grassColor);
         colors.put(Blocks.FERN, grassColor);
@@ -103,7 +106,11 @@ public class BlockColors {
         return -1;
     }
 
-    public static int biomeWaterColor(Biome biome) {
-        return biome.getWaterColor();
+    public static int biomeWaterColor(Level level, BlockPos blockPos) {
+        return 0xFF<<24 | level.getChunk(blockPos).getNoiseBiome(
+                QuartPos.fromBlock(blockPos.getX()),
+                QuartPos.fromBlock(blockPos.getY()),
+                QuartPos.fromBlock(blockPos.getZ())
+        ).value().getWaterColor();
     }
 }

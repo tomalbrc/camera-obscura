@@ -18,6 +18,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -30,16 +32,17 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RPHelper {
     public static ResourcePackBuilder resourcePackBuilder;
     private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
-    private static final Map<String, RPModel> modelResources = new Object2ObjectOpenHashMap<>();
-    private static final Map<String, RPBlockState> blockStateResources = new Object2ObjectOpenHashMap<>();
+    private static final Map<String, RPModel> modelResources = new ConcurrentHashMap<>();
+    private static final Map<String, RPBlockState> blockStateResources = new ConcurrentHashMap<>();
 
-    private static final Map<String, BufferedImage> textureCache = new Object2ObjectOpenHashMap<>();
+    private static final Map<String, BufferedImage> textureCache = new ConcurrentHashMap<>();
 
 
     final private static Gson gson = new GsonBuilder()
