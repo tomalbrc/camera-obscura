@@ -6,7 +6,6 @@ import de.tomalbrc.cameraobscura.util.RPHelper;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.util.Map;

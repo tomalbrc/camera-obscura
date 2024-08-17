@@ -7,7 +7,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.util.Map;
@@ -25,7 +24,7 @@ public class ChestModel {
     }
 
     public static RPModel.View get(BlockState chestBlockState) {
-        RPModel rpModel = null;
+        RPModel rpModel;
         if (chestBlockState.getValue(ChestBlock.TYPE) == ChestType.RIGHT)
             rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/chest_right.json"));
         else if (chestBlockState.getValue(ChestBlock.TYPE) == ChestType.LEFT)

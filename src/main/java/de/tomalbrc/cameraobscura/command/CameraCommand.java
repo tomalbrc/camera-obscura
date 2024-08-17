@@ -21,7 +21,6 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
@@ -255,9 +254,12 @@ public class CameraCommand {
     private static void finalizeImage(BufferedImage mapImage, long startTime, CommandSourceStack source) {
         var rendersDir = FabricLoader.getInstance().getGameDir().resolve("renders").toAbsolutePath();
         var f = rendersDir.toFile();
-        if (!f.exists()) f.mkdir();
+        if (!f.exists()) {
+            if (!f.mkdir())
+                return;
+        }
 
-        String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
         var file = rendersDir.resolve(date+".png").toFile();
 
         try {

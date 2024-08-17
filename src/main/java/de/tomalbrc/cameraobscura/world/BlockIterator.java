@@ -1,6 +1,5 @@
 package de.tomalbrc.cameraobscura.world;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -40,12 +39,9 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
 
     private final Level level;
 
-    private final Map<Vector2i, LevelChunk> cachedChunks;
-
     public BlockIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks) {
         super(level, cachedChunks);
         this.level = level;
-        this.cachedChunks = cachedChunks;
     }
 
     private FluidState cachedFluidState(BlockPos blockPos) {

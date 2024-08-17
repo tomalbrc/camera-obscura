@@ -11,8 +11,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -21,7 +19,6 @@ import org.joml.Vector3f;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class TriangleModel implements RenderModel {
     private final List<Triangle> modelTriangles = new ObjectArrayList<>();
@@ -92,8 +89,7 @@ public class TriangleModel implements RenderModel {
                 tris.get(i).translate(modelView.offset().x(), modelView.offset().y(), modelView.offset().z());
             }
 
-            if (tris != null)
-                this.modelTriangles.addAll(tris);
+            this.modelTriangles.addAll(tris);
         }
         this.textureMap.putAll(modelView.collectTextures());
     }

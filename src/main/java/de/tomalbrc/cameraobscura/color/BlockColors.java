@@ -8,7 +8,6 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
@@ -40,7 +39,7 @@ public class BlockColors {
         int get(Level level, BlockState blockState, BlockPos blockPos);
     }
 
-    private static Reference2ObjectArrayMap<Block, BlockColorProvider> colors = new Reference2ObjectArrayMap<>();
+    private static final Reference2ObjectArrayMap<Block, BlockColorProvider> colors = new Reference2ObjectArrayMap<>();
 
     public static void init() {
         loadColorMaps();

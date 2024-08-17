@@ -1,6 +1,5 @@
 package de.tomalbrc.cameraobscura.render;
 
-import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
 import de.tomalbrc.cameraobscura.color.BlockColors;
 import de.tomalbrc.cameraobscura.color.MiscColors;
@@ -13,26 +12,20 @@ import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
-import eu.pb4.mapcanvas.api.core.CanvasColor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.joml.Vector2i;
@@ -42,11 +35,11 @@ import java.util.List;
 import java.util.Map;
 
 public class Raytracer {
-    private static Vector3f SUN = new Vector3f(1, 2, 1).normalize();
+    private static final Vector3f SUN = new Vector3f(1, 2, 1).normalize();
 
     private final ServerLevel level;
 
-    private static Map<BlockState, RenderModel.View> renderModels = new Reference2ObjectArrayMap<>();
+    private static final Map<BlockState, RenderModel.View> renderModels = new Reference2ObjectArrayMap<>();
 
     private final BlockIterator blockIterator;
     private final EntityIterator entityIterator;
@@ -230,7 +223,7 @@ public class Raytracer {
 
     private RenderModel getRenderModel(List<RPModel.View> rpModel, BlockIterator.WorldHit result, boolean allowWater) {
         RenderModel.View renderModels = null;
-        if (ModConfig.getInstance().renderEntities || !this.renderModels.containsKey(result.blockState())) {
+        if ((ModConfig.getInstance().renderEntities && rpModel.size() > 1) || !this.renderModels.containsKey(result.blockState())) {
             TriangleModel m1 = new TriangleModel(rpModel.get(0));
             for (int i = 1; i < rpModel.size(); i++) {
                 // multipart models

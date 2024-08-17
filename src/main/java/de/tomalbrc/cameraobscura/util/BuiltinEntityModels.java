@@ -2,42 +2,27 @@ package de.tomalbrc.cameraobscura.util;
 
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
-import de.tomalbrc.cameraobscura.util.model.*;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.entity.monster.warden.Warden;
-import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.raid.Raider;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import net.minecraft.world.entity.vehicle.Minecart;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Random;
 
 public class BuiltinEntityModels {
-    static Map<EntityType, RPModel> modelMap = new Object2ObjectOpenHashMap<>();
+    static Map<EntityType<?>, RPModel> modelMap = new Object2ObjectOpenHashMap<>();
     public static RPModel.View getModel(Entity entity, Vector3f pos, Vector3f rot) {
         if (modelMap.containsKey(entity.getType())) {
-            RPModel.View view = switch (entity) {
+            return switch (entity) {
                 case WanderingTrader wanderingTrader ->
                         new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
                 case Villager villager ->
@@ -58,7 +43,6 @@ public class BuiltinEntityModels {
                 default ->
                         new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos);
             };
-            return view;
         } else {
             return new RPModel.View(modelMap.get(EntityType.PIG), new Vector3f(0, rot.y() + 180, 0), pos);
         }
@@ -68,9 +52,6 @@ public class BuiltinEntityModels {
         int num = Math.abs(new Random().nextInt());
 
         RPModel rpModel = RPHelper.loadModel(BuiltinEntityModels.class.getResourceAsStream(model));
-        for (var entry: rpModel.textures.entrySet()) {
-            entry.getKey().replace("0", ""+num);
-        }
         rpModel.textures.put(""+num, rpModel.textures.get("0"));
         rpModel.textures.remove("0");
 

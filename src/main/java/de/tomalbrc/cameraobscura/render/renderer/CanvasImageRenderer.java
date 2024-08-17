@@ -2,18 +2,12 @@ package de.tomalbrc.cameraobscura.render.renderer;
 
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import io.netty.util.concurrent.DefaultThreadFactory;
-import io.netty.util.concurrent.ThreadPerTaskExecutor;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
@@ -23,15 +17,33 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
 
     public CanvasImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-
-        List<CompletableFuture<Void>> futureList = new ObjectArrayList<>();
-
         CanvasImage image = new CanvasImage(width, height);
+
+        // Create a fixed thread pool
+        ExecutorService executor = Executors.newFixedThreadPool(64);
+
+        // List to hold the CompletableFutures for each pixel
+        CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
+        AtomicInteger index = new AtomicInteger();
+
+        // Iterate through rays and create async tasks
         this.iterateRays(this.entity, (ray, x, y) -> {
-            image.set(x, y, CanvasUtils.findClosestColor(raytracer.trace(eyes, ray)));
+            final int pixelX = x;
+            final int pixelY = y;
+
+            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> {
+                // Trace the ray and compute the color asynchronously
+                return CanvasUtils.findClosestColor(raytracer.trace(eyes, ray));
+            }, executor).thenAccept(color -> {
+                // Update the image with the computed color
+                image.set(pixelX, pixelY, color);
+            });
         });
 
-        futureList.forEach(x-> x.complete(null));
+        // Shutdown the executor
+        CompletableFuture.allOf(futures).join();
+
+        executor.shutdownNow();
 
         return image;
     }
