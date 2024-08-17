@@ -95,6 +95,10 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
 
         if (hitResult != null)
             list.add(hitResult);
+        else {
+            BlockState blockState = Blocks.AIR.defaultBlockState();
+            list.add(new WorldHit(BlockPos.containing(clipContext.getTo()), blockState, blockState.getFluidState(), blockState.getFluidState()));
+        }
 
         return list;
     }

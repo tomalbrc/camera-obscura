@@ -320,7 +320,6 @@ public class TriangleModel implements RenderModel {
             // transparent face
             if (textureInfo == null) continue;
 
-
             String texKey = textureInfo.texture.replace("#","");
             //resolve texture key in case of placeholders (starting with #)
             while (textureMap.containsKey(texKey)) {

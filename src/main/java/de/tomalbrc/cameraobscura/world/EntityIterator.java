@@ -29,18 +29,15 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
 
     @Override
     public List<EntityHit> raycast(ClipContext clipContext) {
-        clipContext.getFrom();
-        clipContext.getTo();
-
         if (this.allEntities == null) {
             // only query all nearby entities once
             this.allEntities = new ObjectArrayList<>();
             if (ModConfig.getInstance().renderEntities) {
                 for (Entity entity : this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance))) {
                     if (entity instanceof LivingEntity livingEntity) {
-                        this.allEntities.add(new Triplet<>(entity, entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRotO, 0)));
+                        this.allEntities.add(new Triplet<>(entity, entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRot, 0)));
                     } else {
-                        this.allEntities.add(new Triplet<>(entity, entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.yRotO, 0)));
+                        this.allEntities.add(new Triplet<>(entity, entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0)));
                     }
                 }
             }
@@ -48,7 +45,7 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
 
         List<EntityHit> hits = new ObjectArrayList<>();
         for (Triplet<Entity, Vector3f, Vector3f> entity: this.allEntities) {
-            if (entity.getA().getBoundingBox().inflate(2).intersects(clipContext.getFrom(), clipContext.getTo())) {
+            if (entity.getA().getBoundingBox().inflate(2).intersects(clipContext.getFrom(), clipContext.getTo())/* && this.entity.hasLineOfSight(entity.getA())*/) {
                 hits.add(new EntityHit(entity.getA(), entity.getB(), entity.getC()));
             }
         }

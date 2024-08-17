@@ -138,7 +138,7 @@ public class Raytracer {
         int modelColor = 0x00_ffffff;
 
         BlockPos lightPos = result.blockPos();
-        if (!blockState.isAir()) {
+        if (!blockState.isAir() || !entityHits.isEmpty()) {
             List<RPModel.View> rpModels = null;
             RPModel.View rpModel = null;
 
@@ -165,12 +165,12 @@ public class Raytracer {
             else
                 rpModels = RPHelper.loadModel(blockState);
 
-            if (rpModels == null) {
+            if (rpModels == null && rpModel != null) {
                 rpModels = ObjectArrayList.of(rpModel);
             }
 
             if (rpModels == null) {
-                LogUtils.getLogger().warn("Could not load or find model: " + blockState.getBlock().getName().getString());
+                //LogUtils.getLogger().warn("Could not load or find model: " + blockState.getBlock().getName().getString());
             } else {
                 if (ModConfig.getInstance().renderEntities) {
                     for (EntityIterator.EntityHit hit: entityHits) {
@@ -205,6 +205,8 @@ public class Raytracer {
                     // no need to keep going if color is opaque
                     if ((modelColor >> 24 & 0xff) >= 255) {
                         break;
+                    } else {
+                        blockLight = true;
                     }
                 }
             }
@@ -228,7 +230,7 @@ public class Raytracer {
 
     private RenderModel getRenderModel(List<RPModel.View> rpModel, BlockIterator.WorldHit result, boolean allowWater) {
         RenderModel.View renderModels = null;
-        if (!this.renderModels.containsKey(result.blockState())||true) {
+        if (ModConfig.getInstance().renderEntities || !this.renderModels.containsKey(result.blockState())) {
             TriangleModel m1 = new TriangleModel(rpModel.get(0));
             for (int i = 1; i < rpModel.size(); i++) {
                 // multipart models
@@ -242,7 +244,8 @@ public class Raytracer {
                 renderModels = new RenderModel.View(m1);
             }
 
-            this.renderModels.put(result.blockState(), renderModels);
+            if (!ModConfig.getInstance().renderEntities)
+                this.renderModels.put(result.blockState(), renderModels);
         } else {
             renderModels = this.renderModels.get(result.blockState());
         }

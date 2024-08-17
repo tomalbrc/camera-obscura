@@ -7,13 +7,14 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import org.spongepowered.include.com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Map;
 
 public class RPModel {
     @SerializedName("texture_size")
-    public List<Integer> textureSize;
+    public List<Integer> textureSize = ImmutableList.of(16,16);
     public ResourceLocation parent;
     public Map<String, String> textures;
     public List<RPElement> elements;
