@@ -6,8 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
@@ -18,9 +16,6 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
     public CanvasImage render() {
         Vec3 eyes = this.entity.getEyePosition();
         CanvasImage image = new CanvasImage(width, height);
-
-        // Create a fixed thread pool
-        ExecutorService executor = Executors.newFixedThreadPool(64);
 
         // List to hold the CompletableFutures for each pixel
         CompletableFuture<Void>[] futures = new CompletableFuture[width * height];

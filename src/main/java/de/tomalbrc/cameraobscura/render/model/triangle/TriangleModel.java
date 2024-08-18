@@ -316,7 +316,7 @@ public class TriangleModel implements RenderModel {
             // transparent face
             if (textureInfo == null) continue;
 
-            String texKey = textureInfo.texture.replace("#","");
+            String texKey = textureInfo.texture.charAt(0) == '#' ? textureInfo.texture.substring(1) : textureInfo.texture;
             //resolve texture key in case of placeholders (starting with #)
             while (textureMap.containsKey(texKey)) {
                 texKey = textureMap.get(texKey).getPath();
@@ -326,6 +326,7 @@ public class TriangleModel implements RenderModel {
             if (img == null) continue;
 
             int width = img.getWidth();
+
             // animated textures...
             int realHeight = (int)(img.getHeight() / (img.getHeight()/(float)img.getWidth()));
 

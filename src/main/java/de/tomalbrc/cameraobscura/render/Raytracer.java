@@ -23,7 +23,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +35,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class Raytracer {
     private static final Vector3f SUN = new Vector3f(1, 2, 1).normalize();
@@ -148,15 +151,15 @@ public class Raytracer {
             else if (blockState.is(Blocks.ENDER_CHEST))
                 rpModel = BuiltinModels.chestModel(result.blockState());
             else if (blockState.is(Blocks.SHULKER_BOX))
-                rpModel = BuiltinModels.shulkerModel();
+                rpModel = BuiltinModels.shulkerModel(blockState, Optional.ofNullable(ShulkerBoxBlock.getColorFromBlock(result.blockState().getBlock())));
             else if (blockState.is(BlockTags.BEDS))
-                rpModel = BuiltinModels.bedModel(result.blockState());
+                rpModel = BuiltinModels.bedModel(blockState, Optional.ofNullable(((BedBlock)blockState.getBlock()).getColor()));
             else if (blockState.is(Blocks.DECORATED_POT))
                 rpModel = BuiltinModels.decoratedPotModel();
             else if (blockState.is(Blocks.CONDUIT))
                 rpModel = BuiltinModels.conduitModel();
             else
-                rpModels = RPHelper.loadModel(blockState);
+                rpModels = RPHelper.loadModelView(blockState);
 
             if (rpModels == null && rpModel != null) {
                 rpModels = ObjectArrayList.of(rpModel);
@@ -167,7 +170,7 @@ public class Raytracer {
             } else {
                 if (ModConfig.getInstance().renderEntities) {
                     for (EntityIterator.EntityHit hit: entityHits) {
-                        var view = BuiltinEntityModels.getModel(hit.entity(), blockPos.getCenter().toVector3f().sub(hit.position()).add(0,-0.5f,0), hit.rotation());
+                        var view = BuiltinEntityModels.getModel(hit.type(), blockPos.getCenter().toVector3f().sub(hit.position()).add(0,-0.5f,0), hit.rotation(), hit.uuid());
                         rpModels.add(view);
                     }
                 }

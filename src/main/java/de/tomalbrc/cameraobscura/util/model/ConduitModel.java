@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class ConduitModel {
     public static RPModel.View get() {
-        RPModel rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/conduit.json"));
+        RPModel rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream("/builtin/conduit.json"));
         for (RPElement element : rpModel.elements) {
             for (Map.Entry<String, RPElement.TextureInfo> entry : element.faces.entrySet()) {
                 if (element.name == null || !element.name.equals("eye")) {

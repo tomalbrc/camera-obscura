@@ -6,12 +6,18 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.util.TriConsumer;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
+
 public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final int width;
     protected final int height;
 
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
+
+    protected final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public AbstractRenderer(LivingEntity entity, int width, int height, int renderDistance) {
         this.entity = entity;

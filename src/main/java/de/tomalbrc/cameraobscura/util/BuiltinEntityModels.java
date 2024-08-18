@@ -3,46 +3,32 @@ package de.tomalbrc.cameraobscura.util;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.camel.Camel;
-import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.entity.monster.WitherSkeleton;
-import net.minecraft.world.entity.monster.warden.Warden;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.WanderingTrader;
-import net.minecraft.world.entity.raid.Raider;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public class BuiltinEntityModels {
     static Map<EntityType<?>, RPModel> modelMap = new Object2ObjectOpenHashMap<>();
-    public static RPModel.View getModel(Entity entity, Vector3f pos, Vector3f rot) {
-        if (modelMap.containsKey(entity.getType())) {
-            return switch (entity) {
-                case WanderingTrader wanderingTrader ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case Villager villager ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -2.f / 16.f, 0));
-                case IronGolem ironGolem ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case WitherSkeleton witherSkeleton ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case WitherBoss witherBoss ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case Raider raider ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case Warden warden ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
-                case Camel camel ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, -0.5f));
-
-                default ->
-                        new RPModel.View(modelMap.get(entity.getType()), new Vector3f(0, rot.y() + 180, 0), pos);
-            };
+    public static RPModel.View getModel(EntityType entityType, Vector3f pos, Vector3fc rot, @Nullable UUID uuid) {
+        if (modelMap.containsKey(entityType)) {
+            if (entityType == EntityType.VILLAGER) {
+                return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -2.f / 16.f, 0));
+            } else if (entityType == EntityType.WITHER_SKELETON || entityType == EntityType.IRON_GOLEM || entityType == EntityType.WITHER || entityType == EntityType.WARDEN || entityType == EntityType.WANDERING_TRADER || entityType == EntityType.PILLAGER || entityType == EntityType.EVOKER || entityType == EntityType.RAVAGER || entityType == EntityType.VINDICATOR) {
+                return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, 0));
+            } else if (entityType == EntityType.CAMEL) {
+                return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, -0.5f));
+            } else {
+                return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos);
+            }
+        } else if (entityType == EntityType.PLAYER) {
+            RPModel model = loadModel("/builtin/player.json");
+            model.textures.put(model.textures.keySet().iterator().next(), "d."+uuid.toString().replace("-", ""));
+            return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1.f / 16.f, 0));
         } else {
             return new RPModel.View(modelMap.get(EntityType.PIG), new Vector3f(0, rot.y() + 180, 0), pos);
         }
@@ -51,7 +37,7 @@ public class BuiltinEntityModels {
     private static RPModel loadModel(String model) {
         int num = Math.abs(new Random().nextInt());
 
-        RPModel rpModel = RPHelper.loadModel(BuiltinEntityModels.class.getResourceAsStream(model));
+        RPModel rpModel = RPHelper.loadModelView(BuiltinEntityModels.class.getResourceAsStream(model));
         rpModel.textures.put(""+num, rpModel.textures.get("0"));
         rpModel.textures.remove("0");
 
@@ -85,19 +71,20 @@ public class BuiltinEntityModels {
         modelMap.put(EntityType.SHEEP, loadModel("/builtin/sheep.json"));
         modelMap.put(EntityType.PIGLIN, loadModel("/builtin/piglin.json"));
         modelMap.put(EntityType.ZOMBIFIED_PIGLIN, loadModel("/builtin/zombified_piglin.json"));
+        modelMap.put(EntityType.GHAST, loadModel("/builtin/ghast.json"));
         modelMap.put(EntityType.CHICKEN, loadModel("/builtin/chicken.json"));
 
-        modelMap.put(EntityType.ITEM_FRAME, loadModel("/builtin/pig.json"));
-        modelMap.put(EntityType.GLOW_ITEM_FRAME, loadModel("/builtin/pig.json"));
+        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel("minecraft", "block/item_frame"));
+        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel("minecraft", "block/glow_item_frame"));
         modelMap.put(EntityType.SQUID, loadModel("/builtin/squid.json"));
         modelMap.put(EntityType.GLOW_SQUID, loadModel("/builtin/glow_squid.json"));
         modelMap.put(EntityType.SNOW_GOLEM, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.ARMADILLO, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.RABBIT, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.CAMEL, loadModel("/builtin/camel.json"));
-        modelMap.put(EntityType.CAT, loadModel("/builtin/pig.json"));
+        modelMap.put(EntityType.CAT, loadModel("/builtin/cat.json"));
         modelMap.put(EntityType.DONKEY, loadModel("/builtin/pig.json"));
-        modelMap.put(EntityType.WOLF, loadModel("/builtin/pig.json"));
+        modelMap.put(EntityType.WOLF, loadModel("/builtin/wolf.json"));
         modelMap.put(EntityType.HORSE, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.SKELETON_HORSE, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.ZOMBIE_HORSE, loadModel("/builtin/pig.json"));

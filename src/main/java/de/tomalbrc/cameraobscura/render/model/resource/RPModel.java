@@ -42,7 +42,7 @@ public class RPModel {
 
                 ResourceLocation parent = this.model.parent;
                 while (parent != null && !parent.getPath().isEmpty()) {
-                    var child = RPHelper.loadModel(parent.getNamespace(), parent.getPath(), this.blockRotation, this.uvlock);
+                    var child = RPHelper.loadModelView(parent.getNamespace(), parent.getPath(), this.blockRotation, this.uvlock);
                     if (child != null) {
                         if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, ResourceLocation.parse(value.replace("#",""))));
                         parent = child.model.parent;
@@ -62,7 +62,7 @@ public class RPModel {
 
             ResourceLocation parent = this.model.parent;
             while (parent != null && !parent.getPath().isEmpty()) {
-                var child = RPHelper.loadModel(parent.getNamespace(), parent.getPath(), this.blockRotation, this.uvlock);
+                var child = RPHelper.loadModelView(parent.getNamespace(), parent.getPath(), this.blockRotation, this.uvlock);
                 if (child != null) {
                     if (child.model.elements != null) {
                         return child.model.elements;

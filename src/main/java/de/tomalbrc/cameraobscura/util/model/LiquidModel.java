@@ -13,7 +13,7 @@ import org.joml.Vector4f;
 
 public class LiquidModel {
     public static RPModel.View get(FluidState fluidState, FluidState fluidStateAbove) {
-        int height = (fluidState.getAmount()-1) * 2;
+        int height = !fluidStateAbove.isEmpty() ? 16 : (fluidState.getAmount()-1) * 2;
 
         RPModel rpModel = new RPModel();
         rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");

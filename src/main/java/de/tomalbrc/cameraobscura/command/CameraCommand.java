@@ -51,10 +51,10 @@ public class CameraCommand {
                 .executes(CameraCommand::createMapOfSourceForSource)
                 .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.scale", ModConfig.getInstance().commandPermissionLevel))
                         .executes(CameraCommand::createMapOfSourceScaled))
-                .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.entity", 2))
+                .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.type", 2))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(CameraCommand::createMapOfSourceForSource)
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.entity.scale", ModConfig.getInstance().commandPermissionLevel))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.type.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(CameraCommand::createMapOfSourceForSourceScaled))))
                 .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", ModConfig.getInstance().commandPermissionLevel))
                         .executes(x -> {
@@ -62,9 +62,9 @@ public class CameraCommand {
                                 CameraCommand.createImageAsync(x, livingEntity, 1);
                             return 0;
                         })
-                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.entity", ModConfig.getInstance().commandPermissionLevel))
+                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.type", ModConfig.getInstance().commandPermissionLevel))
                                 .executes(x -> createImageFromSource(x, 1))
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.entity.scale", ModConfig.getInstance().commandPermissionLevel))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.type.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(x -> createImageFromSource(x, IntegerArgumentType.getInteger(x, "scale")))
                                 ))
                         .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.scale", ModConfig.getInstance().commandPermissionLevel))

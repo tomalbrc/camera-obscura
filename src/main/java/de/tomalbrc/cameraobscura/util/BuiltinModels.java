@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
@@ -15,8 +16,11 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class BuiltinModels {
+    static Map<BlockState, RPModel.View> modelMap = new Object2ObjectOpenHashMap<>();
+
     static Int2ObjectOpenHashMap<RPModel.View> waterModels = new Int2ObjectOpenHashMap<>();
     static Int2ObjectOpenHashMap<RPModel.View> lavaModels = new Int2ObjectOpenHashMap<>();
     public static RPModel.View liquidModel(FluidState fluidState, FluidState fluidStateAbove) {
@@ -56,37 +60,25 @@ public class BuiltinModels {
         return view;
     }
 
-    static Map<BlockState, RPModel.View> chestModels = new Object2ObjectOpenHashMap<>();
     public static RPModel.View chestModel(BlockState chestBlockState) {
-        if (chestModels.containsKey(chestBlockState))
-            return chestModels.get(chestBlockState);
+        if (modelMap.containsKey(chestBlockState))
+            return modelMap.get(chestBlockState);
 
-        var view = ChestModel.get(chestBlockState);
-
-        chestModels.put(chestBlockState, view);
-
-        return view;
+        return modelMap.put(chestBlockState, ChestModel.get(chestBlockState));
     }
 
-    static Map<BlockState, RPModel.View> bedModels = new Object2ObjectOpenHashMap<>();
-    public static RPModel.View bedModel(BlockState chestBlockState) {
-        if (bedModels.containsKey(chestBlockState))
-            return bedModels.get(chestBlockState);
+    public static RPModel.View bedModel(BlockState chestBlockState, Optional<DyeColor> color) {
+        if (modelMap.containsKey(chestBlockState))
+            return modelMap.get(chestBlockState);
 
-        var view = BedModel.get(chestBlockState);
-
-        bedModels.put(chestBlockState, view);
-
-        return view;
+        return modelMap.put(chestBlockState, BedModel.get(chestBlockState, color));
     }
 
-    static RPModel.View shulkerModel = null;
-    public static RPModel.View shulkerModel() {
-        if (shulkerModel != null)
-            return shulkerModel;
+    public static RPModel.View shulkerModel(BlockState blockState, Optional<DyeColor> color) {
+        if (modelMap.containsKey(blockState))
+            return modelMap.get(blockState);
 
-        shulkerModel = ShulkerModel.get();
-        return shulkerModel;
+        return modelMap.put(blockState, ShulkerModel.get(color));
     }
 
     static RPModel.View decoratedPotModel = null;

@@ -5,8 +5,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
@@ -17,9 +15,6 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
     public BufferedImage render() {
         Vec3 eyes = this.entity.getEyePosition();
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-
-        // Create a fixed thread pool
-        ExecutorService executor = Executors.newFixedThreadPool(64);
 
         // List to hold the CompletableFutures for each pixel
         CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
