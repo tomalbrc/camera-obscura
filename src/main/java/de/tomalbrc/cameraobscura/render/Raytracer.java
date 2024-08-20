@@ -12,6 +12,7 @@ import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
@@ -19,6 +20,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,7 +43,8 @@ public class Raytracer {
 
     private final ServerLevel level;
 
-    private final Map<BlockState, List<RenderModel>> renderModelCache = new Reference2ObjectArrayMap<>();
+    private static final Map<BlockState, List<RenderModel>> renderModelCache = new Reference2ObjectArrayMap<>();
+    private static final Int2ObjectArrayMap<RenderModel> fluidRenderModelCache = new Int2ObjectArrayMap<>();
     private final Map<UUID, RenderModel> entityRenderModelCache = new Reference2ObjectArrayMap<>();
 
     private final BlockIterator blockIterator;
@@ -51,7 +54,7 @@ public class Raytracer {
 
     private final int skyDarken;
 
-    private TriangleModel localSkyModel;
+    private static final TriangleModel localSkyModel = new TriangleModel(BuiltinModels.skyModel(Vec3.ZERO));
 
     public Raytracer(LivingEntity entity, int distance) {
         this.level = (ServerLevel) entity.level();
@@ -62,9 +65,6 @@ public class Raytracer {
         this.entityIterator = new EntityIterator(this.level, cache, entity);
 
         this.skyDarken = this.level.getSkyDarken();
-
-        RPModel.View modelView = BuiltinModels.skyModel(Vec3.ZERO);
-        this.localSkyModel = new TriangleModel(modelView);
     }
 
     public void preloadChunks(BlockPos center) {
@@ -174,19 +174,18 @@ public class Raytracer {
 
             List<RenderModel> renderModels = this.getBlockRenderModels(rpModels, result, allowWater);
 
-            LevelChunk chunk = this.blockIterator.getChunkAt(blockPos); // get cached chunk
-            int blockColor = result.isWaterOrWaterlogged() ? BlockColors.biomeWaterColor(chunk, blockPos) : BlockColors.get(chunk, blockState, blockPos);
+            // water/foliage/grass color
+            int blockColor = result.isWaterOrWaterlogged() ? getBlurredBiomeWaterColor(blockPos) : getBlurredBlockColor(blockPos, blockState);
 
             List<RenderModel.ModelHit> hits = new ObjectArrayList<>();
-
-
 
             for (int i = 0; i < renderModels.size(); i++) {
                 hits.addAll(renderModels.get(i).intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor));
             }
 
             if (ModConfig.getInstance().renderEntities) {
-                for (EntityIterator.EntityHit hit : entityHits) {
+                for (int i = 0; i < entityHits.size(); i++) {
+                    EntityIterator.EntityHit hit = entityHits.get(i);
                     RPModel.View view = BuiltinEntityModels.getModel(hit.type(), blockPos.getCenter().toVector3f().sub(hit.position()).add(0, -0.5f, 0), hit.rotation(), hit.uuid(), hit.data());
                     TriangleModel entityModel = new TriangleModel(view);
                     hits.addAll(entityModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor));
@@ -237,6 +236,79 @@ public class Raytracer {
         return tintedColor;
     }
 
+    // Method to get the blurred color at coordinates (a, b)
+    public int getBlurredBiomeWaterColor(BlockPos blockPos) {
+        int radius = 1;
+        int aSum = 0, rSum = 0, gSum = 0, bSum = 0;
+        int count = 0;
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                BlockPos b = blockPos.offset(dx,0, dy);
+
+                int argb = BlockColors.biomeWaterColor(this.blockIterator.getChunkAt(b), b);
+
+                // Extract ARGB components
+                int alpha = (argb >> 24) & 0xFF;
+                int red = (argb >> 16) & 0xFF;
+                int green = (argb >> 8) & 0xFF;
+                int blue = argb & 0xFF;
+
+                // Sum up the components
+                aSum += alpha;
+                rSum += red;
+                gSum += green;
+                bSum += blue;
+                count++;
+            }
+        }
+
+        // Calculate average color components
+        int avgAlpha = aSum / count;
+        int avgRed = rSum / count;
+        int avgGreen = gSum / count;
+        int avgBlue = bSum / count;
+
+        // Combine the averaged ARGB components back into a single integer
+        return (avgAlpha << 24) | (avgRed << 16) | (avgGreen << 8) | avgBlue;
+    }
+
+    public int getBlurredBlockColor(BlockPos blockPos, BlockState blockState) {
+        int radius = 1;
+        int aSum = 0, rSum = 0, gSum = 0, bSum = 0;
+        int count = 0;
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                BlockPos b = blockPos.offset(dx,0, dy);
+
+                int argb = BlockColors.get(this.blockIterator.getChunkAt(b), blockState, b);
+
+                // Extract ARGB components
+                int alpha = (argb >> 24) & 0xFF;
+                int red = (argb >> 16) & 0xFF;
+                int green = (argb >> 8) & 0xFF;
+                int blue = argb & 0xFF;
+
+                // Sum up the components
+                aSum += alpha;
+                rSum += red;
+                gSum += green;
+                bSum += blue;
+                count++;
+            }
+        }
+
+        // Calculate average color components
+        int avgAlpha = aSum / count;
+        int avgRed = rSum / count;
+        int avgGreen = gSum / count;
+        int avgBlue = bSum / count;
+
+        // Combine the averaged ARGB components back into a single integer
+        return (avgAlpha << 24) | (avgRed << 16) | (avgGreen << 8) | avgBlue;
+    }
+
     private List<RenderModel> createOrGetCached(BlockState blockState, List<RPModel.View> views) {
         if (this.renderModelCache.containsKey(blockState)) {
             return this.renderModelCache.get(blockState);
@@ -256,8 +328,20 @@ public class Raytracer {
         }
     }
 
+    private RenderModel createOrGetCached(int blockState, RPModel.View view) {
+        if (fluidRenderModelCache.containsKey(blockState)) {
+            return fluidRenderModelCache.get(blockState);
+        }
+        else {
+            var model = new TriangleModel(view);
+            fluidRenderModelCache.put(blockState, model);
+            return model;
+        }
+    }
+
     private RenderModel createOrGetCached(UUID entityUUID, RPModel.View view) {
         if (this.entityRenderModelCache.containsKey(entityUUID)) {
+            // todo: relocate triangle model translation to new blockpos
             return this.entityRenderModelCache.get(entityUUID);
         }
         else {
@@ -273,7 +357,7 @@ public class Raytracer {
 
         if (allowWater && result.isWaterOrWaterlogged() && !result.blockState().is(Blocks.WATER)) {
             RPModel.View lm = BuiltinModels.liquidModel(result.fluidState(), result.fluidStateAbove());
-            views.add(lm);
+            renderModels.add(createOrGetCached(result.fluidState().getAmount() + (result.fluidState().getType() == result.fluidStateAbove().getType() ? 1:0) + (result.fluidState().is(FluidTags.LAVA) ? 100:0), lm));
         }
 
         renderModels.addAll(createOrGetCached(result.blockState(), views));
@@ -294,7 +378,7 @@ public class Raytracer {
     private int skyColorWithClouds(Vec3 pos, Vec3 direction) {
         List<RenderModel.ModelHit> hits = localSkyModel.intersect(pos.toVector3f(), direction.toVector3f().mul(this.distance), new Vector3f((int)pos.x(), 0, (int)pos.z), 0);
         var color = 0;
-        if (hits.size() >= 1) {
+        if (!hits.isEmpty()) {
             // test if cloud was hit (transparent if not)
             if ((hits.get(0).color() >> 24 & 0xff) > 0)
                 color = ColorHelper.alphaComposite(color, (hits.get(0).color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
@@ -304,5 +388,10 @@ public class Raytracer {
         var skyColor = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
 
         return ColorHelper.alphaComposite(color, skyColor);
+    }
+
+    public static void clearCache() {
+        renderModelCache.clear();
+        fluidRenderModelCache.clear();
     }
 }

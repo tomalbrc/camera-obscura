@@ -34,7 +34,9 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
 
         this.allEntities = new ObjectArrayList<>();
         if (ModConfig.getInstance().renderEntities) {
-            for (Entity entity : this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance))) {
+            List<Entity> lst = this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance));
+            for (int i = 0; i < lst.size(); i++) {
+                Entity entity = lst.get(i);
                 EntityHit hit;
 
                 if (!entity1.hasLineOfSight(entity)) continue;
@@ -63,12 +65,12 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
     @Override
     public List<EntityHit> raycast(ClipContext clipContext) {
         List<EntityHit> hits = new ObjectArrayList<>();
-        for (EntityHit entity: this.allEntities) {
-            if (entity.boundingBox().intersects(clipContext.getFrom(), clipContext.getTo())/* && this.type.hasLineOfSight(type.getA())*/) {
-                hits.add(entity);
+        for (int i = 0; i < this.allEntities.size(); i++) {
+            EntityHit entityHit = this.allEntities.get(i);
+            if (entityHit.boundingBox().intersects(clipContext.getFrom(), clipContext.getTo())) {
+                hits.add(entityHit);
             }
         }
-
         return hits;
     }
 

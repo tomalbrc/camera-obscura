@@ -52,7 +52,8 @@ public class BuiltinEntityModels {
 
     private static RPModel loadModel(String model) {
         RPModel rpModel = RPHelper.loadModel(BuiltinEntityModels.class.getResourceAsStream(model));
-        for (RPElement element : rpModel.elements) {
+        for (int i = 0; i < rpModel.elements.size(); i++) {
+            RPElement element = rpModel.elements.get(i);
             element.shade = false;
             for (String key : element.faces.keySet()) {
                 var face = element.faces.get(key);

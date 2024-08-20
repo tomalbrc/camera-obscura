@@ -31,9 +31,10 @@ public class TriangleModel implements RenderModel {
 
     private void readModel(RPModel.View modelView) {
         var elementList = modelView.collectElements();
-        for (var element: elementList) {
-            var from = new Vector3f(element.from);
-            var to = new Vector3f(element.to);
+        for (int i = 0; i < elementList.size(); i++) {
+            RPElement element = elementList.get(i);
+            Vector3f from = new Vector3f(element.from);
+            Vector3f to = new Vector3f(element.to);
 
             Vector3f posOffset = new Vector3f(0.5f); // center block
             from.div(16).sub(posOffset);
@@ -49,40 +50,39 @@ public class TriangleModel implements RenderModel {
             }
 
             List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(modelView.blockRotation()), modelView.uvlock());
-            for (int i = 0; i < tris.size(); i++) {
-                var n = tris.get(i).getNormal().get(new Vector3f());
+            for (int j = 0; j < tris.size(); j++) {
+                Vector3f n = tris.get(j).getNormal().get(new Vector3f());
 
                 if (element.rotation != null) {
                     if (rotationLength > 0.f)
-                        tris.get(i).translate(rotation.x, rotation.y, rotation.z);
+                        tris.get(j).translate(rotation.x, rotation.y, rotation.z);
 
-                    tris.get(i).rotate(elementRotation);
+                    tris.get(j).rotate(elementRotation);
 
                     if (rotationLength > 0.f)
-                        tris.get(i).translate(-rotation.x, -rotation.y, -rotation.z);
+                        tris.get(j).translate(-rotation.x, -rotation.y, -rotation.z);
                 }
 
                 // rotate triangle vertices and normal (needed so we can get a "Direction" from the normal without taking element rotation into account)
-                var rot = modelView.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
+                Vector3f rot = modelView.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
 
-                tris.get(i).rotate(new Quaternionf().rotateX(rot.x()).normalize());
+                tris.get(j).rotate(new Quaternionf().rotateX(rot.x()).normalize());
                 n.rotate(new Quaternionf().rotateX(rot.x()).normalize());
 
-                tris.get(i).rotate(new Quaternionf().rotateY(rot.y()).normalize());
+                tris.get(j).rotate(new Quaternionf().rotateY(rot.y()).normalize());
                 n.rotate(new Quaternionf().rotateY(rot.y()).normalize());
 
-                tris.get(i).rotate(new Quaternionf().rotateZ(rot.z()).normalize());
+                tris.get(j).rotate(new Quaternionf().rotateZ(rot.z()).normalize());
                 n.rotate(new Quaternionf().rotateZ(rot.z()).normalize());
 
-                tris.get(i).recalculateVectors();
-                tris.get(i).setDirection(n);
+                tris.get(j).recalculateVectors();
+                tris.get(j).setDirection(n);
 
-                tris.get(i).translate(modelView.offset().x(), modelView.offset().y(), modelView.offset().z());
+                tris.get(j).translate(modelView.offset().x(), modelView.offset().y(), modelView.offset().z());
             }
 
             this.modelTriangles.addAll(tris);
         }
-
         this.textureMap.putAll(modelView.collectTextures());
     }
 
@@ -262,8 +262,9 @@ public class TriangleModel implements RenderModel {
                     corner11));
         }
 
-        for (Triangle triangle : triangles) {
-            var d = triangle.getDirection();
+        for (int i = 0; i < triangles.size(); i++) {
+            Triangle triangle = triangles.get(i);
+            Direction d = triangle.getDirection();
             if (d != null) triangle.textureInfo = element.faces.get(d.getName());
             triangle.shade = element.shade;
         }

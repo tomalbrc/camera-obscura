@@ -16,7 +16,7 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
 
-    protected final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    protected final ExecutorService executor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()-1));
 
     public AbstractRenderer(LivingEntity entity, int width, int height, int renderDistance) {
         this.entity = entity;

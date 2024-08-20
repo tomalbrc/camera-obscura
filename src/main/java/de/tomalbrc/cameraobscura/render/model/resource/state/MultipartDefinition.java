@@ -34,7 +34,8 @@ public class MultipartDefinition {
 
                 var prop = stateDefinition.getProperty(propertyName);
                 boolean match = false;
-                for (var valueKey : valueKeys) {
+                for (int i = 0; i < valueKeys.length; i++) {
+                    String valueKey = valueKeys[i];
                     var propVal = prop.getValue(valueKey);
                     if (!propVal.isPresent()) {
                         throw new RuntimeException(String.format("Unknown value '%s' for property '%s' on '%s'", valueKey, propertyName, stateDefinition.getOwner()));

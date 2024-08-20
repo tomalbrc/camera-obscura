@@ -182,7 +182,7 @@ public class RPHelper {
 
     public static List<RPModel.View> loadModel(RPBlockState rpBlockState, BlockState blockState) {
         if (rpBlockState != null && rpBlockState.variants != null) {
-            for (var entry: rpBlockState.variants.entrySet()) {
+            for (Map.Entry<String, Variant> entry: rpBlockState.variants.entrySet()) {
                 boolean matches = true;
                 if (!entry.getKey().isEmpty()) {
                     try {
