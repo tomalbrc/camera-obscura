@@ -62,6 +62,9 @@ public class Raytracer {
         this.entityIterator = new EntityIterator(this.level, cache, entity);
 
         this.skyDarken = this.level.getSkyDarken();
+
+        RPModel.View modelView = BuiltinModels.skyModel(Vec3.ZERO);
+        this.localSkyModel = new TriangleModel(modelView);
     }
 
     public void preloadChunks(BlockPos center) {
@@ -289,10 +292,6 @@ public class Raytracer {
     }
 
     private int skyColorWithClouds(Vec3 pos, Vec3 direction) {
-        if (localSkyModel == null) {
-            RPModel.View modelView = BuiltinModels.skyModel(pos);
-            localSkyModel = new TriangleModel(modelView);
-        }
         List<RenderModel.ModelHit> hits = localSkyModel.intersect(pos.toVector3f(), direction.toVector3f().mul(this.distance), new Vector3f((int)pos.x(), 0, (int)pos.z), 0);
         var color = 0;
         if (hits.size() >= 1) {
