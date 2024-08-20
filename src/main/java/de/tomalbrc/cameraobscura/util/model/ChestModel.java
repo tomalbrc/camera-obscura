@@ -26,11 +26,11 @@ public class ChestModel {
     public static RPModel.View get(BlockState chestBlockState) {
         RPModel rpModel;
         if (chestBlockState.getValue(ChestBlock.TYPE) == ChestType.RIGHT)
-            rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream("/builtin/chest_right.json"));
+            rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/chest_right.json"));
         else if (chestBlockState.getValue(ChestBlock.TYPE) == ChestType.LEFT)
-            rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream("/builtin/chest_left.json"));
+            rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/chest_left.json"));
         else
-            rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream("/builtin/chest.json"));
+            rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/chest.json"));
 
         rpModel.textures.put("0", "minecraft:entity/chest/"+chestTexture(chestBlockState));
         for (RPElement element : rpModel.elements) {

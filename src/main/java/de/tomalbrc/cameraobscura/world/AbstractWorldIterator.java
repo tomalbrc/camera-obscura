@@ -33,17 +33,15 @@ abstract public class AbstractWorldIterator<T> {
     }
 
     protected LevelChunk getChunkAt(Vector2i pos) {
-        LevelChunk chunk = null;
         if (this.cachedChunks.containsKey(pos)) {
-            chunk = this.cachedChunks.get(pos);
+            return this.cachedChunks.get(pos);
         } else {
-            chunk = this.level.getChunk(pos.x, pos.y);
-            cachedChunks.put(pos, chunk);
+            LevelChunk chunk = this.level.getChunk(pos.x, pos.y);
+            return cachedChunks.put(pos, chunk);
         }
-        return chunk;
     }
 
-    protected LevelChunk getChunkAt(BlockPos blockPos) {
+    public LevelChunk getChunkAt(BlockPos blockPos) {
         return this.getChunkAt(new Vector2i(SectionPos.blockToSectionCoord(blockPos.getX()), SectionPos.blockToSectionCoord(blockPos.getZ())));
     }
 

@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.json.*;
 import de.tomalbrc.cameraobscura.render.model.resource.RPBlockState;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
@@ -15,9 +14,11 @@ import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.NotNull;
@@ -26,27 +27,27 @@ import org.joml.Vector4f;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class RPHelper {
     public static ResourcePackBuilder resourcePackBuilder;
     private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
-    private static final Map<String, RPModel> modelResources = new ConcurrentHashMap<>();
-    private static final Map<String, RPBlockState> blockStateResources = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, RPModel> modelResources = new Reference2ObjectArrayMap<>();
+    private static final Map<BlockState, RPBlockState> blockStateResources = new Reference2ObjectArrayMap<>();
 
-    private static final Map<String, BufferedImage> textureCache = new ConcurrentHashMap<>();
-
+    private static final Map<ResourceLocation, BufferedImage> textureCache = new Reference2ObjectArrayMap<>();
 
     final private static Gson gson = new GsonBuilder()
-            .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
+            .registerTypeAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
             .registerTypeAdapter(Variant.class, new VariantDeserializer())
             .registerTypeAdapter(MultipartDefinition.class, new MultipartDefinitionDeserializer())
             .registerTypeAdapter(MultipartDefinition.Condition.class, new ConditionDeserializer())
@@ -64,36 +65,37 @@ public class RPHelper {
         return resourcePackBuilder == null ? vanillaBuilder : resourcePackBuilder;
     }
 
-    public static RPBlockState loadBlockState(String path) {
-        if (blockStateResources.containsKey(path)) {
-            return blockStateResources.get(path);
+    public static RPBlockState loadBlockState(BlockState blockState) {
+        if (blockStateResources.containsKey(blockState)) {
+            return blockStateResources.get(blockState);
         }
 
-        byte[] data = getBuilder().getDataOrSource("assets/minecraft/blockstates/" + path + ".json");
+        ResourceLocation location = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
+        byte[] data = getBuilder().getDataOrSource("assets/" + location.getNamespace() + "/blockstates/" + location.getPath() + ".json");
         var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
-        blockStateResources.put(path, resource);
+        blockStateResources.put(blockState, resource);
         return resource;
     }
 
-    public static RPModel.View loadModelView(String namespace, String path, Vector3f blockRotation, boolean uvlock) {
-        return new RPModel.View(loadModel(namespace, path), blockRotation, uvlock);
+    public static RPModel.View loadModelView(ResourceLocation resourceLocation, Vector3f blockRotation, boolean uvlock) {
+        return new RPModel.View(loadModel(resourceLocation), blockRotation, uvlock);
     }
 
-    public static RPModel loadModel(String namespace, String path) {
-        if (modelResources.containsKey(path)) {
-            return modelResources.get(path);
+    public static RPModel loadModel(ResourceLocation resourceLocation) {
+        if (modelResources.containsKey(resourceLocation)) {
+            return modelResources.get(resourceLocation);
         }
 
-        byte[] data = getBuilder().getDataOrSource("assets/"+ namespace +"/models/" + path + ".json");
+        byte[] data = getBuilder().getDataOrSource("assets/"+ resourceLocation.getNamespace() +"/models/" + resourceLocation.getPath() + ".json");
         if (data != null) {
-            RPModel model = loadModelView(new ByteArrayInputStream(data));
-            modelResources.put(path, model);
+            RPModel model = loadModel(new ByteArrayInputStream(data));
+            modelResources.put(resourceLocation, model);
             return model;
         }
         return null;
     }
 
-    public static RPModel loadModelView(InputStream inputStream) {
+    public static RPModel loadModel(InputStream inputStream) {
         RPModel model = gson.fromJson(new InputStreamReader(inputStream), RPModel.class);
         if (model.elements != null) {
             for (int i = 0; i < model.elements.size(); i++) {
@@ -112,47 +114,52 @@ public class RPHelper {
         return model;
     }
 
-    public static byte[] loadTexture(String path) {
-        return getBuilder().getDataOrSource("assets/minecraft/textures/" + path + ".png");
+    public static byte[] loadTextureBytes(ResourceLocation path) {
+        return getBuilder().getDataOrSource("assets/" + path.getNamespace() + "/textures/" + path.getPath() + ".png");
     }
 
-    public static BufferedImage loadTextureImage(String path) {
+    public static BufferedImage loadTextureImage(ResourceLocation path) {
         if (textureCache.containsKey(path)) {
             return textureCache.get(path);
         }
 
-        LogUtils.getLogger().error("Path "+path);
-
-        if (path.startsWith("d.")) {
-            var img = fromBytes(getTexture(path.substring(2)));
+        if (path.getNamespace().equals(Constants.DYNAMIC_PLAYER_TEXTURE)) {
+            var img = imageFromBytes(getPlayerTexture(path.getPath()));
             textureCache.put(path, img);
-
+            return img;
+        } else if (path.getNamespace().equals(Constants.DYNAMIC_SIGN_TEXTURE)) {
+            var img = imageFromBytes(getPlayerTexture(path.getPath()));
+            textureCache.put(path, img);
+            return img;
+        } else if (path.getNamespace().equals(Constants.DYNAMIC_MAP_TEXTURE)) {
+            var img = imageFromBytes(getPlayerTexture(path.getPath()));
+            textureCache.put(path, img);
             return img;
         }
 
-        byte[] data = getBuilder().getDataOrSource("assets/minecraft/textures/" + path + ".png");
-        BufferedImage img = fromBytes(data);
+        byte[] data = loadTextureBytes(path);
+        BufferedImage img = imageFromBytes(data);
         textureCache.put(path, img);
 
 
         return img;
     }
 
-    private static BufferedImage fromBytes(byte[] data) {
+    private static BufferedImage imageFromBytes(byte[] data) {
         BufferedImage img = null;
         try {
             img = ImageIO.read(new ByteArrayInputStream(data));
             if (img.getType() == 10) {
                 img = TextureHelper.darkenGrayscale(img);
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return img;
     }
 
     @NotNull
-    private static byte[] getTexture(String uuid) {
+    private static byte[] getPlayerTexture(String uuid) {
         InputStreamReader inputStreamReader = null;
         try {
             URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
@@ -173,7 +180,7 @@ public class RPHelper {
         }
     }
 
-    public static List<RPModel.View> loadModelView(RPBlockState rpBlockState, BlockState blockState) {
+    public static List<RPModel.View> loadModel(RPBlockState rpBlockState, BlockState blockState) {
         if (rpBlockState != null && rpBlockState.variants != null) {
             for (var entry: rpBlockState.variants.entrySet()) {
                 boolean matches = true;
@@ -194,7 +201,7 @@ public class RPHelper {
                 }
 
                 if (entry.getKey().isEmpty() || matches) {
-                    var model = RPHelper.loadModelView(entry.getValue().model.getNamespace(), entry.getValue().model.getPath(), new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z), entry.getValue().uvlock);
+                    var model = RPHelper.loadModelView(entry.getValue().model, new Vector3f(entry.getValue().x, entry.getValue().y, entry.getValue().z), entry.getValue().uvlock);
                     return ObjectArrayList.of(model);
                 }
             }
@@ -208,7 +215,7 @@ public class RPHelper {
                 if (mp.when == null || mp.when.canApply(blockState)) {
                     for (int applyIndex = 0; applyIndex < mp.apply.size(); applyIndex++) {
                         var apply = mp.apply.get(applyIndex);
-                        var model = RPHelper.loadModelView(apply.model.getNamespace(), apply.model.getPath(), new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
+                        var model = RPHelper.loadModelView(apply.model, new Vector3f(apply.x, apply.y, apply.z), apply.uvlock);
                         list.add(model);
                     }
                 }
@@ -218,13 +225,17 @@ public class RPHelper {
 
         return null;
     }
-    public static List<RPModel.View> loadModelView(BlockState blockState) {
+
+    // returning a list for multipart blocks like multiple vines/lichen in a block
+    public static List<RPModel.View> loadBlockModelViews(BlockState blockState) {
         BlockState block = safePolymerBlockState(blockState);
+        RPBlockState rpBlockState = RPHelper.loadBlockState(block);
+        return loadModel(rpBlockState, block);
+    }
 
-        String blockName = BuiltInRegistries.BLOCK.getKey(block.getBlock()).getPath();
-        RPBlockState rpBlockState = RPHelper.loadBlockState(blockName);
-
-        return loadModelView(rpBlockState, block);
+    public static RPModel loadItemModel(ItemStack itemStack) {
+        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+        return loadModel(resourceLocation.withPath("item/"+resourceLocation.getPath()));
     }
 
     private static BlockState safePolymerBlockState(BlockState blockState) {

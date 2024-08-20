@@ -13,9 +13,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
 import org.joml.Vector2i;
 
 import java.util.List;
@@ -23,15 +20,9 @@ import java.util.Map;
 
 public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit> {
     public record WorldHit(BlockPos blockPos, BlockState blockState, FluidState fluidState, FluidState fluidStateAbove) {
-        public boolean isWater() {
+        public boolean isWaterOrWaterlogged() {
             if (fluidState != null && !fluidState.isEmpty()) {
                 return fluidState.is(FluidTags.WATER);
-            }
-            return false;
-        }
-        public boolean isLava() {
-            if (fluidState != null && !fluidState.isEmpty()) {
-                return fluidState.is(FluidTags.LAVA);
             }
             return false;
         }
@@ -58,7 +49,8 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
             return Blocks.AIR.defaultBlockState();
         } else {
             LevelChunk levelChunk = this.getChunkAt(new Vector2i(SectionPos.blockToSectionCoord(blockPos.getX()), SectionPos.blockToSectionCoord(blockPos.getZ())));
-            return levelChunk.getBlockState(blockPos);
+            BlockState blockState = levelChunk.getBlockState(blockPos);
+            return blockState;
         }
     }
 
@@ -81,12 +73,7 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
                 return null; // keep searching
             }
 
-            Vec3 from = context.getFrom();
-            Vec3 to = context.getTo();
-
-            BlockHitResult blockHitResult = this.level.clipWithInteractionOverride(from, to, blockPos, Shapes.block(), blockState);
-
-            return blockHitResult != null ? new WorldHit(new BlockPos(blockPos), blockState, fluidState, fluidStateAbove) : null;
+            return !blockState.isAir() ? new WorldHit(new BlockPos(blockPos), blockState, fluidState, fluidStateAbove) : null;
         }, (clipContextx) -> null);
 
         if (hitResult != null)

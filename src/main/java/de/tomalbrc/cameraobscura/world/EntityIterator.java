@@ -1,6 +1,9 @@
 package de.tomalbrc.cameraobscura.world;
 
 import de.tomalbrc.cameraobscura.ModConfig;
+import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.util.Constants;
+import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -8,10 +11,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -32,14 +35,27 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
         this.allEntities = new ObjectArrayList<>();
         if (ModConfig.getInstance().renderEntities) {
             for (Entity entity : this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance))) {
+                EntityHit hit;
+
+                if (!entity1.hasLineOfSight(entity)) continue;
+
                 if (entity instanceof LivingEntity livingEntity) {
-                    this.allEntities.add(new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRot, 0), entity.getUUID()));
+                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRot, 0), entity.getUUID(), null);
                 } else if (entity instanceof ItemFrame itemFrame) {
-                    Vec3 off = new Vec3(0,0.5,0.5).yRot(Mth.DEG_TO_RAD * itemFrame.getDirection().toYRot());
-                    this.allEntities.add(new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().subtract(off).toVector3f(), new Vector3f(itemFrame.getXRot(), itemFrame.getYRot(), 0), entity.getUUID()));
+                    var rot = itemFrame.getDirection().getRotation();
+                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), entity.getUUID(), null);
+                } else if (entity instanceof ItemEntity itemEntity) {
+                    hit = new EntityHit(entity.getType(), entity.getBoundingBox(), entity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), entity.getUUID(), itemEntity.getItem().copy());
                 } else {
-                    this.allEntities.add(new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0), entity.getUUID()));
+                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0), entity.getUUID(), null);
                 }
+
+                // Cache player textures
+                if (entity.getType() == EntityType.PLAYER) {
+                    RPHelper.loadTextureImage(CachedResourceLocationDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
+                }
+
+                this.allEntities.add(hit);
             }
         }
     }
@@ -56,5 +72,5 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
         return hits;
     }
 
-    public record EntityHit(EntityType type, AABB boundingBox, Vector3fc position, Vector3fc rotation, UUID uuid) {}
+    public record EntityHit(EntityType type, AABB boundingBox, Vector3fc position, Vector3fc rotation, UUID uuid, Object data) {}
 }

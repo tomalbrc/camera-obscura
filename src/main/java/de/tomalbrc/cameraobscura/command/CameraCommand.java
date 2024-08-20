@@ -145,26 +145,19 @@ public class CameraCommand {
 
         int size = 128*scale;
 
-        boolean async = ModConfig.getInstance().renderAsyncMap;
-        if (async) {
-            var renderer = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance);
+        var renderer = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance);
 
-            CompletableFuture.supplyAsync(() -> {
-                try {
-                    return renderer.render();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }).thenAcceptAsync(mapImage -> {
-                finalize(player, mapImage, source, startTime);
-            }, source.getServer());
-        }
-        else {
-            var mapImage = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance).render();
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return renderer.render();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).thenAcceptAsync(mapImage -> {
             finalize(player, mapImage, source, startTime);
-        }
+        }, source.getServer());
 
         return Command.SINGLE_SUCCESS;
     }
@@ -240,13 +233,9 @@ public class CameraCommand {
 
         long startTime = System.nanoTime();
 
-        if (ModConfig.getInstance().renderAsyncImage) {
-            CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> {
-                finalizeImage(mapImage, startTime, source);
-            }, source.getServer());
-        } else {
-            finalizeImage(renderer.render(), startTime, source);
-        }
+        CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> {
+            finalizeImage(mapImage, startTime, source);
+        }, source.getServer());
 
         return Command.SINGLE_SUCCESS;
     }

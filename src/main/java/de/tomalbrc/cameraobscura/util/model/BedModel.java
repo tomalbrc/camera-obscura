@@ -15,7 +15,7 @@ import java.util.Optional;
 public class BedModel {
 
     public static RPModel.View get(BlockState blockState, Optional<DyeColor> color) {
-        RPModel rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream(blockState.getValue(BedBlock.PART) == BedPart.HEAD ? "/builtin/bed_top.json" : "/builtin/bed_bottom.json"));
+        RPModel rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream(blockState.getValue(BedBlock.PART) == BedPart.HEAD ? "/builtin/bed_top.json" : "/builtin/bed_bottom.json"));
 
         color.ifPresentOrElse(
                 dyeColor -> rpModel.textures.put("0", "minecraft:entity/bed/" + dyeColor.getName()),

@@ -8,7 +8,6 @@ import org.apache.logging.log4j.util.TriConsumer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final int width;

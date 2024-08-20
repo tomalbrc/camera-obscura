@@ -1,10 +1,10 @@
 package de.tomalbrc.cameraobscura.util.model;
 
+import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
@@ -16,7 +16,7 @@ public class LiquidModel {
         int height = !fluidStateAbove.isEmpty() ? 16 : (fluidState.getAmount()-1) * 2;
 
         RPModel rpModel = new RPModel();
-        rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
+        rpModel.parent = CachedResourceLocationDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (fluidState.is(FluidTags.WATER)) {
             rpModel.textures.put("top", "minecraft:block/water_still");

@@ -1,20 +1,26 @@
 package de.tomalbrc.cameraobscura.util;
 
+import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 public class BuiltinEntityModels {
     static Map<EntityType<?>, RPModel> modelMap = new Object2ObjectOpenHashMap<>();
-    public static RPModel.View getModel(EntityType entityType, Vector3f pos, Vector3fc rot, @Nullable UUID uuid) {
+
+    public static RPModel getRaw(EntityType<?> type) {
+        return modelMap.get(type);
+    }
+
+    public static RPModel.View getModel(EntityType entityType, Vector3f pos, Vector3fc rot, @Nullable UUID uuid, Object data) {
         if (modelMap.containsKey(entityType)) {
             if (entityType == EntityType.VILLAGER) {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -2.f / 16.f, 0));
@@ -23,29 +29,27 @@ public class BuiltinEntityModels {
             } else if (entityType == EntityType.CAMEL) {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1, -0.5f));
             } else {
-                return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos);
+                return new RPModel.View(modelMap.get(entityType), new Vector3f(rot.x(), rot.y() + 180, rot.z()), pos);
             }
         } else if (entityType == EntityType.PLAYER) {
-            RPModel model = loadModel("/builtin/player.json");
-            model.textures.put(model.textures.keySet().iterator().next(), "d."+uuid.toString().replace("-", ""));
+            RPModel model = loadModel("/builtin/player.json"); // todo: cache per player uuid
+            model.textures.put(model.textures.keySet().iterator().next(), Constants.DYNAMIC_PLAYER_TEXTURE+":"+uuid.toString().replace("-", ""));
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1.f / 16.f, 0));
+        } else if (entityType == EntityType.ITEM) {
+            ItemStack itemStack = (ItemStack) data;
+            RPModel model = RPHelper.loadItemModel(itemStack);
+            return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, 0, 0));
         } else {
             return new RPModel.View(modelMap.get(EntityType.PIG), new Vector3f(0, rot.y() + 180, 0), pos);
         }
     }
 
     private static RPModel loadModel(String model) {
-        int num = Math.abs(new Random().nextInt());
-
-        RPModel rpModel = RPHelper.loadModelView(BuiltinEntityModels.class.getResourceAsStream(model));
-        rpModel.textures.put(""+num, rpModel.textures.get("0"));
-        rpModel.textures.remove("0");
-
+        RPModel rpModel = RPHelper.loadModel(BuiltinEntityModels.class.getResourceAsStream(model));
         for (RPElement element : rpModel.elements) {
             element.shade = false;
             for (String key : element.faces.keySet()) {
                 var face = element.faces.get(key);
-                face.texture = "#" + num;
                 face.uv.mul(rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f, rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f);
             }
         }
@@ -74,8 +78,8 @@ public class BuiltinEntityModels {
         modelMap.put(EntityType.GHAST, loadModel("/builtin/ghast.json"));
         modelMap.put(EntityType.CHICKEN, loadModel("/builtin/chicken.json"));
 
-        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel("minecraft", "block/item_frame"));
-        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel("minecraft", "block/glow_item_frame"));
+        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel(CachedResourceLocationDeserializer.get("minecraft:block/item_frame")));
+        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel(CachedResourceLocationDeserializer.get("minecraft:block/glow_item_frame")));
         modelMap.put(EntityType.SQUID, loadModel("/builtin/squid.json"));
         modelMap.put(EntityType.GLOW_SQUID, loadModel("/builtin/glow_squid.json"));
         modelMap.put(EntityType.SNOW_GOLEM, loadModel("/builtin/pig.json"));
@@ -95,7 +99,6 @@ public class BuiltinEntityModels {
         modelMap.put(EntityType.FOX, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.FIREBALL, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.FALLING_BLOCK, loadModel("/builtin/pig.json"));
-        modelMap.put(EntityType.ITEM, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.ITEM_DISPLAY, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.BLOCK_DISPLAY, loadModel("/builtin/pig.json"));
         modelMap.put(EntityType.TEXT_DISPLAY, loadModel("/builtin/pig.json"));

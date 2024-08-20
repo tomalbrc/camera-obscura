@@ -1,12 +1,14 @@
 package de.tomalbrc.cameraobscura.util;
 
+import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
+import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
 import de.tomalbrc.cameraobscura.util.model.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.resources.ResourceLocation;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class BuiltinModels {
-    static Map<BlockState, RPModel.View> modelMap = new Object2ObjectOpenHashMap<>();
+    static Map<BlockState, RPModel.View> modelMap = new Reference2ObjectArrayMap<>();
 
     static Int2ObjectOpenHashMap<RPModel.View> waterModels = new Int2ObjectOpenHashMap<>();
     static Int2ObjectOpenHashMap<RPModel.View> lavaModels = new Int2ObjectOpenHashMap<>();
@@ -78,7 +80,7 @@ public class BuiltinModels {
         if (modelMap.containsKey(blockState))
             return modelMap.get(blockState);
 
-        return modelMap.put(blockState, ShulkerModel.get(color));
+        return modelMap.put(blockState, ShulkerModel.get(blockState, color));
     }
 
     static RPModel.View decoratedPotModel = null;
@@ -99,13 +101,21 @@ public class BuiltinModels {
         return conduitModel;
     }
 
+    public static RPModel.View signModel(BlockState blockState) {
+        if (modelMap.containsKey(blockState))
+            return modelMap.get(blockState);
+
+        return modelMap.put(blockState, SignModel.get(blockState));
+    }
+
     static RPModel.View skyModel = null;
-    public static RPModel.View skyModel() {
+    static TriangleModel skyRenderModel = null;
+    public static RPModel.View skyModel(Vec3 pos) {
         if (skyModel != null)
             return skyModel;
 
         RPModel rpModel = new RPModel();
-        rpModel.parent = ResourceLocation.withDefaultNamespace("block/cube_all");
+        rpModel.parent = CachedResourceLocationDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", "minecraft:environment/clouds");
         rpModel.elements = new ObjectArrayList<>();
@@ -123,7 +133,7 @@ public class BuiltinModels {
 
         rpModel.elements.add(element);
 
-        var view = new RPModel.View(rpModel, Vec3.ZERO.toVector3f());
+        var view = new RPModel.View(rpModel, new Vector3f(), pos.toVector3f());
 
         skyModel = view;
 

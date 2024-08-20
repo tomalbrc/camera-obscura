@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class DecoratedPotModel {
     public static RPModel.View get() {
-        RPModel rpModel = RPHelper.loadModelView(ChestModel.class.getResourceAsStream("/builtin/decorated_pot.json"));
+        RPModel rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/decorated_pot.json"));
         for (RPElement element : rpModel.elements) {
             for (Map.Entry<String, RPElement.TextureInfo> entry : element.faces.entrySet()) {
                 if (element.name == null || !(element.name.equals("left") || element.name.equals("right") || element.name.equals("back") || element.name.equals("front")))
