@@ -14,7 +14,6 @@ import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -35,16 +34,17 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RPHelper {
     public static ResourcePackBuilder resourcePackBuilder;
     private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
-    private static final Map<ResourceLocation, RPModel> modelResources = new Reference2ObjectArrayMap<>();
-    private static final Map<BlockState, RPBlockState> blockStateResources = new Reference2ObjectArrayMap<>();
+    private static final Map<ResourceLocation, RPModel> modelResources = new ConcurrentHashMap<>();
+    private static final Map<BlockState, RPBlockState> blockStateResources = new ConcurrentHashMap<>();
 
-    private static final Map<ResourceLocation, BufferedImage> textureCache = new Reference2ObjectArrayMap<>();
+    private static final Map<ResourceLocation, BufferedImage> textureCache = new ConcurrentHashMap<>();
 
     final private static Gson gson = new GsonBuilder()
             .registerTypeAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())

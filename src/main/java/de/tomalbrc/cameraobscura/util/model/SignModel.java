@@ -4,29 +4,15 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.StandingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.properties.RotationSegment;
 import org.joml.Vector3f;
 
 import java.util.Map;
 
 public class SignModel {
-    private static String chestTexture(BlockState blockState) {
-        if (blockState.is(Blocks.CHEST)) {
-            return blockState.getValue(ChestBlock.TYPE) == ChestType.LEFT ?
-                    "normal_left" :
-                    blockState.getValue(ChestBlock.TYPE) == ChestType.RIGHT ?
-                            "normal_right" : "normal";
-        }
-
-        return blockState.is(Blocks.ENDER_CHEST) ? "ender" : "normal";
-    }
-
     public static RPModel.View get(BlockState blockState) {
         RPModel rpModel;
         if (blockState.is(BlockTags.SIGNS))

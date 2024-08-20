@@ -108,6 +108,13 @@ public class BuiltinModels {
         return modelMap.put(blockState, SignModel.get(blockState));
     }
 
+    public static RPModel.View bellModel(BlockState blockState) {
+        if (modelMap.containsKey(blockState))
+            return modelMap.get(blockState);
+
+        return modelMap.put(blockState, BellModel.get());
+    }
+
     static RPModel.View skyModel = null;
     static TriangleModel skyRenderModel = null;
     public static RPModel.View skyModel(Vec3 pos) {

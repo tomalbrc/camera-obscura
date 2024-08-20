@@ -1,6 +1,5 @@
 package de.tomalbrc.cameraobscura.render;
 
-import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
 import de.tomalbrc.cameraobscura.color.BlockColors;
 import de.tomalbrc.cameraobscura.color.MiscColors;
@@ -13,10 +12,9 @@ import de.tomalbrc.cameraobscura.util.ColorHelper;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -43,9 +41,8 @@ public class Raytracer {
 
     private final ServerLevel level;
 
-    private static final Map<BlockState, List<RenderModel>> renderModelCache = new Object2ObjectArrayMap<>();
-    private static final Int2ObjectArrayMap<RenderModel> fluidRenderModelCache = new Int2ObjectArrayMap<>();
-    private final Map<UUID, RenderModel> entityRenderModelCache = new Object2ObjectArrayMap<>();
+    private final Map<BlockState, List<RenderModel>> renderModelCache = new Reference2ObjectArrayMap<>();
+    private final Map<UUID, RenderModel> entityRenderModelCache = new Reference2ObjectArrayMap<>();
 
     private final BlockIterator blockIterator;
     private final EntityIterator entityIterator;
@@ -65,10 +62,6 @@ public class Raytracer {
         this.entityIterator = new EntityIterator(this.level, cache, entity);
 
         this.skyDarken = this.level.getSkyDarken();
-    }
-
-    public static void clearCache() {
-        renderModelCache.clear();
     }
 
     public void preloadChunks(BlockPos center) {
@@ -172,6 +165,10 @@ public class Raytracer {
                 rpModels = rpModel != null ? ObjectArrayList.of(rpModel) : ObjectArrayList.of();
             }
 
+            if (blockState.is(Blocks.BELL)) {
+                rpModels.add(BuiltinModels.bellModel(blockState));
+            }
+
             List<RenderModel> renderModels = this.getBlockRenderModels(rpModels, result, allowWater);
 
             LevelChunk chunk = this.blockIterator.getChunkAt(blockPos); // get cached chunk
@@ -242,10 +239,10 @@ public class Raytracer {
             return this.renderModelCache.get(blockState);
         }
         else {
-            List<RenderModel> list = renderModelCache.get(blockState);
+            List<RenderModel> list = this.renderModelCache.get(blockState);
             if (list == null) {
                 list = new ObjectArrayList();
-                renderModelCache.put(blockState, list);
+                this.renderModelCache.put(blockState, list);
             }
 
             for (int i = 0; i < views.size(); i++) {
@@ -255,23 +252,14 @@ public class Raytracer {
             return list;
         }
     }
-    private RenderModel createOrGetCached(int blockState, RPModel.View view) {
-        if (fluidRenderModelCache.containsKey(blockState)) {
-            return fluidRenderModelCache.get(blockState);
-        }
-        else {
-            var model = new TriangleModel(view);
-            fluidRenderModelCache.put(blockState, model);
-            return model;
-        }
-    }
+
     private RenderModel createOrGetCached(UUID entityUUID, RPModel.View view) {
-        if (entityRenderModelCache.containsKey(entityUUID)) {
-            return entityRenderModelCache.get(entityUUID);
+        if (this.entityRenderModelCache.containsKey(entityUUID)) {
+            return this.entityRenderModelCache.get(entityUUID);
         }
         else {
             var model = new TriangleModel(view);
-            entityRenderModelCache.put(entityUUID, model);
+            this.entityRenderModelCache.put(entityUUID, model);
             return model;
         }
     }
@@ -282,7 +270,6 @@ public class Raytracer {
 
         if (allowWater && result.isWaterOrWaterlogged() && !result.blockState().is(Blocks.WATER)) {
             RPModel.View lm = BuiltinModels.liquidModel(result.fluidState(), result.fluidStateAbove());
-            //renderModels.add(createOrGetCached(result.fluidState().getAmount() + (result.fluidState().getType() == result.fluidStateAbove().getType() ? 1:0) + (result.fluidState().is(FluidTags.LAVA) ? 100:0), lm));
             views.add(lm);
         }
 

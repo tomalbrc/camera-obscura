@@ -3,6 +3,7 @@ package de.tomalbrc.cameraobscura.util;
 import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
+import de.tomalbrc.cameraobscura.util.model.GeneratedItemModel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
@@ -38,6 +39,11 @@ public class BuiltinEntityModels {
         } else if (entityType == EntityType.ITEM) {
             ItemStack itemStack = (ItemStack) data;
             RPModel model = RPHelper.loadItemModel(itemStack);
+
+            if (model.parent.getPath().equals("item/generated")) {
+                model = GeneratedItemModel.getItem(model.textures.getOrDefault("layer0", null), model.textures.getOrDefault("layer1", null));
+            }
+
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, 0, 0));
         } else {
             return new RPModel.View(modelMap.get(EntityType.PIG), new Vector3f(0, rot.y() + 180, 0), pos);

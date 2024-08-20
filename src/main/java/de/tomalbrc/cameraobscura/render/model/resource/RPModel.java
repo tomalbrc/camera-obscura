@@ -63,7 +63,7 @@ public class RPModel {
             }
 
             ResourceLocation parent = this.model.parent;
-            while (parent != null && !parent.getPath().isEmpty()) {
+            while (parent != null) {
                 RPModel.View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
 
                 if (child.model != null) {
