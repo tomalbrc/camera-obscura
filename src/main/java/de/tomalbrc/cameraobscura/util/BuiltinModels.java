@@ -26,7 +26,7 @@ public class BuiltinModels {
     static Int2ObjectOpenHashMap<RPModel.View> waterModels = new Int2ObjectOpenHashMap<>();
     static Int2ObjectOpenHashMap<RPModel.View> lavaModels = new Int2ObjectOpenHashMap<>();
     public static RPModel.View liquidModel(FluidState fluidState, FluidState fluidStateAbove) {
-        int height = (fluidState.getAmount()-1) * 2;
+        int height = fluidStateAbove.isEmpty() ? (fluidState.getAmount()-1) * 2 : 16;
 
         if (fluidState.is(FluidTags.WATER) && waterModels.containsKey(height))
             return waterModels.get(height);
