@@ -153,9 +153,7 @@ public class CameraCommand {
                 e.printStackTrace();
             }
             return null;
-        }).thenAcceptAsync(mapImage -> {
-            finalize(player, mapImage, source, startTime);
-        }, source.getServer());
+        }).thenAcceptAsync(mapImage -> finalize(player, mapImage, source, startTime), source.getServer());
 
         return Command.SINGLE_SUCCESS;
     }
@@ -180,7 +178,7 @@ public class CameraCommand {
                 source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
             }
         } else {
-            source.sendSystemMessage(Component.literal("Something went wrong while trying to take a photo!").withColor(CommonColors.RED));
+            source.sendFailure(Component.literal("Something went wrong while trying to take a photo!").withColor(CommonColors.RED));
         }
     }
 
@@ -221,7 +219,7 @@ public class CameraCommand {
     }
 
 
-    private static int createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int scale) {
+    private static void createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int scale) {
         CommandSourceStack source = context.getSource();
 
         if (ModConfig.getInstance().showSystemMessages)
@@ -231,11 +229,7 @@ public class CameraCommand {
 
         long startTime = System.nanoTime();
 
-        CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> {
-            finalizeImage(mapImage, startTime, source);
-        }, source.getServer());
-
-        return Command.SINGLE_SUCCESS;
+        CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> finalizeImage(mapImage, startTime, source), source.getServer());
     }
 
     private static void finalizeImage(BufferedImage mapImage, long startTime, CommandSourceStack source) {
@@ -255,8 +249,8 @@ public class CameraCommand {
             if (ModConfig.getInstance().showSystemMessages) {
                 long durationInMillis = (System.nanoTime() - startTime) / 1000000;
                 long millis = durationInMillis % 1000;
-                long second = (durationInMillis / 1000) % 60;
-                String time = String.format("%d.%02d seconds", second, millis);
+                long secs = (durationInMillis / 1000);
+                String time = secs > 0 ? String.format("%ds %dms", secs, millis) : String.format("%dms", millis);
                 source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
             }
         } catch (IOException e) {
