@@ -8,7 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
-import de.tomalbrc.cameraobscura.render.Raytracer;
 import de.tomalbrc.cameraobscura.render.renderer.BufferedImageRenderer;
 import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
 import de.tomalbrc.cameraobscura.util.RPHelper;

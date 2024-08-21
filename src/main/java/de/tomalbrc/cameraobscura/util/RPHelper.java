@@ -13,7 +13,10 @@ import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.Vector4f;
 
 import javax.imageio.ImageIO;
@@ -46,7 +50,7 @@ public class RPHelper {
 
     private static final Map<ResourceLocation, BufferedImage> textureCache = new ConcurrentHashMap<>();
 
-    final private static Gson gson = new GsonBuilder()
+    final public static Gson gson = new GsonBuilder()
             .registerTypeAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
             .registerTypeAdapter(Variant.class, new VariantDeserializer())
             .registerTypeAdapter(MultipartDefinition.class, new MultipartDefinitionDeserializer())
@@ -77,7 +81,7 @@ public class RPHelper {
         return resource;
     }
 
-    public static RPModel.View loadModelView(ResourceLocation resourceLocation, Vector3f blockRotation, boolean uvlock) {
+    public static RPModel.View loadModelView(ResourceLocation resourceLocation, Vector3fc blockRotation, boolean uvlock) {
         return new RPModel.View(loadModel(resourceLocation), blockRotation, uvlock);
     }
 

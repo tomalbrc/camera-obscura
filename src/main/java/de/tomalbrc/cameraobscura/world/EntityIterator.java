@@ -15,10 +15,12 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,11 +37,13 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
         this.allEntities = new ObjectArrayList<>();
         if (ModConfig.getInstance().renderEntities) {
             List<Entity> lst = this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance));
-            for (int i = 0; i < lst.size(); i++) {
+            lst.sort(Comparator.comparingDouble(a -> a.position().distanceTo(entity1.position())));
+
+            for (int i = 0; i < lst.size() && this.allEntities.size() <= ModConfig.getInstance().renderEntitiesAmount; i++) {
                 Entity entity = lst.get(i);
                 EntityHit hit;
 
-                if (!entity1.hasLineOfSight(entity)) continue;
+                if (!isInFrustum(entity1.getViewVector(1.f), entity1.position(), entity.position(), ModConfig.getInstance().fov+10) || !entity1.hasLineOfSight(entity)) continue;
 
                 if (entity instanceof LivingEntity livingEntity) {
                     hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRot, 0), entity.getUUID(), null);
@@ -60,6 +64,13 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
                 this.allEntities.add(hit);
             }
         }
+    }
+
+    public boolean isInFrustum(Vec3 viewVector, Vec3 cameraPosition, Vec3 targetPosition, float fov) {
+        Vec3 normalizedDirection = targetPosition.subtract(cameraPosition).normalize();
+        Vec3 normalizedViewVector = viewVector.normalize();
+        double dotProduct = normalizedViewVector.dot(normalizedDirection);
+        return dotProduct >= Math.cos(Math.toRadians(fov) / 2.0);
     }
 
     @Override

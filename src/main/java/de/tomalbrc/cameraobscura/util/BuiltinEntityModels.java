@@ -21,7 +21,7 @@ public class BuiltinEntityModels {
         return modelMap.get(type);
     }
 
-    public static RPModel.View getModel(EntityType entityType, Vector3f pos, Vector3fc rot, @Nullable UUID uuid, Object data) {
+    public static RPModel.View getModel(EntityType<?> entityType, Vector3f pos, Vector3fc rot, @Nullable UUID uuid, Object data) {
         if (modelMap.containsKey(entityType)) {
             if (entityType == EntityType.VILLAGER) {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(0, rot.y() + 180, 0), pos.add(0, -2.f / 16.f, 0));
@@ -55,6 +55,7 @@ public class BuiltinEntityModels {
         for (int i = 0; i < rpModel.elements.size(); i++) {
             RPElement element = rpModel.elements.get(i);
             element.shade = false;
+            element.light = false;
             for (String key : element.faces.keySet()) {
                 var face = element.faces.get(key);
                 face.uv.mul(rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f, rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f);

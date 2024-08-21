@@ -13,6 +13,11 @@ import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceArrayMap;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
@@ -37,6 +42,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Raytracer {
     private static final Vector3f SUN = new Vector3f(1, 2, 1).normalize();
@@ -45,7 +51,7 @@ public class Raytracer {
 
     private static final Map<BlockState, List<RenderModel>> renderModelCache = new Reference2ObjectArrayMap<>();
     private static final Int2ObjectArrayMap<RenderModel> fluidRenderModelCache = new Int2ObjectArrayMap<>();
-    private final Map<UUID, RenderModel> entityRenderModelCache = new Reference2ObjectArrayMap<>();
+    //private final Long2ReferenceMap<TriangleModel> entityRenderModelCache = new Long2ReferenceArrayMap<>();
 
     private final BlockIterator blockIterator;
     private final EntityIterator entityIterator;
@@ -125,9 +131,8 @@ public class Raytracer {
     }
 
     private int colorFromRaycast(Vec3 pos, Vec3 direction, BlockIterator.WorldHit result, boolean allowWater, List<EntityIterator.EntityHit> entityHits) {
-        // Color change for liquids
         double[] shadeTint = new double[]{1, 1, 1, 1};
-        boolean blockLight = true;
+        boolean blockLight = !ModConfig.getInstance().fullbright;
 
         BlockPos blockPos = result.blockPos();
         BlockState blockState = result.blockState();
@@ -174,8 +179,8 @@ public class Raytracer {
 
             List<RenderModel> renderModels = this.getBlockRenderModels(rpModels, result, allowWater);
 
-            // water/foliage/grass color
-            int blockColor = result.isWaterOrWaterlogged() ? getBlurredBiomeWaterColor(blockPos) : getBlurredBlockColor(blockPos, blockState);
+            // water/foliage/grass color - getBlurredBiomeWaterOrBlockColor returns the water color if blockState is null, the grass/foliage color otherwise
+            int blockColor = getBlurredBiomeWaterOrBlockColor(blockPos, result.isWaterOrWaterlogged() ? null : blockState, ModConfig.getInstance().biomeBlend);
 
             List<RenderModel.ModelHit> hits = new ObjectArrayList<>();
 
@@ -187,7 +192,7 @@ public class Raytracer {
                 for (int i = 0; i < entityHits.size(); i++) {
                     EntityIterator.EntityHit hit = entityHits.get(i);
                     RPModel.View view = BuiltinEntityModels.getModel(hit.type(), blockPos.getCenter().toVector3f().sub(hit.position()).add(0, -0.5f, 0), hit.rotation(), hit.uuid(), hit.data());
-                    TriangleModel entityModel = new TriangleModel(view);
+                    RenderModel entityModel = createOrGetCached(view);
                     hits.addAll(entityModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor));
                 }
             }
@@ -200,6 +205,7 @@ public class Raytracer {
                 if (modelHit.direction() != null && blockState.isSolidRender(this.level, result.blockPos()))
                     lightPos = result.blockPos().relative(modelHit.direction());
 
+
                 modelColor = ColorHelper.alphaComposite(modelColor, modelHit.color());
 
                 // shading from a global light source
@@ -207,15 +213,12 @@ public class Raytracer {
                     Vector3f normal = new Vector3f(modelHit.direction().getNormal().getX(), modelHit.direction().getNormal().getY(), modelHit.direction().getNormal().getZ());
                     modelColor = this.getShaded(modelColor, normal);
                 }
-                else {
-                    blockLight = false;
-                }
+
+                blockLight = modelHit.light();
 
                 // no need to keep going if color is opaque
                 if ((modelColor >> 24 & 0xff) >= 255) {
                     break;
-                } else {
-                    blockLight = true;
                 }
             }
         }
@@ -236,9 +239,14 @@ public class Raytracer {
         return tintedColor;
     }
 
-    // Method to get the blurred color at coordinates (a, b)
-    public int getBlurredBiomeWaterColor(BlockPos blockPos) {
-        int radius = 1;
+    public int getBlurredBiomeWaterOrBlockColor(BlockPos blockPos, BlockState blockState, int radius) {
+        if (radius == 0) {
+            if (blockState == null)
+                return BlockColors.biomeWaterColor(this.blockIterator.getChunkAt(blockPos), blockPos);
+            else
+                return BlockColors.get(this.blockIterator.getChunkAt(blockPos), blockState, blockPos);
+        }
+
         int aSum = 0, rSum = 0, gSum = 0, bSum = 0;
         int count = 0;
 
@@ -246,9 +254,12 @@ public class Raytracer {
             for (int dy = -radius; dy <= radius; dy++) {
                 BlockPos b = blockPos.offset(dx,0, dy);
 
-                int argb = BlockColors.biomeWaterColor(this.blockIterator.getChunkAt(b), b);
+                int argb;
+                if (blockState == null)
+                    argb = BlockColors.biomeWaterColor(this.blockIterator.getChunkAt(b), b);
+                else
+                    argb = BlockColors.get(this.blockIterator.getChunkAt(b), blockState, b);
 
-                // Extract ARGB components
                 int alpha = (argb >> 24) & 0xFF;
                 int red = (argb >> 16) & 0xFF;
                 int green = (argb >> 8) & 0xFF;
@@ -273,41 +284,6 @@ public class Raytracer {
         return (avgAlpha << 24) | (avgRed << 16) | (avgGreen << 8) | avgBlue;
     }
 
-    public int getBlurredBlockColor(BlockPos blockPos, BlockState blockState) {
-        int radius = 1;
-        int aSum = 0, rSum = 0, gSum = 0, bSum = 0;
-        int count = 0;
-
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                BlockPos b = blockPos.offset(dx,0, dy);
-
-                int argb = BlockColors.get(this.blockIterator.getChunkAt(b), blockState, b);
-
-                // Extract ARGB components
-                int alpha = (argb >> 24) & 0xFF;
-                int red = (argb >> 16) & 0xFF;
-                int green = (argb >> 8) & 0xFF;
-                int blue = argb & 0xFF;
-
-                // Sum up the components
-                aSum += alpha;
-                rSum += red;
-                gSum += green;
-                bSum += blue;
-                count++;
-            }
-        }
-
-        // Calculate average color components
-        int avgAlpha = aSum / count;
-        int avgRed = rSum / count;
-        int avgGreen = gSum / count;
-        int avgBlue = bSum / count;
-
-        // Combine the averaged ARGB components back into a single integer
-        return (avgAlpha << 24) | (avgRed << 16) | (avgGreen << 8) | avgBlue;
-    }
 
     private List<RenderModel> createOrGetCached(BlockState blockState, List<RPModel.View> views) {
         if (this.renderModelCache.containsKey(blockState)) {
@@ -328,27 +304,29 @@ public class Raytracer {
         }
     }
 
-    private RenderModel createOrGetCached(int blockState, RPModel.View view) {
-        if (fluidRenderModelCache.containsKey(blockState)) {
-            return fluidRenderModelCache.get(blockState);
+    private RenderModel createOrGetCached(int fluidLevel, RPModel.View view) {
+        if (fluidRenderModelCache.containsKey(fluidLevel)) {
+            return fluidRenderModelCache.get(fluidLevel);
         }
         else {
             var model = new TriangleModel(view);
-            fluidRenderModelCache.put(blockState, model);
+            fluidRenderModelCache.put(fluidLevel, model);
             return model;
         }
     }
 
-    private RenderModel createOrGetCached(UUID entityUUID, RPModel.View view) {
-        if (this.entityRenderModelCache.containsKey(entityUUID)) {
-            // todo: relocate triangle model translation to new blockpos
-            return this.entityRenderModelCache.get(entityUUID);
-        }
-        else {
-            var model = new TriangleModel(view);
-            this.entityRenderModelCache.put(entityUUID, model);
+    private RenderModel createOrGetCached(RPModel.View view) {
+        /*
+        TriangleModel model = this.entityRenderModelCache.get(id);
+        if (model != null) {
             return model;
         }
+        */
+
+        var model = new TriangleModel(view);
+        //this.entityRenderModelCache.put(id, model);
+        return model;
+
     }
 
     private List<RenderModel> getBlockRenderModels(List<RPModel.View> views, BlockIterator.WorldHit result, boolean allowWater) {

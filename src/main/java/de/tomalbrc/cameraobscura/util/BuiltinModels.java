@@ -66,21 +66,28 @@ public class BuiltinModels {
         if (modelMap.containsKey(chestBlockState))
             return modelMap.get(chestBlockState);
 
-        return modelMap.put(chestBlockState, ChestModel.get(chestBlockState));
+        var model = ChestModel.get(chestBlockState);
+        modelMap.put(chestBlockState, model);
+        return model;
     }
 
     public static RPModel.View bedModel(BlockState chestBlockState, Optional<DyeColor> color) {
         if (modelMap.containsKey(chestBlockState))
             return modelMap.get(chestBlockState);
 
-        return modelMap.put(chestBlockState, BedModel.get(chestBlockState, color));
+
+        var model = BedModel.get(chestBlockState, color);
+        modelMap.put(chestBlockState, model);
+        return model;
     }
 
     public static RPModel.View shulkerModel(BlockState blockState, Optional<DyeColor> color) {
         if (modelMap.containsKey(blockState))
             return modelMap.get(blockState);
 
-        return modelMap.put(blockState, ShulkerModel.get(blockState, color));
+        var model = ShulkerModel.get(blockState, color);
+        modelMap.put(blockState, model);
+        return model;
     }
 
     static RPModel.View decoratedPotModel = null;
@@ -105,18 +112,21 @@ public class BuiltinModels {
         if (modelMap.containsKey(blockState))
             return modelMap.get(blockState);
 
-        return modelMap.put(blockState, SignModel.get(blockState));
+        var model = SignModel.get(blockState);
+        modelMap.put(blockState, model);
+        return model;
     }
 
     public static RPModel.View bellModel(BlockState blockState) {
         if (modelMap.containsKey(blockState))
             return modelMap.get(blockState);
 
-        return modelMap.put(blockState, BellModel.get());
+        var model = BellModel.get();
+        modelMap.put(blockState, model);
+        return model;
     }
 
     static RPModel.View skyModel = null;
-    static TriangleModel skyRenderModel = null;
     public static RPModel.View skyModel(Vec3 pos) {
         if (skyModel != null)
             return skyModel;

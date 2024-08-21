@@ -22,6 +22,8 @@ public class Triangle {
     public RPElement.TextureInfo textureInfo;
     public boolean shade;
 
+    public boolean light;
+
     private Direction direction;
 
     public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2) {

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface RenderModel {
 
-    record ModelHit(int color, Direction direction, boolean shade, double t) {}
+    record ModelHit(int color, Direction direction, boolean shade, boolean light, double t) {}
 
     List<ModelHit> intersect(Vector3f origin, Vector3f direction, Vector3f offset, int textureTint);
 }

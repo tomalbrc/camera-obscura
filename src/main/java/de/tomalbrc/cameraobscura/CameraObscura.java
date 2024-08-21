@@ -18,7 +18,6 @@ public class CameraObscura implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ModConfig.load();
         BuiltinEntityModels.initModels();
         BlockColors.init();
 

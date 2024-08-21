@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.spongepowered.include.com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -21,16 +21,16 @@ public class RPModel {
     public Object2ObjectOpenHashMap<String, String> textures;
     public List<RPElement> elements;
 
-    public record View(RPModel model, Vector3f blockRotation, Vector3f offset, boolean uvlock) {
-        public View(RPModel model, Vector3f blockRotation, Vector3f offset) {
+    public record View(RPModel model, Vector3fc blockRotation, Vector3fc offset, boolean uvlock) {
+        public View(RPModel model, Vector3fc blockRotation, Vector3fc offset) {
             this(model, blockRotation, offset, false);
         }
 
-        public View(RPModel model, Vector3f blockRotation, boolean uvlock) {
+        public View(RPModel model, Vector3fc blockRotation, boolean uvlock) {
             this(model, blockRotation, Vec3.ZERO.toVector3f(), uvlock);
         }
 
-        public View(RPModel model, Vector3f blockRotation) {
+        public View(RPModel model, Vector3fc blockRotation) {
             this(model, blockRotation, Vec3.ZERO.toVector3f(), false);
         }
 

@@ -23,6 +23,8 @@ public class GeneratedItemModel {
 
         element.faces.put("north", tiSide);
         element.faces.put("south", tiSide);
+        element.shade = false;
+        element.light = false;
 
         return element;
     }
