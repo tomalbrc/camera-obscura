@@ -27,7 +27,7 @@
     "fabric": "*",
     "fabric-api": "*",
     "polymer-resource-pack": "*",
-    "polymer-core": "+",
+    "polymer-core": "*",
     "minecraft": ">=1.21.2-"
   }
 }
