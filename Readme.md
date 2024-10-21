@@ -87,6 +87,13 @@ Takes a picture as the source entity and saves it as PNG with optional scale of 
 
 Clears the cache (textures, resourcepack models and blockstate definitions, cached triangle models)
 
+---
+```
+/camera-obscura clear-cache
+```
+
+Clears the cache (textures, resourcepack models and blockstate definitions, cached triangle models)
+
 
 ## Permissions:
 

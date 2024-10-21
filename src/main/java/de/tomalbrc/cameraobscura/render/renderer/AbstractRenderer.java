@@ -1,13 +1,13 @@
 package de.tomalbrc.cameraobscura.render.renderer;
 
 import de.tomalbrc.cameraobscura.render.Raytracer;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.util.TriConsumer;
 
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final int width;
@@ -16,15 +16,17 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
 
+    protected final ExecutorService executor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()-1));
+
     public AbstractRenderer(LivingEntity entity, int width, int height, int renderDistance) {
         this.entity = entity;
         this.width = width;
         this.height = height;
-        this.raytracer = new Raytracer(this.entity.level(), renderDistance);
+        this.raytracer = new Raytracer(this.entity, renderDistance);
         this.raytracer.preloadChunks(entity.getOnPos());
     }
 
-    public static Vector3f yawPitchRotation(Vector3f base, float angleYaw, float anglePitch) {
+    public static Vec3 yawPitchRotation(Vec3 base, double angleYaw, double anglePitch) {
         double oldX = base.x();
         double oldY = base.y();
         double oldZ = base.z();
@@ -38,47 +40,39 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         double newY = oldX * sinTwo + oldY * cosTwo;
         double newZ = oldX * sinOne * cosTwo - oldY * sinOne * sinTwo + oldZ * cosOne;
 
-        return new Vector3f(
-                (float) newX,
-                (float) newY,
-                (float) newZ
-        );
+        return new Vec3(newX, newY, newZ);
     }
 
-    public static Vector3f doubleYawPitchRotation(Vector3f base, float firstYaw, float firstPitch, float secondYaw,
-                                                  float secondPitch) {
+    public static Vec3 doubleYawPitchRotation(Vec3 base, double firstYaw, double firstPitch, double secondYaw,
+                                              double secondPitch) {
         return yawPitchRotation(yawPitchRotation(base, firstYaw, firstPitch), secondYaw, secondPitch);
     }
 
-    protected List<Vector3f> buildRayMap(LivingEntity entity) {
-        float yawRad = (entity.yHeadRot + 90) * Mth.DEG_TO_RAD;
-        float pitchRad = -entity.xRotO * Mth.DEG_TO_RAD;
+    protected void iterateRays(LivingEntity entity, TriConsumer<Vec3, Integer, Integer> consumer) {
+        double yawRad = (entity.yHeadRot + 90) * Mth.DEG_TO_RAD;
+        double pitchRad = -entity.xRotO * Mth.DEG_TO_RAD;
 
         // this is incorrect but the math is not mathing when using 0,0,-1...
-        Vector3f baseVec = new Vector3f(1, 0, 0);
+        Vec3 baseVec = new Vec3(1, 0, 0);
 
         // from viewer to screen to worldspace
-        Vector3fc lowerLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vector3fc upperLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
-        Vector3fc lowerRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vector3fc upperRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 lowerLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 upperLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 lowerRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 upperRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
 
-        List<Vector3f> rays = new ObjectArrayList<>(width * height);
-
-        Vector3f leftFraction = new Vector3f(upperLeft).sub(lowerLeft).mul(1.f / (height - 1.f));
-        Vector3f rightFraction = new Vector3f(upperRight).sub(lowerRight).mul(1.f / (height - 1.f));
+        Vec3 leftFraction = upperLeft.subtract(lowerLeft).scale(1. / (height - 1.));
+        Vec3 rightFraction = upperRight.subtract(lowerRight).scale(1. / (height - 1.));
 
         for (int pitch = 0; pitch < height; pitch++) {
-            Vector3f leftPitch = new Vector3f(upperLeft).sub(leftFraction.mul(pitch, new Vector3f()));
-            Vector3f rightPitch = new Vector3f(upperRight).sub(rightFraction.mul(pitch, new Vector3f()));
-            Vector3f yawFraction = new Vector3f(rightPitch).sub(leftPitch).mul(1.f / (width - 1.f));
+            Vec3 leftPitch = upperLeft.subtract(leftFraction.scale(pitch));
+            Vec3 rightPitch = upperRight.subtract(rightFraction.scale(pitch));
+            Vec3 yawFraction = rightPitch.subtract(leftPitch).scale(1. / (width - 1.));
 
             for (int yaw = 0; yaw < width; yaw++) {
-                Vector3f ray = new Vector3f(leftPitch).add(yawFraction.mul(yaw, new Vector3f())).normalize();
-                rays.add(ray);
+                Vec3 ray = leftPitch.add(yawFraction.scale(yaw)).normalize();
+                consumer.accept(ray, yaw, pitch);
             }
         }
-
-        return rays;
     }
 }

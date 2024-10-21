@@ -1,6 +1,7 @@
 package de.tomalbrc.cameraobscura.render.model.resource;
 
 import com.google.gson.annotations.SerializedName;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.util.Mth;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
@@ -20,6 +21,7 @@ public class RPElement {
     public String name;
 
     public boolean shade = true;
+    transient public boolean light = true;
 
     public static class TextureInfo {
         @SerializedName("tintindex")

@@ -1,0 +1,36 @@
+{
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "entity/bell/bell_body"
+	},
+	"elements": [
+		{
+			"name": "body",
+			"from": [4, 4, 4],
+			"to": [12, 6, 12],
+			"rotation": {"angle": 0, "axis": "z", "origin": [8, 12, 8]},
+			"faces": {
+				"north": {"uv": [4, 10.5, 8, 11.5], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [8, 10.5, 12, 11.5], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [12, 10.5, 16, 11.5], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [0, 10.5, 4, 11.5], "rotation": 180, "texture": "#0"},
+				"up": {"uv": [12, 6.5, 8, 10.5], "rotation": 180, "texture": "#0"},
+				"down": {"uv": [8, 10.5, 4, 6.5], "rotation": 180, "texture": "#0"}
+			}
+		},
+		{
+			"name": "body",
+			"from": [5, 6, 5],
+			"to": [11, 13, 11],
+			"rotation": {"angle": 0, "axis": "z", "origin": [8, 14, 8]},
+			"faces": {
+				"north": {"uv": [3, 3, 6, 6.5], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [6, 3, 9, 6.5], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [9, 3, 12, 6.5], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [0, 3, 3, 6.5], "rotation": 180, "texture": "#0"},
+				"up": {"uv": [9, 0, 6, 3], "rotation": 180, "texture": "#0"},
+				"down": {"uv": [6, 3, 3, 0], "rotation": 180, "texture": "#0"}
+			}
+		}
+	]
+}

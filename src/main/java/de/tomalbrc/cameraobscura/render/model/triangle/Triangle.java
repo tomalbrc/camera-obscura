@@ -17,16 +17,16 @@ public class Triangle {
     private Vector3f v0v1;
     private Vector3f v0v2;
 
-    private Vector3fc normal;
-
-    private final int color;
+    private Vector3f normal;
 
     public RPElement.TextureInfo textureInfo;
     public boolean shade;
 
+    public boolean light;
+
     private Direction direction;
 
-    public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2, int color) {
+    public Triangle(Vector3f v0, Vector3f v1, Vector3f v2, Vector2f uv0, Vector2f uv1, Vector2f uv2) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
@@ -38,8 +38,6 @@ public class Triangle {
         this.recalculateVectors();
 
         this.setDirection(normal);
-
-        this.color = color;
 
         this.shade = true;
     }
@@ -72,10 +70,6 @@ public class Triangle {
         this.v0v1 = v1.sub(this.v0, new Vector3f());
         this.v0v2 = v2.sub(this.v0, new Vector3f());
         this.normal = v0v1.cross(this.v0v2,  new Vector3f()).normalize(); // N
-    }
-
-    public int getColor() {
-        return this.color;
     }
 
     public Vector3fc getNormal() {

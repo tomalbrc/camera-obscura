@@ -4,9 +4,9 @@ import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
     public CanvasImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
@@ -15,21 +15,30 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
 
     public CanvasImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        List<Vector3f> rays = buildRayMap(this.entity);
-
         CanvasImage image = new CanvasImage(width, height);
 
-        // loop through every pixel on map
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int index = x+height*y;
-                Vec3 rayTraceVector = new Vec3(rays.get(index).x, rays.get(index).y, rays.get(index).z);
+        // List to hold the CompletableFutures for each pixel
+        CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
+        AtomicInteger index = new AtomicInteger();
 
-                var res = raytracer.trace(eyes, rayTraceVector);
+        // Iterate through rays and create async tasks
+        this.iterateRays(this.entity, (ray, x, y) -> {
+            final int pixelX = x;
+            final int pixelY = y;
 
-                image.set(x, y, CanvasUtils.findClosestColor(res));
-            }
-        }
+            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> {
+                // Trace the ray and compute the color asynchronously
+                return CanvasUtils.findClosestColor(raytracer.trace(eyes, ray));
+            }, executor).thenAccept(color -> {
+                // Update the image with the computed color
+                image.set(pixelX, pixelY, color);
+            });
+        });
+
+        // Shutdown the executor
+        CompletableFuture.allOf(futures).join();
+
+        executor.shutdownNow();
 
         return image;
     }

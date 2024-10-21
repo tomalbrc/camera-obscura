@@ -8,7 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
-import de.tomalbrc.cameraobscura.render.Raytracer;
 import de.tomalbrc.cameraobscura.render.renderer.BufferedImageRenderer;
 import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
 import de.tomalbrc.cameraobscura.util.RPHelper;
@@ -18,17 +17,18 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
@@ -50,10 +50,10 @@ public class CameraCommand {
                 .executes(CameraCommand::createMapOfSourceForSource)
                 .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.scale", ModConfig.getInstance().commandPermissionLevel))
                         .executes(CameraCommand::createMapOfSourceScaled))
-                .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.entity", 2))
+                .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.type", 2))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(CameraCommand::createMapOfSourceForSource)
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.entity.scale", ModConfig.getInstance().commandPermissionLevel))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.type.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(CameraCommand::createMapOfSourceForSourceScaled))))
                 .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", ModConfig.getInstance().commandPermissionLevel))
                         .executes(x -> {
@@ -61,9 +61,9 @@ public class CameraCommand {
                                 CameraCommand.createImageAsync(x, livingEntity, 1);
                             return 0;
                         })
-                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.entity", ModConfig.getInstance().commandPermissionLevel))
+                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.type", ModConfig.getInstance().commandPermissionLevel))
                                 .executes(x -> createImageFromSource(x, 1))
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.entity.scale", ModConfig.getInstance().commandPermissionLevel))
+                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.type.scale", ModConfig.getInstance().commandPermissionLevel))
                                         .executes(x -> createImageFromSource(x, IntegerArgumentType.getInteger(x, "scale")))
                                 ))
                         .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.scale", ModConfig.getInstance().commandPermissionLevel))
@@ -76,8 +76,8 @@ public class CameraCommand {
                 )
                 .then(Commands.literal("clear-cache").requires(Permissions.require("camera-obscura.command.clear-cache", 2))
                         .executes(x -> {
-                            Raytracer.clearCache();
                             RPHelper.clearCache();
+                            //Raytracer.clearCache(); // not sure if enabling this is beneficial
                             return 0;
                         }))
                 .build();
@@ -144,47 +144,42 @@ public class CameraCommand {
 
         int size = 128*scale;
 
-        boolean async = ModConfig.getInstance().renderAsyncMap;
-        if (async) {
-            var renderer = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance);
+        var renderer = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance);
 
-            CompletableFuture.supplyAsync(() -> {
-                try {
-                    return renderer.render();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }).thenAcceptAsync(mapImage -> {
-                finalize(player, mapImage, source, startTime);
-            }, source.getServer());
-        }
-        else {
-            var mapImage = new CanvasImageRenderer(entity, size, size, ModConfig.getInstance().renderDistance).render();
-            finalize(player, mapImage, source, startTime);
-        }
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return renderer.render();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).thenAcceptAsync(mapImage -> finalize(player, mapImage, source, startTime), source.getServer());
 
         return Command.SINGLE_SUCCESS;
     }
 
     private static void finalize(Player player, CanvasImage mapImage, CommandSourceStack source, long startTime) {
-        source.sendSuccess(() -> Component.literal("Took a photo!"), false);
+        if (mapImage != null) {
+            source.sendSuccess(() -> Component.literal("Took a photo!"), false);
 
-        var items = CameraCommand.mapItems(mapImage, source.getLevel());
+            var items = CameraCommand.mapItems(mapImage, source.getLevel());
 
-        if (player != null) {
-            items.forEach(player::addItem);
-        } else if (source.getPlayer() != null) {
-            items.forEach(source.getPlayer()::addItem);
-        }
+            if (player != null) {
+                items.forEach(player::addItem);
+            } else if (source.getPlayer() != null) {
+                items.forEach(source.getPlayer()::addItem);
+            }
 
-        if (ModConfig.getInstance().showSystemMessages) {
-            long durationInMillis = (System.nanoTime() - startTime) / 1000000;
-            long millis = durationInMillis % 1000;
-            long second = (durationInMillis / 1000) % 60;
-            String time = String.format("%d.%02d seconds", second, millis);
-            source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+            if (ModConfig.getInstance().showSystemMessages) {
+                long durationInMillis = (System.nanoTime() - startTime) / 1000000;
+                long millis = durationInMillis % 1000;
+                long secs = durationInMillis / 1000;
+                String time = secs > 0 ? String.format("%ds %dms", secs, millis) : String.format("%dms", millis);
+                source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
+            }
+        } else {
+            source.sendFailure(Component.literal("Something went wrong while trying to take a photo!").withColor(CommonColors.RED));
         }
     }
 
@@ -200,7 +195,7 @@ public class CameraCommand {
         for (int ys = 0; ys < ySections; ys++) {
             for (int xs = 0; xs < xSections; xs++) {
                 var id = level.getFreeMapId();
-                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, new ResourceLocation("camera-obscura", "generated")));
+                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath("camera-obscura", "generated")));
 
                 for (int xl = 0; xl < 128; xl++) {
                     for (int yl = 0; yl < 128; yl++) {
@@ -213,10 +208,10 @@ public class CameraCommand {
                     }
                 }
 
-                level.setMapData(MapItem.makeKey(id), state);
+                level.setMapData(id, state);
 
                 var stack = new ItemStack(Items.FILLED_MAP);
-                stack.getOrCreateTag().putInt("map", id);
+                stack.set(DataComponents.MAP_ID, id);
                 items.add(stack);
             }
         }
@@ -225,7 +220,7 @@ public class CameraCommand {
     }
 
 
-    private static int createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int scale) {
+    private static void createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int scale) {
         CommandSourceStack source = context.getSource();
 
         if (ModConfig.getInstance().showSystemMessages)
@@ -235,24 +230,19 @@ public class CameraCommand {
 
         long startTime = System.nanoTime();
 
-        if (ModConfig.getInstance().renderAsyncImage) {
-            CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> {
-                finalizeImage(mapImage, startTime, source);
-            }, source.getServer());
-        } else {
-            finalizeImage(renderer.render(), startTime, source);
-        }
-
-        return Command.SINGLE_SUCCESS;
+        CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> finalizeImage(mapImage, startTime, source), source.getServer());
     }
 
     private static void finalizeImage(BufferedImage mapImage, long startTime, CommandSourceStack source) {
         var rendersDir = FabricLoader.getInstance().getGameDir().resolve("renders").toAbsolutePath();
         var f = rendersDir.toFile();
-        if (!f.exists()) f.mkdir();
+        if (!f.exists()) {
+            if (!f.mkdir())
+                return;
+        }
 
-        String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
-        var file = rendersDir.resolve("img"+".png").toFile();
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
+        var file = rendersDir.resolve(date+".png").toFile();
 
         try {
             ImageIO.write(mapImage, "PNG", file);
@@ -260,8 +250,8 @@ public class CameraCommand {
             if (ModConfig.getInstance().showSystemMessages) {
                 long durationInMillis = (System.nanoTime() - startTime) / 1000000;
                 long millis = durationInMillis % 1000;
-                long second = (durationInMillis / 1000) % 60;
-                String time = String.format("%d.%02d seconds", second, millis);
+                long secs = (durationInMillis / 1000);
+                String time = secs > 0 ? String.format("%ds %dms", secs, millis) : String.format("%dms", millis);
                 source.sendSuccess(() -> Component.literal("Done! ("+time+")"), false);
             }
         } catch (IOException e) {

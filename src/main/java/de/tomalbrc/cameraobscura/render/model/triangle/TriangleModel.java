@@ -5,16 +5,14 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
-import org.joml.Quaternionf;
-import org.joml.Vector2f;
-import org.joml.Vector2fc;
-import org.joml.Vector3f;
+import org.joml.*;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -25,71 +23,72 @@ public class TriangleModel implements RenderModel {
 
     private final Map<String, ResourceLocation> textureMap = new Object2ObjectOpenHashMap<>();
 
-    public TriangleModel(RPModel.View... rpModel) {
-        for (int i = 0; i < rpModel.length; i++) {
-            this.readModel(rpModel[i]);
-        }
+    private static final Vector2f[] list = new Vector2f[]{
+            new Vector2f(0,0),
+            new Vector2f(1,0),
+            new Vector2f(1,1),
+            new Vector2f(0,1)
+    };
+
+    public TriangleModel(RPModel.View view) {
+        this.readModel(view);
     }
 
-    public TriangleModel combine(TriangleModel other) {
-        modelTriangles.addAll(other.modelTriangles);
-        textureMap.putAll(other.textureMap);
-        return this;
-    }
-
-    private void readModel(RPModel.View rpModel) {
-        var elementList = rpModel.collectElements();
-        for (var element: elementList) {
-            var from = new Vector3f(element.from);
-            var to = new Vector3f(element.to);
+    private void readModel(RPModel.View modelView) {
+        var elementList = modelView.collectElements();
+        for (int i = 0; i < elementList.size(); i++) {
+            RPElement element = elementList.get(i);
+            Vector3f from = new Vector3f(element.from);
+            Vector3f to = new Vector3f(element.to);
 
             Vector3f posOffset = new Vector3f(0.5f); // center block
             from.div(16).sub(posOffset);
             to.div(16).sub(posOffset);
 
             Quaternionf elementRotation = null;
-            Vector3f ro = null;
-            float rol = 0;
+            Vector3f rotationOrigin = null;
+            float rotationOriginLength = 0;
             if (element.rotation != null) {
                 elementRotation = element.rotation.toQuaternionf();
-                ro = element.rotation.getOrigin();
-                rol = element.rotation.getOrigin().length();
+                rotationOrigin = element.rotation.getOrigin();
+                rotationOriginLength = element.rotation.getOrigin().length();
             }
 
-            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(rpModel.blockRotation()), rpModel.uvlock());
-            for (int i = 0; i < tris.size(); i++) {
-                var n = tris.get(i).getNormal().get(new Vector3f());
+            List<Triangle> tris = generateCubeTriangles(from, to, element, new Vector3f(modelView.blockRotation()), modelView.uvlock());
+            for (int j = 0; j < tris.size(); j++) {
+                Vector3f n = tris.get(j).getNormal().get(new Vector3f());
 
                 if (element.rotation != null) {
-                    if (rol > 0.f)
-                        tris.get(i).translate(ro.x, ro.y, ro.z);
+                    if (rotationOriginLength > 0.f)
+                        tris.get(j).translate(rotationOrigin.x, rotationOrigin.y, rotationOrigin.z);
 
-                    tris.get(i).rotate(elementRotation);
+                    tris.get(j).rotate(elementRotation);
 
-                    if (rol > 0.f)
-                        tris.get(i).translate(-ro.x, -ro.y, -ro.z);
+                    if (rotationOriginLength > 0.f)
+                        tris.get(j).translate(-rotationOrigin.x, -rotationOrigin.y, -rotationOrigin.z);
                 }
 
                 // rotate triangle vertices and normal (needed so we can get a "Direction" from the normal without taking element rotation into account)
-                var rot = rpModel.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
+                Vector3f rot = modelView.blockRotation().mul(-Mth.DEG_TO_RAD, new Vector3f());
 
-                tris.get(i).rotate(new Quaternionf().rotateX(rot.x()));
-                n.rotate(new Quaternionf().rotateX(rot.x()));
+                tris.get(j).rotate(new Quaternionf().rotateX(rot.x()).normalize());
+                n.rotate(new Quaternionf().rotateX(rot.x()).normalize());
 
-                tris.get(i).rotate(new Quaternionf().rotateY(rot.y()));
-                n.rotate(new Quaternionf().rotateY(rot.y()));
+                tris.get(j).rotate(new Quaternionf().rotateY(rot.y()).normalize());
+                n.rotate(new Quaternionf().rotateY(rot.y()).normalize());
 
-                tris.get(i).rotate(new Quaternionf().rotateZ(rot.z()));
-                n.rotate(new Quaternionf().rotateZ(rot.z()));
+                tris.get(j).rotate(new Quaternionf().rotateZ(rot.z()).normalize());
+                n.rotate(new Quaternionf().rotateZ(rot.z()).normalize());
 
-                tris.get(i).recalculateVectors();
-                tris.get(i).setDirection(n);
+                tris.get(j).recalculateVectors();
+                tris.get(j).setDirection(n);
+
+                tris.get(j).translate(modelView.offset().x(), modelView.offset().y(), modelView.offset().z());
             }
 
-            if (tris != null)
-                this.modelTriangles.addAll(tris);
+            this.modelTriangles.addAll(tris);
         }
-        this.textureMap.putAll(rpModel.collectTextures());
+        this.textureMap.putAll(modelView.collectTextures());
     }
 
     private List<Triangle> generateCubeTriangles(Vector3f from, Vector3f to, RPElement element, Vector3f normal, boolean uvlock) {
@@ -105,12 +104,6 @@ public class TriangleModel implements RenderModel {
         //if (!uvlock)
             normal.set(0);
 
-        var list = new Vector2f[]{
-                new Vector2f(0,0),
-                new Vector2f(1,0),
-                new Vector2f(1,1),
-                new Vector2f(0,1)
-        };
 
         Vector2f corner00, corner10, corner11, corner01;
         int offset;
@@ -118,8 +111,10 @@ public class TriangleModel implements RenderModel {
         // change offset: (int)(rotationInDegrees/90)
         // vanilla "only" supports 90° rotations for textures
 
-        if (element.faces.containsKey("down")) {
-            offset = 4- (int)(normal.y) / 90 - element.faces.get("down").rotation / 90;
+        RPElement.TextureInfo textureInfo;
+        textureInfo = element.faces.get("down");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.y) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -132,8 +127,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, minY, minZ),
                     corner01,
                     corner11,
-                    corner10,
-                    -1419412));
+                    corner10));
 
             triangles.add(new Triangle(
                     new Vector3f(minX, minY, minZ),
@@ -141,12 +135,12 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, minY, maxZ),
                     corner10,
                     corner00,
-                    corner01,
-                    -2419412));
+                    corner01));
         }
 
-        if (element.faces.containsKey("up")) {
-            offset = 4- (int)(normal.y) / 90 - element.faces.get("up").rotation / 90;
+        textureInfo = element.faces.get("up");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.y) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -159,8 +153,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, maxY, maxZ),
                     corner00,
                     corner11,
-                    corner10,
-                    6315465));
+                    corner10));
 
             triangles.add(new Triangle(
                     new Vector3f(minX, maxY, maxZ),
@@ -168,12 +161,12 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, maxY, minZ),
                     corner11,
                     corner00,
-                    corner01,
-                    5315465));
+                    corner01));
         }
 
-        if (element.faces.containsKey("north")) {
-            offset = 4- (int)(normal.x) / 90 - element.faces.get("north").rotation / 90;
+        textureInfo = element.faces.get("north");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.x) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -186,8 +179,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, maxY, minZ),
                     corner10,
                     corner00,
-                    corner11,
-                    -32522));
+                    corner11));
 
             triangles.add(new Triangle(
                     new Vector3f(minX, minY, minZ),
@@ -195,12 +187,12 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, minY, minZ),
                     corner00,
                     corner01,
-                    corner11,
-                    432522));
+                    corner11));
         }
 
-        if (element.faces.containsKey("south")) {
-            offset = 4- (int)(normal.x) / 90 - element.faces.get("south").rotation / 90;
+        textureInfo = element.faces.get("south");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.x) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -213,7 +205,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, maxY, maxZ),
                     corner10,
                     corner00,
-                    corner11, 832453));
+                    corner11));
 
             triangles.add(new Triangle(
                     new Vector3f(maxX, minY, maxZ),
@@ -221,11 +213,12 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, minY, maxZ),
                     corner00,
                     corner01,
-                    corner11, -832453));
+                    corner11));
         }
 
-        if (element.faces.containsKey("west")) {
-            offset = 4- (int)(normal.z) / 90 - element.faces.get("west").rotation / 90;
+        textureInfo = element.faces.get("west");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.z) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -238,8 +231,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, maxY, maxZ),
                     corner11,
                     corner10,
-                    corner01,
-                    -52151));
+                    corner01));
 
             triangles.add(new Triangle(
                     new Vector3f(minX, minY, minZ),
@@ -247,12 +239,12 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(minX, maxY, minZ),
                     corner10,
                     corner00,
-                    corner01,
-                    252151));
+                    corner01));
         }
 
-        if (element.faces.containsKey("east")) {
-            offset = 4- (int)(normal.z) / 90 - element.faces.get("east").rotation / 90;
+        textureInfo = element.faces.get("east");
+        if (textureInfo != null) {
+            offset = 4- (int)(normal.z) / 90 - textureInfo.rotation / 90;
             corner00 = list[(0+offset)%4];
             corner10 = list[(1+offset)%4];
             corner11 = list[(2+offset)%4];
@@ -265,8 +257,7 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, maxY, maxZ),
                     corner10,
                     corner00,
-                    corner11,
-                    41245));
+                    corner11));
 
             triangles.add(new Triangle(
                     new Vector3f(maxX, minY, minZ),
@@ -274,16 +265,15 @@ public class TriangleModel implements RenderModel {
                     new Vector3f(maxX, minY, maxZ),
                     corner00,
                     corner01,
-                    corner11,
-                    141245));
+                    corner11));
         }
 
-
-        var radNormalRot = normal.mul(-Mth.DEG_TO_RAD, new Vector3f());
-        for (Triangle triangle : triangles) {
-            var d = triangle.getDirection();
+        for (int i = 0; i < triangles.size(); i++) {
+            Triangle triangle = triangles.get(i);
+            Direction d = triangle.getDirection();
             if (d != null) triangle.textureInfo = element.faces.get(d.getName());
             triangle.shade = element.shade;
+            triangle.light = element.light;
         }
 
         return triangles;
@@ -314,35 +304,36 @@ public class TriangleModel implements RenderModel {
             // transparent face
             if (textureInfo == null) continue;
 
-
-            String texKey = textureInfo.texture.replace("#","");
+            String texKey = textureInfo.texture.charAt(0) == '#' ? textureInfo.texture.substring(1) : textureInfo.texture;
             //resolve texture key in case of placeholders (starting with #)
-            while (textureMap.containsKey(texKey)) {
-                texKey = textureMap.get(texKey).getPath();
+            ResourceLocation r = this.textureMap.get(texKey);
+            while (this.textureMap.containsKey(texKey)) {
+                r = this.textureMap.get(texKey);
+                texKey = this.textureMap.get(texKey).getPath();
             }
 
-            BufferedImage img = RPHelper.loadTextureImage(texKey);
+            BufferedImage img = RPHelper.loadTextureImage(r);
             if (img == null) continue;
 
             int width = img.getWidth();
-            // animated textures...
+
+            // adjust height for animated textures...
             int realHeight = (int)(img.getHeight() / (img.getHeight()/(float)img.getWidth()));
 
             if (textureInfo.uv != null)
                 uv = TextureHelper.remapUV(uv, textureInfo.uv, width, realHeight);
 
-            boolean debug = false; // only render triangle colors during debug
             int s = (int) (width * uv.x());
             int t = (int) (realHeight * uv.y());
 
-            int imgData = debug ? triangle.getColor() : img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
+            int imgData = img.getRGB(Mth.clamp(s, 0, img.getWidth()-1), Mth.clamp(t, 0, img.getHeight()-1));
 
             // Apply block specific tint, but only if this face has a tintIndex
             if (textureInfo.tintIndex != -1 && textureTint != -1) {
                 imgData = FastColor.ARGB32.multiply(imgData, textureTint);
             }
 
-            modelHitList.add(new ModelHit(imgData, normalDir, triangle.shade));
+            modelHitList.add(new ModelHit(imgData, normalDir, triangle.shade, triangle.light, hit.t()));
         }
 
         return modelHitList;

@@ -39,13 +39,7 @@ public class CameraItem extends SimplePolymerItem {
             player.awardStat(Stats.ITEM_USED.get(this));
 
             var renderer = new CanvasImageRenderer(player, 128, 128, ModConfig.getInstance().renderDistance);
-            boolean async = ModConfig.getInstance().renderAsyncMap;
-            if (async) {
-                CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> finalize(mapImage, player), level.getServer());
-            }
-            else {
-                finalize(renderer.render(), player);
-            }
+            CompletableFuture.supplyAsync(renderer::render).thenAcceptAsync(mapImage -> finalize(mapImage, player), level.getServer());
 
             return InteractionResultHolder.pass(player.getItemInHand(interactionHand));
         }

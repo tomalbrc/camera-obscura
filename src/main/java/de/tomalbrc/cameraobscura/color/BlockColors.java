@@ -4,15 +4,18 @@ import de.tomalbrc.cameraobscura.mixin.BiomeAccessor;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -25,8 +28,8 @@ public class BlockColors {
 
     private static void loadColorMaps() {
         try {
-            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/grass")));
-            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTexture("colormap/foliage")));
+            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(ResourceLocation.withDefaultNamespace("colormap/grass"))));
+            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(ResourceLocation.withDefaultNamespace("colormap/foliage"))));
 
             GrassColor.init(GRASS_TEXTURE.getRGB(0, 0, GRASS_TEXTURE.getWidth(), GRASS_TEXTURE.getHeight(), null, 0, GRASS_TEXTURE.getWidth()));
             FoliageColor.init(FOLIAGE_TEXTURE.getRGB(0, 0, FOLIAGE_TEXTURE.getWidth(), FOLIAGE_TEXTURE.getHeight(), null, 0, FOLIAGE_TEXTURE.getWidth()));
@@ -36,19 +39,21 @@ public class BlockColors {
     }
 
     interface BlockColorProvider {
-        int get(Level level, BlockState blockState, BlockPos blockPos);
+        int get(LevelChunk level, BlockState blockState, BlockPos blockPos);
     }
 
-    private static Reference2ObjectArrayMap<Block, BlockColorProvider> colors = new Reference2ObjectArrayMap<>();
+    private static final Reference2ObjectArrayMap<Block, BlockColorProvider> colors = new Reference2ObjectArrayMap<>();
 
     public static void init() {
         loadColorMaps();
 
-        BlockColorProvider grassColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(level.getBiome(blockPos).value())).invokeGetGrassColor();
-        BlockColorProvider foliageColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(level.getBiome(blockPos).value())).invokeGetFoliageColorFromTexture();
+        BlockColorProvider grassColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(getBiome(level, blockPos).value())).invokeGetGrassColor();
+        BlockColorProvider foliageColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(getBiome(level, blockPos).value())).invokeGetFoliageColorFromTexture();
 
         colors.put(Blocks.LARGE_FERN, grassColor);
         colors.put(Blocks.TALL_GRASS, grassColor);
+
+        colors.put(Blocks.SUGAR_CANE, foliageColor);
 
         colors.put(Blocks.GRASS_BLOCK, grassColor);
         colors.put(Blocks.FERN, grassColor);
@@ -96,14 +101,22 @@ public class BlockColors {
         colors.put(Blocks.LILY_PAD, (level, blockState, blockPos) -> 0x208030);
     }
 
-    public static int get(Level level, BlockState blockState, BlockPos blockPos) {
+    public static int get(LevelChunk level, BlockState blockState, BlockPos blockPos) {
         if (colors.containsKey(blockState.getBlock()))
             return colors.get(blockState.getBlock()).get(level, blockState, blockPos) | 0xff_00_00_00;
 
         return -1;
     }
 
-    public static int biomeWaterColor(Biome biome) {
-        return biome.getWaterColor();
+    public static int biomeWaterColor(LevelChunk level, BlockPos blockPos) {
+        return 0xFF<<24 | getBiome(level, blockPos).value().getWaterColor();
+    }
+
+    private static Holder<Biome> getBiome(LevelChunk chunk, BlockPos blockPos) {
+        return chunk.getNoiseBiome(
+                QuartPos.fromBlock(blockPos.getX()),
+                QuartPos.fromBlock(blockPos.getY()),
+                QuartPos.fromBlock(blockPos.getZ())
+        );
     }
 }
