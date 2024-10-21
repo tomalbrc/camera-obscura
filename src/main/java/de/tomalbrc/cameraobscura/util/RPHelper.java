@@ -13,10 +13,7 @@ import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
+import xyz.nucleoid.packettweaker.PacketContext;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -191,7 +189,7 @@ public class RPHelper {
                 if (!entry.getKey().isEmpty()) {
                     try {
                         String str = String.format("%s[%s]", BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath(), entry.getKey());
-                        BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), str, false);
+                        BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, str, false);
 
                         for (Map.Entry<Property<?>, Comparable<?>> propertyComparableEntry : blockResult.properties().entrySet()) {
                             if (!blockState.getValue(propertyComparableEntry.getKey()).equals(propertyComparableEntry.getValue())) {
@@ -244,7 +242,7 @@ public class RPHelper {
 
     private static BlockState safePolymerBlockState(BlockState blockState) {
         if (blockState.getBlock() instanceof PolymerBlock polymerBlock) {
-            blockState = polymerBlock.getPolymerBlockState(blockState);
+            blockState = polymerBlock.getPolymerBlockState(blockState, PacketContext.get());
         }
         return blockState;
     }

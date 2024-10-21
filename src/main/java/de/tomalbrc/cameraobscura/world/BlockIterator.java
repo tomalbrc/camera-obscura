@@ -49,8 +49,7 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
             return Blocks.AIR.defaultBlockState();
         } else {
             LevelChunk levelChunk = this.getChunkAt(new Vector2i(SectionPos.blockToSectionCoord(blockPos.getX()), SectionPos.blockToSectionCoord(blockPos.getZ())));
-            BlockState blockState = levelChunk.getBlockState(blockPos);
-            return blockState;
+            return levelChunk.getBlockState(blockPos);
         }
     }
 
@@ -65,7 +64,7 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
                 fluidStateAbove = this.cachedFluidState(blockPos.above());
             }
 
-            if (!blockState.isSolidRender(level, blockPos) || blockState.isAir()) {
+            if (!blockState.isSolidRender() || blockState.isAir()) {
                 if (!blockState.isAir()) {
                     list.add(new WorldHit(new BlockPos(blockPos), blockState, fluidState, fluidStateAbove));
                 }

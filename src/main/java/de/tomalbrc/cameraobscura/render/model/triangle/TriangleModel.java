@@ -5,12 +5,11 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import org.joml.*;
 
@@ -330,7 +329,7 @@ public class TriangleModel implements RenderModel {
 
             // Apply block specific tint, but only if this face has a tintIndex
             if (textureInfo.tintIndex != -1 && textureTint != -1) {
-                imgData = FastColor.ARGB32.multiply(imgData, textureTint);
+                imgData = ARGB.multiply(imgData, textureTint);
             }
 
             modelHitList.add(new ModelHit(imgData, normalDir, triangle.shade, triangle.light, hit.t()));

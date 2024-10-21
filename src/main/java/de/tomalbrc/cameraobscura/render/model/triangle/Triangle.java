@@ -2,6 +2,7 @@ package de.tomalbrc.cameraobscura.render.model.triangle;
 
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 public class Triangle {
@@ -43,12 +44,38 @@ public class Triangle {
     }
 
     public void setDirection(Vector3fc dir) {
-        this.direction = Direction.fromDelta(
+        this.direction = fromDelta(
                 (int) dir.x(),
                 (int) dir.y(),
                 (int) dir.z()
         );
     }
+
+    @Nullable
+    public static Direction fromDelta(int x, int y, int z) {
+        if (x == 0) {
+            if (y == 0) {
+                if (z > 0) {
+                    return Direction.SOUTH;
+                }
+                if (z < 0) {
+                    return Direction.NORTH;
+                }
+            } else if (z == 0) {
+                if (y > 0) {
+                    return Direction.UP;
+                }
+                return Direction.DOWN;
+            }
+        } else if (y == 0 && z == 0) {
+            if (x > 0) {
+                return Direction.EAST;
+            }
+            return Direction.WEST;
+        }
+        return null;
+    }
+
 
     public Direction getDirection() {
         return this.direction;

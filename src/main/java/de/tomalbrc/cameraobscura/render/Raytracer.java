@@ -13,11 +13,6 @@ import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
-import it.unimi.dsi.fastutil.longs.Long2ReferenceArrayMap;
-import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
@@ -26,7 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
@@ -42,7 +37,6 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Raytracer {
     private static final Vector3f SUN = new Vector3f(1, 2, 1).normalize();
@@ -159,7 +153,7 @@ public class Raytracer {
             else if (blockState.is(BlockTags.SHULKER_BOXES))
                 rpModel = BuiltinModels.shulkerModel(blockState, Optional.ofNullable(ShulkerBoxBlock.getColorFromBlock(result.blockState().getBlock())));
             else if (blockState.is(BlockTags.BEDS))
-                rpModel = BuiltinModels.bedModel(blockState, Optional.ofNullable(((BedBlock)blockState.getBlock()).getColor()));
+                rpModel = BuiltinModels.bedModel(blockState, Optional.of(((BedBlock)blockState.getBlock()).getColor()));
             else if (blockState.is(Blocks.DECORATED_POT))
                 rpModel = BuiltinModels.decoratedPotModel();
             else if (blockState.is(Blocks.CONDUIT))
@@ -202,7 +196,7 @@ public class Raytracer {
             for (int i = 0; i < hits.size(); i++) {
                 RenderModel.ModelHit modelHit = hits.get(i);
 
-                if (modelHit.direction() != null && blockState.isSolidRender(this.level, result.blockPos()))
+                if (modelHit.direction() != null && blockState.isSolidRender())
                     lightPos = result.blockPos().relative(modelHit.direction());
 
 
@@ -210,7 +204,7 @@ public class Raytracer {
 
                 // shading from a global light source
                 if (modelHit.shade() && modelHit.direction() != null) {
-                    Vector3f normal = new Vector3f(modelHit.direction().getNormal().getX(), modelHit.direction().getNormal().getY(), modelHit.direction().getNormal().getZ());
+                    Vector3f normal = new Vector3f(modelHit.direction().getUnitVec3().toVector3f());
                     modelColor = this.getShaded(modelColor, normal);
                 }
 
@@ -286,16 +280,11 @@ public class Raytracer {
 
 
     private List<RenderModel> createOrGetCached(BlockState blockState, List<RPModel.View> views) {
-        if (this.renderModelCache.containsKey(blockState)) {
-            return this.renderModelCache.get(blockState);
+        if (renderModelCache.containsKey(blockState)) {
+            return renderModelCache.get(blockState);
         }
         else {
-            List<RenderModel> list = this.renderModelCache.get(blockState);
-            if (list == null) {
-                list = new ObjectArrayList();
-                this.renderModelCache.put(blockState, list);
-            }
-
+            List<RenderModel> list = renderModelCache.computeIfAbsent(blockState, k -> new ObjectArrayList<>());
             for (int i = 0; i < views.size(); i++) {
                 var model = new TriangleModel(views.get(i));
                 list.add(model);
@@ -363,7 +352,7 @@ public class Raytracer {
         }
 
         float darkness = this.skyDarken / 12.f;
-        var skyColor = ColorHelper.alphaComposite(FastColor.ARGB32.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
+        var skyColor = ColorHelper.alphaComposite(ARGB.color((int)(darkness*255), 0,0,0), MiscColors.SKY_COLOR);
 
         return ColorHelper.alphaComposite(color, skyColor);
     }

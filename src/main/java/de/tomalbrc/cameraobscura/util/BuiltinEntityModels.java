@@ -33,7 +33,7 @@ public class BuiltinEntityModels {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(rot.x(), rot.y() + 180, rot.z()), pos);
             }
         } else if (entityType == EntityType.PLAYER) {
-            RPModel model = loadModel("/builtin/player.json"); // todo: cache per player uuid
+            RPModel model = loadModel("/builtin/player.json"); // todo: cache per player uuid ..?
             model.textures.put(model.textures.keySet().iterator().next(), Constants.DYNAMIC_PLAYER_TEXTURE+":"+uuid.toString().replace("-", ""));
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1.f / 16.f, 0));
         } else if (entityType == EntityType.ITEM) {
@@ -168,7 +168,25 @@ public class BuiltinEntityModels {
         modelMap.put(EntityType.HOPPER_MINECART, loadModel("/builtin/minecart.json"));
         modelMap.put(EntityType.CHEST_MINECART, loadModel("/builtin/minecart.json"));
 
-        modelMap.put(EntityType.BOAT, loadModel("/builtin/boat.json"));
-        modelMap.put(EntityType.CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.ACACIA_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.ACACIA_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.BAMBOO_RAFT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.BAMBOO_CHEST_RAFT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.CHERRY_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.CHERRY_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.DARK_OAK_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.DARK_OAK_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.OAK_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.OAK_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.BIRCH_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.BIRCH_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.JUNGLE_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.JUNGLE_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.MANGROVE_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.MANGROVE_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.PALE_OAK_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.PALE_OAK_CHEST_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.SPRUCE_BOAT, loadModel("/builtin/boat.json"));
+        modelMap.put(EntityType.SPRUCE_CHEST_BOAT, loadModel("/builtin/boat.json"));
     }
 }

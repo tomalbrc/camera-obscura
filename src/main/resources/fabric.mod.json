@@ -26,6 +26,8 @@
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
     "fabric-api": "*",
-    "minecraft": ">=${minecraft_version}"
+    "polymer-resource-pack": "*",
+    "polymer-core": "+",
+    "minecraft": ">=1.21.2-"
   }
 }

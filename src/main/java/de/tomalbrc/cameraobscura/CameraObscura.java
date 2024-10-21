@@ -10,6 +10,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -21,10 +23,11 @@ public class CameraObscura implements ModInitializer {
         BuiltinEntityModels.initModels();
         BlockColors.init();
 
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("camera-obscura", "camera"));
         Registry.register(
                 BuiltInRegistries.ITEM,
-                ResourceLocation.fromNamespaceAndPath("camera-obscura", "camera"),
-                new CameraItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE))
+                key,
+                new CameraItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).setId(key))
         );
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> CameraCommand.register(dispatcher));
