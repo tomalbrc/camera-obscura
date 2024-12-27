@@ -151,7 +151,7 @@ public class Raytracer {
             else if (blockState.is(Blocks.ENDER_CHEST))
                 rpModel = BuiltinModels.chestModel(blockState);
             else if (blockState.is(BlockTags.SHULKER_BOXES))
-                rpModel = BuiltinModels.shulkerModel(blockState, Optional.ofNullable(ShulkerBoxBlock.getColorFromBlock(result.blockState().getBlock())));
+                rpModel = BuiltinModels.shulkerModel(blockState, Optional.ofNullable(((ShulkerBoxBlock)result.blockState().getBlock()).getColor()));
             else if (blockState.is(BlockTags.BEDS))
                 rpModel = BuiltinModels.bedModel(blockState, Optional.of(((BedBlock)blockState.getBlock()).getColor()));
             else if (blockState.is(Blocks.DECORATED_POT))
@@ -347,8 +347,8 @@ public class Raytracer {
         var color = 0;
         if (!hits.isEmpty()) {
             // test if cloud was hit (transparent if not)
-            if ((hits.get(0).color() >> 24 & 0xff) > 0)
-                color = ColorHelper.alphaComposite(color, (hits.get(0).color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
+            if ((hits.getFirst().color() >> 24 & 0xff) > 0)
+                color = ColorHelper.alphaComposite(color, (hits.getFirst().color() & 0x00_ff_ff_ff) | 0x44_00_00_00);
         }
 
         float darkness = this.skyDarken / 12.f;

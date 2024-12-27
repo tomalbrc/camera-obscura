@@ -1,6 +1,5 @@
 package de.tomalbrc.cameraobscura.color;
 
-import de.tomalbrc.cameraobscura.mixin.BiomeAccessor;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
@@ -47,8 +46,8 @@ public class BlockColors {
     public static void init() {
         loadColorMaps();
 
-        BlockColorProvider grassColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(getBiome(level, blockPos).value())).invokeGetGrassColor();
-        BlockColorProvider foliageColor = (level, blockState, blockPos) -> ((BiomeAccessor)(Object)(getBiome(level, blockPos).value())).invokeGetFoliageColorFromTexture();
+        BlockColorProvider grassColor = (level, blockState, blockPos) -> getBiome(level, blockPos).value().getGrassColor(blockPos.getX(), blockPos.getZ());
+        BlockColorProvider foliageColor = (level, blockState, blockPos) -> getBiome(level, blockPos).value().getFoliageColor();
 
         colors.put(Blocks.LARGE_FERN, grassColor);
         colors.put(Blocks.TALL_GRASS, grassColor);
@@ -62,8 +61,8 @@ public class BlockColors {
 
         colors.put(Blocks.PINK_PETALS, grassColor);
 
-        colors.put(Blocks.SPRUCE_LEAVES, (level, blockState, blockPos) -> FoliageColor.getEvergreenColor());
-        colors.put(Blocks.BIRCH_LEAVES, (level, blockState, blockPos) -> FoliageColor.getBirchColor());
+        colors.put(Blocks.SPRUCE_LEAVES, (level, blockState, blockPos) -> FoliageColor.FOLIAGE_EVERGREEN);
+        colors.put(Blocks.BIRCH_LEAVES, (level, blockState, blockPos) -> FoliageColor.FOLIAGE_BIRCH);
 
         colors.put(Blocks.OAK_LEAVES, foliageColor);
         colors.put(Blocks.JUNGLE_LEAVES, foliageColor);
