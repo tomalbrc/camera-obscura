@@ -37,8 +37,6 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
         // Shutdown the executor
         CompletableFuture.allOf(futures).join();
 
-        executor.shutdownNow();
-
         return imgFile;
     }
 }

@@ -38,8 +38,6 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
         // Shutdown the executor
         CompletableFuture.allOf(futures).join();
 
-        executor.shutdownNow();
-
         return image;
     }
 }
