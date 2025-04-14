@@ -21,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
@@ -67,6 +68,7 @@ public class RPHelper {
         return resourcePackBuilder == null ? vanillaBuilder : resourcePackBuilder;
     }
 
+    @Nullable
     public static RPBlockState loadBlockState(BlockState blockState) {
         if (blockStateResources.containsKey(blockState)) {
             return blockStateResources.get(blockState);
@@ -74,9 +76,12 @@ public class RPHelper {
 
         ResourceLocation location = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         byte[] data = getBuilder().getDataOrSource("assets/" + location.getNamespace() + "/blockstates/" + location.getPath() + ".json");
-        var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
-        blockStateResources.put(blockState, resource);
-        return resource;
+        if (data != null) {
+            var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
+            blockStateResources.put(blockState, resource);
+            return resource;
+        }
+        return null;
     }
 
     public static RPModel.View loadModelView(ResourceLocation resourceLocation, Vector3fc blockRotation, boolean uvlock) {
@@ -232,7 +237,11 @@ public class RPHelper {
     public static List<RPModel.View> loadBlockModelViews(BlockState blockState) {
         BlockState block = safePolymerBlockState(blockState);
         RPBlockState rpBlockState = RPHelper.loadBlockState(block);
-        return loadModel(rpBlockState, block);
+        if (rpBlockState != null) {
+            return loadModel(rpBlockState, block);
+        }
+
+        return null;
     }
 
     public static RPModel loadItemModel(ItemStack itemStack) {

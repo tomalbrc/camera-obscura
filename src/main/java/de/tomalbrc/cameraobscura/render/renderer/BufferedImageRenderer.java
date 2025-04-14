@@ -16,25 +16,15 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
         Vec3 eyes = this.entity.getEyePosition();
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
-        // List to hold the CompletableFutures for each pixel
         CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
         AtomicInteger index = new AtomicInteger();
 
-        // Iterate through rays and create async tasks
         this.iterateRays(this.entity, (ray, x, y) -> {
-            final int pixelX = x;
-            final int pixelY = y;
-
-            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> {
-                // Trace the ray and compute the color asynchronously
-                return raytracer.trace(eyes, ray);
-            }, executor).thenAccept(color -> {
-                // Update the image with the computed color
+            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> raytracer.trace(eyes, ray), executor).thenAccept(color -> {
                 imgFile.setRGB(x, y, color);
             });
         });
 
-        // Shutdown the executor
         CompletableFuture.allOf(futures).join();
 
         return imgFile;

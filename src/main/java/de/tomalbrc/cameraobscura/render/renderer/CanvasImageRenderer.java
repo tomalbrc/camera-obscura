@@ -17,25 +17,23 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
         Vec3 eyes = this.entity.getEyePosition();
         CanvasImage image = new CanvasImage(width, height);
 
-        // List to hold the CompletableFutures for each pixel
+
         CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
         AtomicInteger index = new AtomicInteger();
 
-        // Iterate through rays and create async tasks
         this.iterateRays(this.entity, (ray, x, y) -> {
             final int pixelX = x;
             final int pixelY = y;
 
-            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> {
-                // Trace the ray and compute the color asynchronously
-                return CanvasUtils.findClosestColor(raytracer.trace(eyes, ray));
-            }, executor).thenAccept(color -> {
-                // Update the image with the computed color
-                image.set(pixelX, pixelY, color);
+            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> CanvasUtils.findClosestColor(raytracer.trace(eyes, ray)), executor).thenAccept(color -> {
+                try {
+                    image.set(pixelX, pixelY, color);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             });
         });
 
-        // Shutdown the executor
         CompletableFuture.allOf(futures).join();
 
         return image;

@@ -22,6 +22,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -29,7 +30,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 import javax.imageio.ImageIO;
@@ -183,7 +183,7 @@ public class CameraCommand {
         }
     }
 
-    public static List<ItemStack> mapItems(CanvasImage image, Level level) {
+    public static List<ItemStack> mapItems(CanvasImage image, ServerLevel level) {
         var xSections = Mth.ceil(image.getWidth() / 128d);
         var ySections = Mth.ceil(image.getHeight() / 128d);
 

@@ -1,15 +1,12 @@
 package de.tomalbrc.cameraobscura.json;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CachedResourceLocationDeserializer implements JsonDeserializer<ResourceLocation> {
+public class CachedResourceLocationDeserializer implements JsonDeserializer<ResourceLocation>, JsonSerializer<ResourceLocation> {
     private static final ConcurrentHashMap<String, ResourceLocation> CACHE = new ConcurrentHashMap<>();
 
     public static ResourceLocation get(String name) {
@@ -34,10 +31,14 @@ public class CachedResourceLocationDeserializer implements JsonDeserializer<Reso
             return location;
         }
 
-        ResourceLocation.Serializer serializer = new ResourceLocation.Serializer();
-        location = serializer.deserialize(element, type, context);
+        location = ResourceLocation.parse(string);
 
         CACHE.put(string, location);
         return location;
+    }
+
+    @Override
+    public JsonElement serialize(ResourceLocation resourceLocation, Type type, JsonSerializationContext jsonSerializationContext) {
+        return new JsonPrimitive(resourceLocation.toString());
     }
 }

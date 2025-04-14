@@ -2,6 +2,7 @@ package de.tomalbrc.cameraobscura;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.ResourceLocation;
 
@@ -17,7 +18,7 @@ public class ModConfig {
     private static ModConfig instance;
 
     private static final Gson gson = new GsonBuilder()
-            .registerTypeHierarchyAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
+            .registerTypeHierarchyAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
             .setPrettyPrinting()
             .create();
 
