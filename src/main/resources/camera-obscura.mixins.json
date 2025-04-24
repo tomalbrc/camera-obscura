@@ -4,6 +4,7 @@
   "package": "de.tomalbrc.cameraobscura.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "PolymerCommonUtilMixin"
   ],
   "injectors": {
     "defaultRequire": 1
