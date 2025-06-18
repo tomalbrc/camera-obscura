@@ -7,7 +7,6 @@ import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.polymer.core.api.item.SimplePolymerItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
@@ -55,10 +54,10 @@ public class CameraItem extends SimplePolymerItem {
         if (player != null && !player.isRemoved()) {
             player.playSound(SoundEvents.SPYGLASS_STOP_USING, 1.0F, 1.0F);
 
-            var items = CameraCommand.mapItems(canvasImage, player.serverLevel());
+            var items = CameraCommand.mapItems(canvasImage, player.level());
             items.forEach(x -> {
                 if (!player.addItem(x)) {
-                    player.spawnAtLocation((ServerLevel) player.level(), x);
+                    player.spawnAtLocation(player.level(), x);
                 }
             });
         }
