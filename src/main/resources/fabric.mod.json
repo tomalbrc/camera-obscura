@@ -28,6 +28,6 @@
     "fabric-api": "*",
     "polymer-resource-pack": "*",
     "polymer-core": "*",
-    "minecraft": ">=1.21.4"
+    "minecraft": ">=1.21.6"
   }
 }
