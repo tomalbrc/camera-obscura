@@ -1,5 +1,6 @@
 package de.tomalbrc.cameraobscura.world;
 
+import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
 import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.util.Constants;
@@ -45,20 +46,27 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
 
                 if (!isInFrustum(entity1.getViewVector(1.f), entity1.position(), entity.position(), ModConfig.getInstance().fov+10) || !entity1.hasLineOfSight(entity)) continue;
 
-                if (entity instanceof LivingEntity livingEntity) {
-                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), livingEntity.yBodyRot, 0), entity.getUUID(), null);
-                } else if (entity instanceof ItemFrame itemFrame) {
-                    var rot = itemFrame.getDirection().getRotation();
-                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), entity.getUUID(), null);
-                } else if (entity instanceof ItemEntity itemEntity) {
-                    hit = new EntityHit(entity.getType(), entity.getBoundingBox(), entity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), entity.getUUID(), itemEntity.getItem().copy());
-                } else {
-                    hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0), entity.getUUID(), null);
+                switch (entity) {
+                    case LivingEntity livingEntity ->
+                            hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(0, livingEntity.yBodyRot, 0), entity.getUUID(), null);
+                    case ItemFrame itemFrame -> {
+                        var rot = itemFrame.getDirection().getRotation();
+                        hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), entity.getUUID(), null);
+                    }
+                    case ItemEntity itemEntity ->
+                            hit = new EntityHit(entity.getType(), entity.getBoundingBox(), entity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), entity.getUUID(), itemEntity.getItem().copy());
+                    default ->
+                            hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0), entity.getUUID(), null);
                 }
 
                 // Cache player textures
                 if (entity.getType() == EntityType.PLAYER) {
-                    RPHelper.loadTextureImage(CachedResourceLocationDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
+                    try {
+                        RPHelper.loadTextureImage(CachedResourceLocationDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
+                    } catch (Exception e) {
+                        LogUtils.getLogger().info("Could not render player");
+                        continue;
+                    }
                 }
 
                 this.allEntities.add(hit);

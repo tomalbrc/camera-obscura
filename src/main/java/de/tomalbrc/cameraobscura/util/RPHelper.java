@@ -13,7 +13,9 @@ import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -35,6 +37,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,8 +47,8 @@ public class RPHelper {
     private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
-    private static final Map<ResourceLocation, RPModel> modelResources = new ConcurrentHashMap<>();
-    private static final Map<BlockState, RPBlockState> blockStateResources = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, RPModel> modelResources = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
+    private static final Map<BlockState, RPBlockState> blockStateResources = Collections.synchronizedMap(new Reference2ObjectOpenHashMap<>());
 
     private static final Map<ResourceLocation, BufferedImage> textureCache = new ConcurrentHashMap<>();
 
@@ -74,7 +77,7 @@ public class RPHelper {
             return blockStateResources.get(blockState);
         }
 
-        ResourceLocation location = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
+        ResourceLocation location = blockState.getBlock().builtInRegistryHolder().key().location();
         byte[] data = getBuilder().getDataOrSource("assets/" + location.getNamespace() + "/blockstates/" + location.getPath() + ".json");
         if (data != null) {
             var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
@@ -125,7 +128,7 @@ public class RPHelper {
         return getBuilder().getDataOrSource("assets/" + path.getNamespace() + "/textures/" + path.getPath() + ".png");
     }
 
-    public static BufferedImage loadTextureImage(ResourceLocation path) {
+    public static BufferedImage loadTextureImage(ResourceLocation path) throws Exception {
         if (textureCache.containsKey(path)) {
             return textureCache.get(path);
         }
@@ -152,15 +155,10 @@ public class RPHelper {
         return img;
     }
 
-    private static BufferedImage imageFromBytes(byte[] data) {
-        BufferedImage img = null;
-        try {
-            img = ImageIO.read(new ByteArrayInputStream(data));
-            if (img.getType() == 10) {
-                img = TextureHelper.darkenGrayscale(img);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    private static BufferedImage imageFromBytes(byte[] data) throws Exception {
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
+        if (img.getType() == 10) {
+            img = TextureHelper.darkenGrayscale(img);
         }
         return img;
     }
@@ -193,7 +191,7 @@ public class RPHelper {
                 boolean matches = true;
                 if (!entry.getKey().isEmpty()) {
                     try {
-                        String str = String.format("%s[%s]", BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath(), entry.getKey());
+                        String str = String.format("%s[%s]", blockState.getBlock().builtInRegistryHolder().key().location(), entry.getKey());
                         BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, str, false);
 
                         for (Map.Entry<Property<?>, Comparable<?>> propertyComparableEntry : blockResult.properties().entrySet()) {

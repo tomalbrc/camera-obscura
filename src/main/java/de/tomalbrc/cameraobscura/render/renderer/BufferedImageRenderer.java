@@ -4,8 +4,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.awt.image.BufferedImage;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
     public BufferedImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
@@ -16,16 +15,11 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
         Vec3 eyes = this.entity.getEyePosition();
         var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 
-        CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
-        AtomicInteger index = new AtomicInteger();
-
-        this.iterateRays(this.entity, (ray, x, y) -> {
-            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> raytracer.trace(eyes, ray), executor).thenAccept(color -> {
-                imgFile.setRGB(x, y, color);
-            });
+        IntStream.range(0, width * height).parallel().forEach(i -> {
+            int x = i % width;
+            int y = i / width;
+            imgFile.setRGB(x, y, raytracer.trace(eyes, rayAt(entity.getYRot(), entity.xRotO, x, y)));
         });
-
-        CompletableFuture.allOf(futures).join();
 
         return imgFile;
     }

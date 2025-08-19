@@ -1,12 +1,12 @@
 package de.tomalbrc.cameraobscura.render.renderer;
 
+import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
     public CanvasImageRenderer(LivingEntity entity, int width, int height, int renderDistance) {
@@ -17,24 +17,12 @@ public class CanvasImageRenderer extends AbstractRenderer<CanvasImage> {
         Vec3 eyes = this.entity.getEyePosition();
         CanvasImage image = new CanvasImage(width, height);
 
-
-        CompletableFuture<Void>[] futures = new CompletableFuture[width * height];
-        AtomicInteger index = new AtomicInteger();
-
-        this.iterateRays(this.entity, (ray, x, y) -> {
-            final int pixelX = x;
-            final int pixelY = y;
-
-            futures[index.getAndIncrement()] = CompletableFuture.supplyAsync(() -> CanvasUtils.findClosestColor(raytracer.trace(eyes, ray)), executor).thenAccept(color -> {
-                try {
-                    image.set(pixelX, pixelY, color);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
+        IntStream.range(0, width * height).parallel().forEach(i -> {
+            int x = i % width;
+            int y = i / width;
+            CanvasColor color = CanvasUtils.findClosestColor(raytracer.trace(eyes, rayAt(entity.getYRot(), entity.xRotO, x, y)));
+            image.set(x, y, color);
         });
-
-        CompletableFuture.allOf(futures).join();
 
         return image;
     }

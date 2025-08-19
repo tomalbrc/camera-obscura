@@ -4,10 +4,6 @@ import de.tomalbrc.cameraobscura.render.Raytracer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.util.TriConsumer;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final int width;
@@ -15,8 +11,6 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
 
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
-
-    protected static final ExecutorService executor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()-1));
 
     public AbstractRenderer(LivingEntity entity, int width, int height, int renderDistance) {
         this.entity = entity;
@@ -48,31 +42,28 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         return yawPitchRotation(yawPitchRotation(base, firstYaw, firstPitch), secondYaw, secondPitch);
     }
 
-    protected void iterateRays(LivingEntity entity, TriConsumer<Vec3, Integer, Integer> consumer) {
-        double yawRad = (entity.yHeadRot + 90) * Mth.DEG_TO_RAD;
-        double pitchRad = -entity.xRotO * Mth.DEG_TO_RAD;
+    protected Vec3 rayAt(float yaw, float pitch, int x, int y) {
+        double yawRad = (yaw + 90) * Mth.DEG_TO_RAD;
+        double pitchRad = -pitch * Mth.DEG_TO_RAD;
 
-        // this is incorrect but the math is not mathing when using 0,0,-1...
+        // forward
         Vec3 baseVec = new Vec3(1, 0, 0);
 
         // from viewer to screen to worldspace
-        Vec3 lowerLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 upperLeft = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 lowerRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 upperRight = doubleYawPitchRotation(baseVec, FOV_YAW_RAD, FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 lowerLeft  = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 upperLeft  = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD,  FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 lowerRight = doubleYawPitchRotation(baseVec,  FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
+        Vec3 upperRight = doubleYawPitchRotation(baseVec,  FOV_YAW_RAD,  FOV_PITCH_RAD, yawRad, pitchRad);
 
-        Vec3 leftFraction = upperLeft.subtract(lowerLeft).scale(1. / (height - 1.));
-        Vec3 rightFraction = upperRight.subtract(lowerRight).scale(1. / (height - 1.));
+        // vertical lerp between top and bottom for this row
+        double v = (double) y / (height - 1);
+        Vec3 leftEdge  = upperLeft.lerp(lowerLeft, v);
+        Vec3 rightEdge = upperRight.lerp(lowerRight, v);
 
-        for (int pitch = 0; pitch < height; pitch++) {
-            Vec3 leftPitch = upperLeft.subtract(leftFraction.scale(pitch));
-            Vec3 rightPitch = upperRight.subtract(rightFraction.scale(pitch));
-            Vec3 yawFraction = rightPitch.subtract(leftPitch).scale(1. / (width - 1.));
+        // horizontal lerp between left and right edge for this column
+        double u = (double) x / (width - 1);
+        Vec3 ray = leftEdge.lerp(rightEdge, u);
 
-            for (int yaw = 0; yaw < width; yaw++) {
-                Vec3 ray = leftPitch.add(yawFraction.scale(yaw)).normalize();
-                consumer.accept(ray, yaw, pitch);
-            }
-        }
+        return ray;
     }
 }

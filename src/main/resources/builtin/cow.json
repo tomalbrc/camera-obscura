@@ -1,7 +1,7 @@
 {
 	"texture_size": [64, 32],
 	"textures": {
-		"0": "entity/cow/cow"
+		"0": "entity/cow/temperate_cow"
 	},
 	"elements": [
 		{

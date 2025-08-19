@@ -1,5 +1,6 @@
 package de.tomalbrc.cameraobscura.render.model.triangle;
 
+import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
@@ -11,7 +12,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector2f;
+import org.joml.Vector2fc;
+import org.joml.Vector3f;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -292,11 +296,12 @@ public class TriangleModel implements RenderModel {
 
         hitList.sort((a,b) -> Float.compare(a.t(), b.t()));
 
+        Vector2f uv = new Vector2f();
         for (int i = 0; i < hitList.size(); i++) {
             Triangle.TriangleHit hit = hitList.get(i);
             Triangle triangle = hit.triangle();
 
-            Vector2fc uv = hit.uv();
+            uv.set(hit.u(), hit.v());
             Direction normalDir = hit.triangle().getDirection(); // normal direction of the hit triangle
             RPElement.TextureInfo textureInfo = triangle.textureInfo;
 
@@ -311,7 +316,14 @@ public class TriangleModel implements RenderModel {
                 texKey = this.textureMap.get(texKey).getPath();
             }
 
-            BufferedImage img = RPHelper.loadTextureImage(r);
+            BufferedImage img = null;
+            try {
+                img = RPHelper.loadTextureImage(r);
+            } catch (Exception e) {
+                LogUtils.getLogger().error("Could not load {}", r);
+                continue;
+            }
+
             if (img == null) continue;
 
             int width = img.getWidth();

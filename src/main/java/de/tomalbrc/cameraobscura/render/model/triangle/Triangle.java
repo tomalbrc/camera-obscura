@@ -130,12 +130,13 @@ public class Triangle {
         float uCoord = u * uv0.x + v * uv1.x + w * uv2.x;
         float vCoord = u * uv0.y + v * uv1.y + w * uv2.y;
 
-        return new TriangleHit(t, new Vector2f(uCoord, vCoord), this);
+        return new TriangleHit(t, uCoord, vCoord, this);
     }
 
     public record TriangleHit(
             float t, // Distance along the ray
-            Vector2fc uv,
+            float u,
+            float v,
             Triangle triangle
     ) {
     }
