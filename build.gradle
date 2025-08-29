@@ -14,9 +14,9 @@ repositories {
     maven { url "https://maven.nucleoid.xyz/" }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += ['--add-modules', 'jdk.incubator.vector']
-}
+//tasks.withType(JavaCompile).configureEach {
+//    options.compilerArgs += ['--add-modules', 'jdk.incubator.vector']
+//}
 
 dependencies {
     // To change the versions see the gradle.properties file

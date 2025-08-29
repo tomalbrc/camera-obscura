@@ -9,6 +9,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
 import de.tomalbrc.cameraobscura.Permissions;
+import de.tomalbrc.cameraobscura.render.Raytracer;
 import de.tomalbrc.cameraobscura.render.renderer.BufferedImageRenderer;
 import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
 import de.tomalbrc.cameraobscura.util.RPHelper;
@@ -77,7 +78,7 @@ public class CameraCommand {
                 .then(Commands.literal("clear-cache").requires(Permissions.require("camera-obscura.command.clear-cache", 2))
                         .executes(x -> {
                             RPHelper.clearCache();
-                            //Raytracer.clearCache(); // not sure if enabling this is beneficial
+                            Raytracer.clearCache(); // not sure if enabling this is beneficial
                             return 0;
                         }))
                 .build();

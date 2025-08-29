@@ -5,7 +5,7 @@ import de.tomalbrc.cameraobscura.color.BlockColors;
 import de.tomalbrc.cameraobscura.color.MiscColors;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
-import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
+import de.tomalbrc.cameraobscura.render.model.triangle.QuadModel;
 import de.tomalbrc.cameraobscura.util.BuiltinEntityModels;
 import de.tomalbrc.cameraobscura.util.BuiltinModels;
 import de.tomalbrc.cameraobscura.util.ColorHelper;
@@ -54,7 +54,7 @@ public class Raytracer {
 
     private final int skyDarken;
 
-    private static final TriangleModel localSkyModel = new TriangleModel(BuiltinModels.skyModel(Vec3.ZERO));
+    private static final QuadModel localSkyModel = new QuadModel(BuiltinModels.skyModel(Vec3.ZERO));
 
     public Raytracer(LivingEntity entity, int distance) {
         this.level = (ServerLevel) entity.level();
@@ -286,7 +286,7 @@ public class Raytracer {
         else {
             List<RenderModel> list = renderModelCache.computeIfAbsent(blockState, k -> new ObjectArrayList<>());
             for (int i = 0; i < views.size(); i++) {
-                var model = new TriangleModel(views.get(i));
+                var model = new QuadModel(views.get(i));
                 list.add(model);
             }
             return list;
@@ -298,7 +298,7 @@ public class Raytracer {
             return fluidRenderModelCache.get(fluidLevel);
         }
         else {
-            var model = new TriangleModel(view);
+            var model = new QuadModel(view);
             fluidRenderModelCache.put(fluidLevel, model);
             return model;
         }
@@ -312,7 +312,7 @@ public class Raytracer {
         }
         */
 
-        var model = new TriangleModel(view);
+        var model = new QuadModel(view);
         //this.entityRenderModelCache.put(id, model);
         return model;
 

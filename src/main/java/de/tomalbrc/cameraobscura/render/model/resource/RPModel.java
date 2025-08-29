@@ -21,6 +21,8 @@ public class RPModel {
     public Object2ObjectOpenHashMap<String, String> textures;
     public List<RPElement> elements;
 
+    Map<String, ResourceLocation> collectedTextures;
+
     public record View(RPModel model, Vector3fc blockRotation, Vector3fc offset, boolean uvlock) {
         public View(RPModel model, Vector3fc blockRotation, Vector3fc offset) {
             this(model, blockRotation, offset, false);
@@ -35,26 +37,28 @@ public class RPModel {
         }
 
         public Map<String, ResourceLocation> collectTextures() {
-            Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
+            if (model.collectedTextures == null) {
+                model.collectedTextures = new Object2ObjectOpenHashMap<>();
 
-            if (this.model.textures != null && !this.model.textures.isEmpty()) {
-                for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
-                    collectedTextures.put(entry.getKey(), CachedResourceLocationDeserializer.get(entry.getValue().replace("#", "")));
+                if (this.model.textures != null && !this.model.textures.isEmpty()) {
+                    for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
+                        model.collectedTextures.put(entry.getKey(), CachedResourceLocationDeserializer.get(entry.getValue().replace("#", "")));
+                    }
+                }
+
+                ResourceLocation parent = this.model.parent;
+                while (parent != null && !parent.getPath().isEmpty()) {
+                    View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
+                    if (child.model != null) {
+                        if (child.model.textures != null) child.model.textures.forEach((key,value) -> model.collectedTextures.putIfAbsent(key, CachedResourceLocationDeserializer.get(value.replace("#",""))));
+                        parent = child.model.parent;
+                    } else {
+                        break;
+                    }
                 }
             }
 
-            ResourceLocation parent = this.model.parent;
-            while (parent != null && !parent.getPath().isEmpty()) {
-                View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
-                if (child.model != null) {
-                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, CachedResourceLocationDeserializer.get(value.replace("#",""))));
-                    parent = child.model.parent;
-                } else {
-                    break;
-                }
-            }
-
-            return collectedTextures;
+            return model.collectedTextures;
         }
 
         public List<RPElement> collectElements() {

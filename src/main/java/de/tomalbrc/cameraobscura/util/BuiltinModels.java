@@ -3,7 +3,6 @@ package de.tomalbrc.cameraobscura.util;
 import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
-import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
 import de.tomalbrc.cameraobscura.util.model.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
