@@ -13,6 +13,7 @@ import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.world.BlockIterator;
 import de.tomalbrc.cameraobscura.world.EntityIterator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
@@ -33,7 +34,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -45,7 +45,7 @@ public class Raytracer {
 
     private static final Map<BlockState, List<RenderModel>> renderModelCache = new Reference2ObjectArrayMap<>();
     private static final Int2ObjectArrayMap<RenderModel> fluidRenderModelCache = new Int2ObjectArrayMap<>();
-    //private final Long2ReferenceMap<TriangleModel> entityRenderModelCache = new Long2ReferenceArrayMap<>();
+    private final Map<UUID, RenderModel> entityRenderModelCache = new Object2ObjectOpenHashMap<>();
 
     private final BlockIterator blockIterator;
     private final EntityIterator entityIterator;
@@ -60,7 +60,7 @@ public class Raytracer {
         this.level = (ServerLevel) entity.level();
         this.distance = distance;
 
-        var cache = new Object2ObjectOpenHashMap<Vector2i, LevelChunk>();
+        var cache = new Int2ObjectOpenHashMap<LevelChunk>();
         this.blockIterator = new BlockIterator(this.level, cache);
         this.entityIterator = new EntityIterator(this.level, cache, entity);
 
@@ -92,7 +92,7 @@ public class Raytracer {
 
         ClipContext context = new ClipContext(pos, scaledDir, null, ClipContext.Fluid.ANY, CollisionContext.empty());
         List<BlockIterator.WorldHit> result = this.blockIterator.raycast(context);
-        List<EntityIterator.EntityHit> entityResult = this.entityIterator.raycast(context);
+        List<EntityIterator.EntityHit> entityResult = ModConfig.getInstance().renderEntities ? this.entityIterator.raycast(context) : List.of();
 
         int color = 0x00ffffff;
 
@@ -186,7 +186,7 @@ public class Raytracer {
                 for (int i = 0; i < entityHits.size(); i++) {
                     EntityIterator.EntityHit hit = entityHits.get(i);
                     RPModel.View view = BuiltinEntityModels.getModel(hit.type(), blockPos.getCenter().toVector3f().sub(hit.position()).add(0, -0.5f, 0), hit.rotation(), hit.uuid(), hit.data());
-                    RenderModel entityModel = createOrGetCached(view);
+                    RenderModel entityModel = createOrGetCached(hit.uuid(), view);
                     hits.addAll(entityModel.intersect(pos.toVector3f(), direction.toVector3f(), blockPos.getCenter().toVector3f(), blockColor));
                 }
             }
@@ -229,8 +229,7 @@ public class Raytracer {
         }
 
         // Apply shade tint
-        int tintedColor = ColorHelper.multiplyColor(modelColor, ColorHelper.packColor(shadeTint));
-        return tintedColor;
+        return ColorHelper.multiplyColor(modelColor, ColorHelper.packColor(shadeTint));
     }
 
     public int getBlurredBiomeWaterOrBlockColor(BlockPos blockPos, BlockState blockState, int radius) {
@@ -265,6 +264,9 @@ public class Raytracer {
                 gSum += green;
                 bSum += blue;
                 count++;
+
+                if (blockState != null && blockState.is(Blocks.REDSTONE_WIRE))
+                    break;
             }
         }
 
@@ -304,18 +306,19 @@ public class Raytracer {
         }
     }
 
-    private RenderModel createOrGetCached(RPModel.View view) {
-        /*
-        TriangleModel model = this.entityRenderModelCache.get(id);
+    private RenderModel createOrGetCached(UUID id, RPModel.View view) {
+        RenderModel model = this.entityRenderModelCache.get(id);
         if (model != null) {
             return model;
         }
-        */
 
-        var model = new QuadModel(view);
+        QuadModel qm = new QuadModel(view);
+//        for (Quad quad : qm.getQuads()) {
+//            quad.origin.add(view.offset());
+//        }
+        model = qm;
         //this.entityRenderModelCache.put(id, model);
         return model;
-
     }
 
     private List<RenderModel> getBlockRenderModels(List<RPModel.View> views, BlockIterator.WorldHit result, boolean allowWater) {

@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tomalbrc.cameraobscura.json.*;
+import de.tomalbrc.cameraobscura.render.TextureData;
 import de.tomalbrc.cameraobscura.render.model.resource.RPBlockState;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
@@ -22,15 +23,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,7 +48,7 @@ public class RPHelper {
     private static final Map<ResourceLocation, RPModel> modelResources = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
     private static final Map<BlockState, RPBlockState> blockStateResources = Collections.synchronizedMap(new Reference2ObjectOpenHashMap<>());
 
-    private static final Map<ResourceLocation, BufferedImage> textureCache = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, TextureData> textureCache = new ConcurrentHashMap<>();
 
     final public static Gson gson = new GsonBuilder()
             .registerTypeAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
@@ -128,53 +126,37 @@ public class RPHelper {
         return getBuilder().getDataOrSource("assets/" + path.getNamespace() + "/textures/" + path.getPath() + ".png");
     }
 
-    public static BufferedImage loadTextureImage(ResourceLocation path) throws Exception {
+    public static TextureData loadTextureImage(ResourceLocation path) throws Exception {
         if (textureCache.containsKey(path)) {
             return textureCache.get(path);
         }
 
-        if (path.getNamespace().equals(Constants.DYNAMIC_PLAYER_TEXTURE)) {
-            var img = imageFromBytes(getPlayerTexture(path.getPath()));
-            textureCache.put(path, img);
-            return img;
-        } else if (path.getNamespace().equals(Constants.DYNAMIC_SIGN_TEXTURE)) {
-            var img = imageFromBytes(getPlayerTexture(path.getPath()));
-            textureCache.put(path, img);
-            return img;
-        } else if (path.getNamespace().equals(Constants.DYNAMIC_MAP_TEXTURE)) {
-            var img = imageFromBytes(getPlayerTexture(path.getPath()));
-            textureCache.put(path, img);
-            return img;
+        switch (path.getNamespace()) {
+            case Constants.DYNAMIC_PLAYER_TEXTURE, Constants.DYNAMIC_SIGN_TEXTURE, Constants.DYNAMIC_MAP_TEXTURE -> {
+                var img = TextureData.fromBytes(getPlayerTexture(path.getPath()));
+                textureCache.put(path, img);
+                return img;
+            }
         }
 
         byte[] data = loadTextureBytes(path);
-        BufferedImage img = imageFromBytes(data);
+        TextureData img = TextureData.fromBytes(data);
         textureCache.put(path, img);
 
-
-        return img;
+        return TextureData.fromBytes(data);
     }
 
-    private static BufferedImage imageFromBytes(byte[] data) throws Exception {
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
-        if (img.getType() == 10) {
-            img = TextureHelper.darkenGrayscale(img);
-        }
-        return img;
-    }
-
-    @NotNull
     private static byte[] getPlayerTexture(String uuid) {
         InputStreamReader inputStreamReader = null;
         try {
             URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
             inputStreamReader = new InputStreamReader(url.openStream());
 
-            JsonObject textureProperty = new JsonParser().parse(inputStreamReader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
+            JsonObject textureProperty = JsonParser.parseReader(inputStreamReader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
             String texture = textureProperty.get("value").getAsString();
             var newJson = new String(Base64.getDecoder().decode(texture));
 
-            var str = new JsonParser().parse(newJson).getAsJsonObject().get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
+            var str = JsonParser.parseString(newJson).getAsJsonObject().get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
 
             URL textureUrl = new URL(str);
             byte[] bytes = textureUrl.openStream().readAllBytes();
