@@ -30,7 +30,7 @@ public class BlockIterator extends AbstractWorldIterator<BlockIterator.WorldHit>
 
     private final Level level;
 
-    public BlockIterator(ServerLevel level, Map<Integer, LevelChunk> cachedChunks) {
+    public BlockIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks) {
         super(level, cachedChunks);
         this.level = level;
     }

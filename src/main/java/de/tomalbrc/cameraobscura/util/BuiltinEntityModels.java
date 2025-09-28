@@ -32,9 +32,9 @@ public class BuiltinEntityModels {
             } else {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(rot.x(), rot.y() + 180, rot.z()), pos);
             }
-        } else if (entityType == EntityType.PLAYER && uuid != null) {
+        } else if (entityType == EntityType.PLAYER) {
             RPModel model = loadModel("/builtin/player.json"); // todo: cache per player uuid ..?
-            model.textures.put(model.textures.keySet().iterator().next(), Constants.DYNAMIC_PLAYER_TEXTURE + ":" + uuid.toString().replace("-", ""));
+            model.textures.put(model.textures.keySet().iterator().next(), Constants.DYNAMIC_PLAYER_TEXTURE+":"+uuid.toString().replace("-", ""));
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1.f / 16.f, 0));
         } else if (entityType == EntityType.ITEM) {
             ItemStack itemStack = (ItemStack) data;
@@ -58,7 +58,7 @@ public class BuiltinEntityModels {
             element.light = false;
             for (String key : element.faces.keySet()) {
                 var face = element.faces.get(key);
-                face.uv.mul(rpModel.textureSize.get(0) / 16.f, rpModel.textureSize.get(1) / 16.f, rpModel.textureSize.get(0) / 16.f, rpModel.textureSize.get(1) / 16.f);
+                face.uv.mul(rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f, rpModel.textureSize.get(0)/16.f, rpModel.textureSize.get(1)/16.f);
             }
         }
         return rpModel;

@@ -28,7 +28,10 @@ public class Quad {
         u.sub(origin, this.uVec);
         v.sub(origin, this.vVec);
 
-        this.uVec.cross(this.vVec, this.normal).negate().normalize();
+        this.vVec.cross(this.uVec, this.normal).normalize();
+        if (this.normal.dot(origin) > 0) {
+            this.normal.negate(); // flip if pointing inward
+        }
 
         this.uVecDot = this.uVec.dot(this.uVec);
         this.vVecDot = this.vVec.dot(this.vVec);
@@ -37,26 +40,27 @@ public class Quad {
         this.shade = true;
     }
 
-    /**
-     * Map a (possibly non-axis aligned) normal to the closest cardinal Direction.
-     * Chooses the axis with the largest absolute component.
-     */
     public void setDirection(Vector3fc dir) {
-        float dx = dir.x();
-        float dy = dir.y();
-        float dz = dir.z();
+        int dx = (int) Math.signum(dir.x());
+        int dy = (int) Math.signum(dir.y());
+        int dz = (int) Math.signum(dir.z());
+        this.direction = fromDelta(dx, dy, dz).getOpposite();
+    }
 
-        float adx = Math.abs(dx);
-        float ady = Math.abs(dy);
-        float adz = Math.abs(dz);
-
-        if (adx >= ady && adx >= adz) {
-            this.direction = dx > 0 ? Direction.EAST : Direction.WEST;
-        } else if (ady >= adx && ady >= adz) {
-            this.direction = dy > 0 ? Direction.UP : Direction.DOWN;
-        } else {
-            this.direction = dz > 0 ? Direction.SOUTH : Direction.NORTH;
+    public static Direction fromDelta(int x, int y, int z) {
+        if (x == 0) {
+            if (y == 0) {
+                if (z > 0) return Direction.SOUTH;
+                if (z < 0) return Direction.NORTH;
+            } else if (z == 0) {
+                if (y > 0) return Direction.UP;
+                return Direction.DOWN;
+            }
+        } else if (y == 0 && z == 0) {
+            if (x > 0) return Direction.EAST;
+            return Direction.WEST;
         }
+        return Direction.UP;
     }
 
     public Direction getDirection() {
@@ -71,11 +75,7 @@ public class Quad {
         float denom = normal.x * dir.x + normal.y * dir.y + normal.z * dir.z;
         if (Math.abs(denom) < 1e-6f) return null; // parallel or nearly parallel
 
-        // Back-face culling: if denom > 0, the ray and normal point roughly the same way
-        // which means the ray hits the back side of the face — ignore it.
-        if (denom > 1e-6f) return null;
-
-        // numer = (origin - orig) · normal
+        // numer = (origin - orig) * normal
         float ox = origin.x - orig.x;
         float oy = origin.y - orig.y;
         float oz = origin.z - orig.z;

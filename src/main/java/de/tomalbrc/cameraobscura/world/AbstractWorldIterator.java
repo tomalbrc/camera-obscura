@@ -13,9 +13,9 @@ import java.util.Map;
 abstract public class AbstractWorldIterator<T> {
     protected final ServerLevel level;
 
-    private final Map<Integer, LevelChunk> cachedChunks;
+    private final Map<Vector2i, LevelChunk> cachedChunks;
 
-    public AbstractWorldIterator(ServerLevel level, Map<Integer, LevelChunk> cachedChunks) {
+    public AbstractWorldIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks) {
         this.level = level;
         this.cachedChunks = cachedChunks;
     }
@@ -33,12 +33,12 @@ abstract public class AbstractWorldIterator<T> {
     }
 
     protected LevelChunk getChunkAt(Vector2i pos) {
-        LevelChunk levelChunk = this.cachedChunks.get(SectionPos.sectionToBlockCoord(pos.x, pos.y));
+        LevelChunk levelChunk = this.cachedChunks.get(pos);
         if (levelChunk != null) {
             return levelChunk;
         } else {
             levelChunk = this.level.getChunk(pos.x, pos.y);
-            cachedChunks.put(SectionPos.sectionToBlockCoord(pos.x, pos.y), levelChunk);
+            cachedChunks.put(pos, levelChunk);
             return levelChunk;
         }
     }

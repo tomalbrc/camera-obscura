@@ -17,6 +17,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -26,15 +27,17 @@ import java.util.Map;
 import java.util.UUID;
 
 public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityHit> {
+    private final LivingEntity entity;
 
     private final List<EntityHit> allEntities;
 
-    public EntityIterator(ServerLevel level, Map<Integer, LevelChunk> cachedChunks, LivingEntity entity1) {
+    public EntityIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks, LivingEntity entity1) {
         super(level, cachedChunks);
+        this.entity = entity1;
 
         this.allEntities = new ObjectArrayList<>();
         if (ModConfig.getInstance().renderEntities) {
-            List<Entity> lst = this.level.getEntities(entity1, entity1.getBoundingBox().inflate(ModConfig.getInstance().renderDistance));
+            List<Entity> lst = this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance));
             lst.sort(Comparator.comparingDouble(a -> a.position().distanceTo(entity1.position())));
 
             for (int i = 0; i < lst.size() && this.allEntities.size() <= ModConfig.getInstance().renderEntitiesAmount; i++) {
@@ -90,5 +93,5 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
         return hits;
     }
 
-    public record EntityHit(EntityType<?> type, AABB boundingBox, Vector3fc position, Vector3fc rotation, UUID uuid, Object data) {}
+    public record EntityHit(EntityType type, AABB boundingBox, Vector3fc position, Vector3fc rotation, UUID uuid, Object data) {}
 }

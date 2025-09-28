@@ -65,7 +65,6 @@ public class BlockColors {
         colors.put(Blocks.GRASS_BLOCK, grassColor);
         colors.put(Blocks.FERN, grassColor);
         colors.put(Blocks.SHORT_GRASS, grassColor);
-        colors.put(Blocks.BUSH, grassColor);
         colors.put(Blocks.TALL_GRASS, grassColor);
         colors.put(Blocks.POTTED_FERN, grassColor);
 

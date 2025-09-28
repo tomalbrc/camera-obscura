@@ -1,7 +1,6 @@
 package de.tomalbrc.cameraobscura.render.model.triangle;
 
 import com.mojang.logging.LogUtils;
-import de.tomalbrc.cameraobscura.render.TextureData;
 import de.tomalbrc.cameraobscura.render.model.RenderModel;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
@@ -9,6 +8,7 @@ import de.tomalbrc.cameraobscura.util.RPHelper;
 import de.tomalbrc.cameraobscura.util.TextureHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -16,9 +16,9 @@ import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 public class QuadModel implements RenderModel {
     private final List<Quad> quads = new ObjectArrayList<>();
@@ -48,13 +48,12 @@ public class QuadModel implements RenderModel {
         this.textureMap.putAll(modelView.collectTextures());
     }
 
-    private void applyRotations(Vector3f v, RPElement element, Vector3f blockRotationDeg) {
+    private void applyElementAndBlockRotation(Vector3f v, RPElement element, Vector3f blockRotationDeg) {
         if (element.rotation != null) {
             Quaternionf elemQ = element.rotation.toQuaternionf();
             Vector3f rotOrigin = element.rotation.getOrigin();
             v.sub(rotOrigin).rotate(elemQ).add(rotOrigin);
         }
-
         if (blockRotationDeg != null) {
             Vector3f rot = new Vector3f(blockRotationDeg).mul(Mth.DEG_TO_RAD);
             Quaternionf blockQ = new Quaternionf().rotateY(-rot.y()).rotateX(-rot.x()).rotateZ(-rot.z());
@@ -68,37 +67,46 @@ public class QuadModel implements RenderModel {
         float minX = from.x, minY = from.y, minZ = from.z;
         float maxX = to.x, maxY = to.y, maxZ = to.z;
 
-        BiConsumer<Vector3f[], String> buildFace = (corners, faceName) -> {
-            for (Vector3f v : corners) applyRotations(v, element, blockRotationDeg);
+        java.util.function.BiConsumer<Vector3f[], String> buildFace = (corners, faceName) -> {
+            Vector3f[] verts = new Vector3f[]{new Vector3f(corners[0]), new Vector3f(corners[1]), new Vector3f(corners[2]), new Vector3f(corners[3])};
+            for (Vector3f v : verts) applyElementAndBlockRotation(v, element, blockRotationDeg);
+
             RPElement.TextureInfo texInfo = element.faces.get(faceName);
-            Quad q = new Quad(corners[0], corners[1], corners[2]);
+
+            Quad q = new Quad(verts[0], verts[1], verts[3]);
             q.textureInfo = texInfo;
             out.add(q);
         };
 
         // DOWN
         if (element.faces.get("down") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(maxX, minY, minZ), new Vector3f(minX, minY, minZ), new Vector3f(maxX, minY, maxZ)}, "down");
+                new Vector3f(minX, minY, minZ), new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, minY, maxZ), new Vector3f(minX, minY, maxZ)}, "down");
 
         // UP
         if (element.faces.get("up") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(minX, maxY, minZ), new Vector3f(maxX, maxY, minZ), new Vector3f(minX, maxY, maxZ)}, "up");
+                new Vector3f(minX, maxY, minZ), new Vector3f(maxX, maxY, minZ),
+                new Vector3f(maxX, maxY, maxZ), new Vector3f(minX, maxY, maxZ)}, "up");
 
         // NORTH
         if (element.faces.get("north") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(minX, minY, minZ), new Vector3f(maxX, minY, minZ), new Vector3f(minX, maxY, minZ)}, "north");
+                new Vector3f(minX, minY, minZ), new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, maxY, minZ), new Vector3f(minX, maxY, minZ)}, "north");
 
         // SOUTH
         if (element.faces.get("south") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(maxX, minY, maxZ), new Vector3f(minX, minY, maxZ), new Vector3f(maxX, maxY, maxZ)}, "south");
+                new Vector3f(maxX, minY, maxZ), new Vector3f(minX, minY, maxZ),
+                new Vector3f(minX, maxY, maxZ), new Vector3f(maxX, maxY, maxZ)}, "south");
 
         // WEST
         if (element.faces.get("west") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(minX, minY, maxZ), new Vector3f(minX, minY, minZ), new Vector3f(minX, maxY, maxZ)}, "west");
+                new Vector3f(minX, minY, maxZ), new Vector3f(minX, minY, minZ),
+                new Vector3f(minX, maxY, minZ), new Vector3f(minX, maxY, maxZ)}, "west");
 
         // EAST
         if (element.faces.get("east") != null) buildFace.accept(new Vector3f[]{
-                new Vector3f(maxX, minY, minZ), new Vector3f(maxX, minY, maxZ), new Vector3f(maxX, maxY, minZ)}, "east");
+                new Vector3f(maxX, minY, minZ), new Vector3f(maxX, minY, maxZ),
+                new Vector3f(maxX, maxY, maxZ), new Vector3f(maxX, maxY, minZ)}, "east");
 
         return out;
     }
@@ -119,7 +127,7 @@ public class QuadModel implements RenderModel {
             Quad quad = hit.quad();
             RPElement.TextureInfo texInfo = quad.textureInfo;
             if (texInfo == null) continue;
-            uv.set(1 - hit.u(), 1 - hit.v());
+            uv.set(1-hit.u(), 1-hit.v());
 
             String texKey = texInfo.texture.charAt(0) == '#' ? texInfo.texture.substring(1) : texInfo.texture;
             ResourceLocation r = this.textureMap.get(texKey);
@@ -128,22 +136,17 @@ public class QuadModel implements RenderModel {
                 texKey = this.textureMap.get(texKey).getPath();
             }
 
-            TextureData img;
-            try {
-                img = RPHelper.loadTextureImage(r);
-            } catch (Exception e) {
-                LogUtils.getLogger().error("Could not load {}", r);
-                continue;
-            }
+            BufferedImage img;
+            try { img = RPHelper.loadTextureImage(r); } catch (Exception e) { LogUtils.getLogger().error("Could not load {}", r); continue; }
             if (img == null) continue;
 
             int width = img.getWidth();
-            int realHeight = (int) (img.getHeight() / (img.getHeight() / (float) img.getWidth())); // animated textures, might be better to read mcmeta
+            int realHeight = (int)(img.getHeight() / (img.getHeight() / (float) img.getWidth()));
             if (texInfo.uv != null) uv = TextureHelper.remapUV(uv, texInfo.uv, width, realHeight);
 
-            int s = (int) (width * uv.x());
-            int t = (int) (realHeight * uv.y());
-            int imgData = img.getPixel(Mth.clamp(s, 0, img.getWidth() - 1), Mth.clamp(t, 0, img.getHeight() - 1));
+            int s = (int)(width * uv.x());
+            int t = (int)(realHeight * uv.y());
+            int imgData = img.getRGB(Mth.clamp(s, 0, img.getWidth() - 1), Mth.clamp(t, 0, img.getHeight() - 1));
 
             if (texInfo.tintIndex != -1 && textureTint != -1)
                 imgData = ARGB.multiply(imgData, textureTint);
@@ -151,9 +154,5 @@ public class QuadModel implements RenderModel {
             modelHitList.add(new ModelHit(imgData, quad.getDirection(), quad.shade, quad.light, hit.t()));
         }
         return modelHitList;
-    }
-
-    public List<Quad> getQuads() {
-        return quads;
     }
 }
