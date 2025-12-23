@@ -8,6 +8,8 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.query.QueryOptions;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 
 import java.util.function.Predicate;
 
@@ -16,7 +18,7 @@ public class Permissions {
     static boolean loaded = FabricLoader.getInstance().isModLoaded("luckperms");
 
     public static boolean check(ServerPlayer player, String node, int defaultCheck) {
-        return (loaded && hasLuckPermsPermission(player, node)) || player.hasPermissions(defaultCheck);
+        return (loaded && hasLuckPermsPermission(player, node)) || player.permissions().hasPermission(new Permission.HasCommandLevel(PermissionLevel.byId(defaultCheck)));
     }
 
     public static Predicate<CommandSourceStack> require(String node, int fallbackLevel) {
@@ -24,7 +26,7 @@ public class Permissions {
             try {
                 return check(source.getPlayerOrException(), node, fallbackLevel);
             } catch (CommandSyntaxException e) {
-                return source.hasPermission(fallbackLevel);
+                return source.permissions().hasPermission(new Permission.HasCommandLevel(PermissionLevel.byId(fallbackLevel)));
             }
         };
     }

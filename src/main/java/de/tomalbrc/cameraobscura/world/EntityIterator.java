@@ -2,7 +2,7 @@ package de.tomalbrc.cameraobscura.world;
 
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
-import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.util.Constants;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -62,7 +62,7 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
                 // Cache player textures
                 if (entity.getType() == EntityType.PLAYER) {
                     try {
-                        RPHelper.loadTextureImage(CachedResourceLocationDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
+                        RPHelper.loadTextureImage(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
                     } catch (Exception e) {
                         LogUtils.getLogger().info("Could not render player");
                         continue;

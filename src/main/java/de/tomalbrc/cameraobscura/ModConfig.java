@@ -2,9 +2,9 @@ package de.tomalbrc.cameraobscura;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -18,7 +18,7 @@ public class ModConfig {
     private static ModConfig instance;
 
     private static final Gson gson = new GsonBuilder()
-            .registerTypeHierarchyAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
+            .registerTypeHierarchyAdapter(Identifier.class, new CachedIdentifierDeserializer())
             .setPrettyPrinting()
             .create();
 
@@ -33,9 +33,9 @@ public class ModConfig {
     public int fov = 70;
     public int biomeBlend = 1;
 
-    public ResourceLocation cameraItem = ResourceLocation.withDefaultNamespace("spyglass");
+    public Identifier cameraItem = Identifier.withDefaultNamespace("spyglass");
     public boolean cameraConsumesItem = true;
-    public ResourceLocation cameraConsumeItem = ResourceLocation.withDefaultNamespace("map");
+    public Identifier cameraConsumeItem = Identifier.withDefaultNamespace("map");
     public int commandPermissionLevel = 2;
 
     public static ModConfig getInstance() {

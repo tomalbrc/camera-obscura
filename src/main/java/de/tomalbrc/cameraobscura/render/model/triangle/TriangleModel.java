@@ -9,7 +9,7 @@ import de.tomalbrc.cameraobscura.util.TextureHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import org.joml.Quaternionf;
@@ -24,7 +24,7 @@ import java.util.Map;
 public class TriangleModel implements RenderModel {
     private final List<Triangle> modelTriangles = new ObjectArrayList<>();
 
-    private final Map<String, ResourceLocation> textureMap = new Object2ObjectOpenHashMap<>();
+    private final Map<String, Identifier> textureMap = new Object2ObjectOpenHashMap<>();
 
     private static final Vector2f[] list = new Vector2f[]{
             new Vector2f(0,0),
@@ -310,7 +310,7 @@ public class TriangleModel implements RenderModel {
 
             String texKey = textureInfo.texture.charAt(0) == '#' ? textureInfo.texture.substring(1) : textureInfo.texture;
             //resolve texture key in case of placeholders (starting with #)
-            ResourceLocation r = this.textureMap.get(texKey);
+            Identifier r = this.textureMap.get(texKey);
             while (this.textureMap.containsKey(texKey)) {
                 r = this.textureMap.get(texKey);
                 texKey = this.textureMap.get(texKey).getPath();

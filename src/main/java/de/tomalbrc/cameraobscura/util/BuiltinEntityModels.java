@@ -1,6 +1,6 @@
 package de.tomalbrc.cameraobscura.util;
 
-import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.model.GeneratedItemModel;
@@ -86,8 +86,8 @@ public class BuiltinEntityModels {
         modelMap.put(EntityType.GHAST, loadModel("/builtin/ghast.json"));
         modelMap.put(EntityType.CHICKEN, loadModel("/builtin/chicken.json"));
 
-        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel(CachedResourceLocationDeserializer.get("minecraft:block/item_frame")));
-        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel(CachedResourceLocationDeserializer.get("minecraft:block/glow_item_frame")));
+        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("minecraft:block/item_frame")));
+        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("minecraft:block/glow_item_frame")));
         modelMap.put(EntityType.SQUID, loadModel("/builtin/squid.json"));
         modelMap.put(EntityType.GLOW_SQUID, loadModel("/builtin/glow_squid.json"));
         modelMap.put(EntityType.SNOW_GOLEM, loadModel("/builtin/pig.json"));

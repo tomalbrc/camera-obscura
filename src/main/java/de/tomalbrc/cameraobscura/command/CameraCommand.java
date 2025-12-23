@@ -21,7 +21,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
@@ -195,7 +195,7 @@ public class CameraCommand {
         for (int ys = 0; ys < ySections; ys++) {
             for (int xs = 0; xs < xSections; xs++) {
                 var id = level.getFreeMapId();
-                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath("camera-obscura", "generated")));
+                var state = MapItemSavedData.createFresh(0, 0, (byte) 0, false, false, ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("camera-obscura", "generated")));
 
                 for (int xl = 0; xl < 128; xl++) {
                     for (int yl = 0; yl < 128; yl++) {

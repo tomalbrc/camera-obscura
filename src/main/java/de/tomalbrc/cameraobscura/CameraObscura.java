@@ -12,7 +12,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 
@@ -23,7 +23,7 @@ public class CameraObscura implements ModInitializer {
         BuiltinEntityModels.initModels();
         BlockColors.init();
 
-        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("camera-obscura", "camera"));
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("camera-obscura", "camera"));
         Registry.register(
                 BuiltInRegistries.ITEM,
                 key,

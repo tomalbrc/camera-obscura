@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -47,13 +47,13 @@ public class RPHelper {
     private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
 
     // Cache resourcepack models
-    private static final Map<ResourceLocation, RPModel> modelResources = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
+    private static final Map<Identifier, RPModel> modelResources = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
     private static final Map<BlockState, RPBlockState> blockStateResources = Collections.synchronizedMap(new Reference2ObjectOpenHashMap<>());
 
-    private static final Map<ResourceLocation, BufferedImage> textureCache = new ConcurrentHashMap<>();
+    private static final Map<Identifier, BufferedImage> textureCache = new ConcurrentHashMap<>();
 
     final public static Gson gson = new GsonBuilder()
-            .registerTypeAdapter(ResourceLocation.class, new CachedResourceLocationDeserializer())
+            .registerTypeAdapter(Identifier.class, new CachedIdentifierDeserializer())
             .registerTypeAdapter(Variant.class, new VariantDeserializer())
             .registerTypeAdapter(MultipartDefinition.class, new MultipartDefinitionDeserializer())
             .registerTypeAdapter(MultipartDefinition.Condition.class, new ConditionDeserializer())
@@ -77,7 +77,7 @@ public class RPHelper {
             return blockStateResources.get(blockState);
         }
 
-        ResourceLocation location = blockState.getBlock().builtInRegistryHolder().key().location();
+        Identifier location = blockState.getBlock().builtInRegistryHolder().key().identifier();
         byte[] data = getBuilder().getDataOrSource("assets/" + location.getNamespace() + "/blockstates/" + location.getPath() + ".json");
         if (data != null) {
             var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
@@ -87,11 +87,11 @@ public class RPHelper {
         return null;
     }
 
-    public static RPModel.View loadModelView(ResourceLocation resourceLocation, Vector3fc blockRotation, boolean uvlock) {
+    public static RPModel.View loadModelView(Identifier resourceLocation, Vector3fc blockRotation, boolean uvlock) {
         return new RPModel.View(loadModel(resourceLocation), blockRotation, uvlock);
     }
 
-    public static RPModel loadModel(ResourceLocation resourceLocation) {
+    public static RPModel loadModel(Identifier resourceLocation) {
         if (modelResources.containsKey(resourceLocation)) {
             return modelResources.get(resourceLocation);
         }
@@ -124,11 +124,11 @@ public class RPHelper {
         return model;
     }
 
-    public static byte[] loadTextureBytes(ResourceLocation path) {
+    public static byte[] loadTextureBytes(Identifier path) {
         return getBuilder().getDataOrSource("assets/" + path.getNamespace() + "/textures/" + path.getPath() + ".png");
     }
 
-    public static BufferedImage loadTextureImage(ResourceLocation path) throws Exception {
+    public static BufferedImage loadTextureImage(Identifier path) throws Exception {
         if (textureCache.containsKey(path)) {
             return textureCache.get(path);
         }
@@ -191,7 +191,7 @@ public class RPHelper {
                 boolean matches = true;
                 if (!entry.getKey().isEmpty()) {
                     try {
-                        String str = String.format("%s[%s]", blockState.getBlock().builtInRegistryHolder().key().location(), entry.getKey());
+                        String str = String.format("%s[%s]", blockState.getBlock().builtInRegistryHolder().key().identifier(), entry.getKey());
                         BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, str, false);
 
                         for (Map.Entry<Property<?>, Comparable<?>> propertyComparableEntry : blockResult.properties().entrySet()) {
@@ -243,7 +243,7 @@ public class RPHelper {
     }
 
     public static RPModel loadItemModel(ItemStack itemStack) {
-        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+        Identifier resourceLocation = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
         return loadModel(resourceLocation.withPath("item/"+resourceLocation.getPath()));
     }
 

@@ -1,6 +1,6 @@
 package de.tomalbrc.cameraobscura.util;
 
-import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
@@ -132,7 +132,7 @@ public class BuiltinModels {
             return skyModel;
 
         RPModel rpModel = new RPModel();
-        rpModel.parent = CachedResourceLocationDeserializer.get("minecraft:block/cube_all");
+        rpModel.parent = CachedIdentifierDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         rpModel.textures.put("all", "minecraft:environment/clouds");
         rpModel.elements = new ObjectArrayList<>();

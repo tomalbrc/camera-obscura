@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.DryFoliageColor;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
@@ -29,9 +29,9 @@ public class BlockColors {
 
     private static void loadColorMaps() {
         try {
-            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(ResourceLocation.withDefaultNamespace("colormap/grass"))));
-            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(ResourceLocation.withDefaultNamespace("colormap/foliage"))));
-            DRY_FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(ResourceLocation.withDefaultNamespace("colormap/dry_foliage"))));
+            GRASS_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(Identifier.withDefaultNamespace("colormap/grass"))));
+            FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(Identifier.withDefaultNamespace("colormap/foliage"))));
+            DRY_FOLIAGE_TEXTURE = ImageIO.read(new ByteArrayInputStream(RPHelper.loadTextureBytes(Identifier.withDefaultNamespace("colormap/dry_foliage"))));
 
             GrassColor.init(GRASS_TEXTURE.getRGB(0, 0, GRASS_TEXTURE.getWidth(), GRASS_TEXTURE.getHeight(), null, 0, GRASS_TEXTURE.getWidth()));
             FoliageColor.init(FOLIAGE_TEXTURE.getRGB(0, 0, FOLIAGE_TEXTURE.getWidth(), FOLIAGE_TEXTURE.getHeight(), null, 0, FOLIAGE_TEXTURE.getWidth()));

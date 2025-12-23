@@ -1,11 +1,11 @@
 package de.tomalbrc.cameraobscura.render.model.resource;
 
 import com.google.gson.annotations.SerializedName;
-import de.tomalbrc.cameraobscura.json.CachedResourceLocationDeserializer;
+import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.util.RPHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
 import org.spongepowered.include.com.google.common.collect.ImmutableList;
@@ -17,7 +17,7 @@ import java.util.Objects;
 public class RPModel {
     @SerializedName("texture_size")
     public List<Integer> textureSize = ImmutableList.of(16,16);
-    public ResourceLocation parent;
+    public Identifier parent;
     public Object2ObjectOpenHashMap<String, String> textures;
     public List<RPElement> elements;
 
@@ -34,20 +34,20 @@ public class RPModel {
             this(model, blockRotation, Vec3.ZERO.toVector3f(), false);
         }
 
-        public Map<String, ResourceLocation> collectTextures() {
-            Map<String, ResourceLocation> collectedTextures = new Object2ObjectOpenHashMap<>();
+        public Map<String, Identifier> collectTextures() {
+            Map<String, Identifier> collectedTextures = new Object2ObjectOpenHashMap<>();
 
             if (this.model.textures != null && !this.model.textures.isEmpty()) {
                 for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
-                    collectedTextures.put(entry.getKey(), CachedResourceLocationDeserializer.get(entry.getValue().replace("#", "")));
+                    collectedTextures.put(entry.getKey(), CachedIdentifierDeserializer.get(entry.getValue().replace("#", "")));
                 }
             }
 
-            ResourceLocation parent = this.model.parent;
+            Identifier parent = this.model.parent;
             while (parent != null && !parent.getPath().isEmpty()) {
                 View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
                 if (child.model != null) {
-                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, CachedResourceLocationDeserializer.get(value.replace("#",""))));
+                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, CachedIdentifierDeserializer.get(value.replace("#",""))));
                     parent = child.model.parent;
                 } else {
                     break;
@@ -62,7 +62,7 @@ public class RPModel {
                 return this.model.elements;
             }
 
-            ResourceLocation parent = this.model.parent;
+            Identifier parent = this.model.parent;
             while (parent != null) {
                 RPModel.View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
 
