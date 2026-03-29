@@ -19,14 +19,11 @@
       "de.tomalbrc.cameraobscura.CameraObscura"
     ]
   },
-  "mixins": [
-    "camera-obscura.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric": "*",
+    "fabric-api": "*",
     "polymer-resource-pack": "*",
     "polymer-core": "*",
-    "minecraft": ">=1.21.6"
+    "minecraft": ">=26.1"
   }
 }

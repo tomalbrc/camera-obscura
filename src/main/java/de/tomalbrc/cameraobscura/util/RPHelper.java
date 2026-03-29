@@ -11,11 +11,14 @@ import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.render.model.resource.state.MultipartDefinition;
 import de.tomalbrc.cameraobscura.render.model.resource.state.Variant;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
-import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
+import eu.pb4.polymer.resourcepack.api.OutputGenerator;
 import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
+import eu.pb4.polymer.resourcepack.api.ResourcePackStatusConsumer;
+import eu.pb4.polymer.resourcepack.impl.generation.DefaultRPBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -27,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
-import xyz.nucleoid.packettweaker.PacketContext;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -44,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RPHelper {
     public static ResourcePackBuilder resourcePackBuilder;
-    private static final ResourcePackBuilder vanillaBuilder = PolymerResourcePackUtils.createBuilder(Path.of("polymer/camera-obscura"));
+    private static final ResourcePackBuilder vanillaBuilder = new DefaultRPBuilder<>(OutputGenerator.zipGenerator(Path.of("polymer/camera-obscura")), ResourcePackStatusConsumer.nonLogging());
 
     // Cache resourcepack models
     private static final Map<Identifier, RPModel> modelResources = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
