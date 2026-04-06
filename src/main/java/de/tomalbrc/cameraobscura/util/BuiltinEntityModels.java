@@ -34,14 +34,16 @@ public class BuiltinEntityModels {
             }
         } else if (entityType == EntityType.PLAYER) {
             RPModel model = loadModel("/builtin/player.json"); // todo: cache per player uuid ..?
-            model.textures.put(model.textures.keySet().iterator().next(), Constants.DYNAMIC_PLAYER_TEXTURE+":"+uuid.toString().replace("-", ""));
+            model.textures.put(model.textures.keySet().iterator().next(), RPModel.TextureEntry.of(Constants.DYNAMIC_PLAYER_TEXTURE+":"+uuid.toString().replace("-", "")));
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, -1.f / 16.f, 0));
         } else if (entityType == EntityType.ITEM) {
             ItemStack itemStack = (ItemStack) data;
             RPModel model = RPHelper.loadItemModel(itemStack);
 
             if (model.parent.getPath().equals("item/generated")) {
-                model = GeneratedItemModel.getItem(model.textures.getOrDefault("layer0", null), model.textures.getOrDefault("layer1", null));
+                var obj = model.textures.getOrDefault("layer0", null);
+                var obj2 = model.textures.getOrDefault("layer1", null);
+                model = GeneratedItemModel.getItem(obj == null ? null : obj.sprite(), obj2 == null ? null : obj2.sprite());
             }
 
             return new RPModel.View(model, new Vector3f(0, rot.y() + 180, 0), pos.add(0, 0, 0));

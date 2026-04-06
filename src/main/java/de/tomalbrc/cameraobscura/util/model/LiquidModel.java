@@ -19,11 +19,11 @@ public class LiquidModel {
         rpModel.parent = CachedIdentifierDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
         if (fluidState.is(FluidTags.WATER)) {
-            rpModel.textures.put("top", "minecraft:block/water_still");
-            rpModel.textures.put("side", "minecraft:block/water_flow");
+            rpModel.textures.put("top", RPModel.TextureEntry.of("minecraft:block/water_still"));
+            rpModel.textures.put("side", RPModel.TextureEntry.of("minecraft:block/water_flow"));
         } else {
-            rpModel.textures.put("top", "minecraft:block/lava_still");
-            rpModel.textures.put("side", "minecraft:block/lava_flow");
+            rpModel.textures.put("top", RPModel.TextureEntry.of("minecraft:block/lava_still"));
+            rpModel.textures.put("side", RPModel.TextureEntry.of("minecraft:block/lava_flow"));
         }
         rpModel.elements = new ObjectArrayList<>();
         var element = new RPElement();

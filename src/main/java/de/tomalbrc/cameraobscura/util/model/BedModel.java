@@ -18,8 +18,8 @@ public class BedModel {
         RPModel rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream(blockState.getValue(BedBlock.PART) == BedPart.HEAD ? "/builtin/bed_top.json" : "/builtin/bed_bottom.json"));
 
         color.ifPresentOrElse(
-                dyeColor -> rpModel.textures.put("0", "minecraft:entity/bed/" + dyeColor.getName()),
-                () -> rpModel.textures.put("0", "minecraft:entity/bed/red")
+                dyeColor -> rpModel.textures.put("0", RPModel.TextureEntry.of("minecraft:entity/bed/" + dyeColor.getName())),
+                () -> rpModel.textures.put("0", RPModel.TextureEntry.of("minecraft:entity/bed/red"))
         );
 
         for (RPElement element : rpModel.elements) {

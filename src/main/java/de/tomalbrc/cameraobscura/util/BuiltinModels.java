@@ -3,7 +3,6 @@ package de.tomalbrc.cameraobscura.util;
 import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.render.model.resource.RPElement;
 import de.tomalbrc.cameraobscura.render.model.resource.RPModel;
-import de.tomalbrc.cameraobscura.render.model.triangle.TriangleModel;
 import de.tomalbrc.cameraobscura.util.model.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -134,7 +133,7 @@ public class BuiltinModels {
         RPModel rpModel = new RPModel();
         rpModel.parent = CachedIdentifierDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
-        rpModel.textures.put("all", "minecraft:environment/clouds");
+        rpModel.textures.put("all", RPModel.TextureEntry.of("minecraft:environment/clouds"));
         rpModel.elements = new ObjectArrayList<>();
         var element = new RPElement();
         element.from = new Vector3f(-128*64, 0,-128*64);

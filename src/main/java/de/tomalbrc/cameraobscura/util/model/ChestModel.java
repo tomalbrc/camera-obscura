@@ -32,7 +32,7 @@ public class ChestModel {
         else
             rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/chest.json"));
 
-        rpModel.textures.put("0", "minecraft:entity/chest/"+chestTexture(chestBlockState));
+        rpModel.textures.put("0", RPModel.TextureEntry.of("minecraft:entity/chest/"+chestTexture(chestBlockState)));
         for (RPElement element : rpModel.elements) {
             for (Map.Entry<String, RPElement.TextureInfo> entry : element.faces.entrySet()) {
                 entry.getValue().uv.mul(4.f);

@@ -17,8 +17,8 @@ public class ShulkerModel {
         RPModel rpModel = RPHelper.loadModel(ChestModel.class.getResourceAsStream("/builtin/shulker.json"));
 
         dyeColor.ifPresentOrElse(
-                color -> rpModel.textures.put("0", "minecraft:entity/shulker/shulker_" + color.getName()),
-                () -> rpModel.textures.put("0", "minecraft:entity/shulker/shulker"));
+                color -> rpModel.textures.put("0", RPModel.TextureEntry.of("minecraft:entity/shulker/shulker_" + color.getName())),
+                () -> rpModel.textures.put("0", RPModel.TextureEntry.of("minecraft:entity/shulker/shulker")));
 
         for (RPElement element : rpModel.elements) {
             for (Map.Entry<String, RPElement.TextureInfo> entry : element.faces.entrySet()) {

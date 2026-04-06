@@ -33,8 +33,8 @@ public class GeneratedItemModel {
         RPModel rpModel = new RPModel();
         rpModel.parent = null;
         rpModel.textures = new Object2ObjectOpenHashMap<>();
-        rpModel.textures.put("layer0", layer0);
-        if (layer1 != null) rpModel.textures.put("layer1", layer1);
+        rpModel.textures.put("layer0", RPModel.TextureEntry.of(layer0));
+        if (layer1 != null) rpModel.textures.put("layer1", RPModel.TextureEntry.of(layer1));
 
         rpModel.elements = new ObjectArrayList<>();
 

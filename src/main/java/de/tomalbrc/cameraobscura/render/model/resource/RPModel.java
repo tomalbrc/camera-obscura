@@ -1,5 +1,6 @@
 package de.tomalbrc.cameraobscura.render.model.resource;
 
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.util.RPHelper;
@@ -10,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
 import org.spongepowered.include.com.google.common.collect.ImmutableList;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,8 +20,26 @@ public class RPModel {
     @SerializedName("texture_size")
     public List<Integer> textureSize = ImmutableList.of(16,16);
     public Identifier parent;
-    public Object2ObjectOpenHashMap<String, String> textures;
+    public Object2ObjectOpenHashMap<String, TextureEntry> textures;
     public List<RPElement> elements;
+
+    public record TextureEntry(String sprite, boolean force_translucent) {
+        public static TextureEntry of(String sprite) {
+            return new TextureEntry(sprite, false);
+        }
+
+        public static class Deserializer implements JsonDeserializer<TextureEntry> {
+            @Override
+            public TextureEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                if (json.isJsonPrimitive()) {
+                    return new TextureEntry(json.getAsString(), false);
+                }
+
+                JsonObject obj = json.getAsJsonObject();
+                return new TextureEntry(obj.get("sprite").getAsString(), obj.has("force_translucent") && obj.get("force_translucent").getAsBoolean());
+            }
+        }
+    }
 
     public record View(RPModel model, Vector3fc blockRotation, Vector3fc offset, boolean uvlock) {
         public View(RPModel model, Vector3fc blockRotation, Vector3fc offset) {
@@ -38,8 +58,8 @@ public class RPModel {
             Map<String, Identifier> collectedTextures = new Object2ObjectOpenHashMap<>();
 
             if (this.model.textures != null && !this.model.textures.isEmpty()) {
-                for (Map.Entry<String, String> entry : this.model.textures.entrySet()) {
-                    collectedTextures.put(entry.getKey(), CachedIdentifierDeserializer.get(entry.getValue().replace("#", "")));
+                for (Map.Entry<String, TextureEntry> entry : this.model.textures.entrySet()) {
+                    collectedTextures.put(entry.getKey(), CachedIdentifierDeserializer.get(entry.getValue().sprite().replace("#", "")));
                 }
             }
 
@@ -47,7 +67,7 @@ public class RPModel {
             while (parent != null && !parent.getPath().isEmpty()) {
                 View child = RPHelper.loadModelView(parent, this.blockRotation, this.uvlock);
                 if (child.model != null) {
-                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, CachedIdentifierDeserializer.get(value.replace("#",""))));
+                    if (child.model.textures != null) child.model.textures.forEach((key,value) -> collectedTextures.putIfAbsent(key, CachedIdentifierDeserializer.get(value.sprite().replace("#",""))));
                     parent = child.model.parent;
                 } else {
                     break;

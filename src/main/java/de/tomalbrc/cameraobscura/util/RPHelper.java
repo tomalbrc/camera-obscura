@@ -61,6 +61,7 @@ public class RPHelper {
             .registerTypeAdapter(MultipartDefinition.Condition.class, new ConditionDeserializer())
             .registerTypeAdapter(Vector3f.class, new Vector3fDeserializer())
             .registerTypeAdapter(Vector4f.class, new Vector4fDeserializer())
+            .registerTypeAdapter(RPModel.TextureEntry.class, new RPModel.TextureEntry.Deserializer())
             .create();
 
     public static void clearCache() {

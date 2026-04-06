@@ -14,10 +14,11 @@ public class PortalModel {
         RPModel rpModel = new RPModel();
         rpModel.parent = CachedIdentifierDeserializer.get("minecraft:block/cube_all");
         rpModel.textures = new Object2ObjectOpenHashMap<>();
+        // TODO
         if (flat) {
-            rpModel.textures.put("all", "minecraft:block/black_concrete");
+            rpModel.textures.put("all", RPModel.TextureEntry.of("minecraft:block/black_concrete"));
         } else {
-            rpModel.textures.put("all", "minecraft:block/black_concrete");
+            rpModel.textures.put("all", RPModel.TextureEntry.of("minecraft:block/black_concrete"));
         }
         rpModel.elements = new ObjectArrayList<>();
         var element = new RPElement();
