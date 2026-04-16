@@ -1,0 +1,37 @@
+[versions]
+minecraft = "26.1.2"
+
+loader = "0.18.5"
+fabric-api = "0.144.3+26.1"
+polymer = "0.16.0-pre.3+26.1"
+fabric-permissions = "0.7.0"
+
+bstats = "3.2.1"
+
+proguard = "7.8.2"
+
+[libraries]
+# fabric
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
+fabric-permissions = { module = "me.lucko:fabric-permissions-api", version.ref = "fabric-permissions" }
+
+# Polymer
+polymer-resource-pack = { module = "eu.pb4:polymer-resource-pack", version.ref = "polymer" }
+polymer-resource-pack-extras = { module = "eu.pb4:polymer-resource-pack-extras", version.ref = "polymer" }
+polymer-core = { module = "eu.pb4:polymer-core", version.ref = "polymer" }
+polymer-virtual-entity = { module = "eu.pb4:polymer-virtual-entity", version.ref = "polymer" }
+polymer-autohost = { module = "eu.pb4:polymer-autohost", version.ref = "polymer" }
+
+# Other
+bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
+
+proguard-gradle = { module = "com.guardsquare:proguard-gradle", version.ref = "proguard" }
+
+# Plugins
+[plugins]
+fabric-loom = { id = "net.fabricmc.fabric-loom", version = "1.15-SNAPSHOT" }
+run-paper = { id = "xyz.jpenilla:run-paper", version = "3.0.2" }
+paperweight = { id = "io.papermc.paperweight.userdev", version = "2.0.0-beta+" }
+shadow = { id = "com.gradleup.shadow", version = "9.4.1" }

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "de.tomalbrc.cameraobscura.mixin",
+  "mixins": [
+    "ItemFrameMixin",
+    "LevelMixin",
+    "LivingEntityMixin",
+    "ServerEntityMixin",
+    "ServerPlayerMixin",
+    "WardenMixin"
+  ]
+}

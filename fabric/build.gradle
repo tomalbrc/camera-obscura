@@ -1,0 +1,74 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'maven-publish'
+    id 'com.gradleup.shadow' version '9.4.1'
+}
+
+version = "${project.mod_version}+${rootProject.minecraft_version}"
+group = rootProject.maven_group
+
+base {
+    archivesName = rootProject.property("archives_base_name") as String + "-fabric"
+}
+
+repositories {
+    maven { url "https://maven.nucleoid.xyz/" }
+}
+
+configurations {
+    shade
+    implementation.extendsFrom shade
+}
+
+dependencies {
+    minecraft libs.minecraft
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
+
+    include(libs.fabric.permissions)
+    implementation(libs.fabric.permissions)
+
+    implementation libs.polymer.resource.pack
+    implementation libs.polymer.resource.pack.extras
+    implementation libs.polymer.core
+    implementation libs.polymer.virtual.entity
+    implementation libs.polymer.autohost
+
+    shade project(':common')
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", rootProject.minecraft_version
+    inputs.property "loader_version", libs.versions.loader.get()
+
+    filesMatching("fabric.mod.json") {
+        expand(
+                "version": project.version,
+                "minecraft_version": rootProject.minecraft_version,
+                "loader_version": libs.versions.loader.get()
+        )
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.shade]
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+jar {
+    dependsOn shadowJar
+    enabled = false
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+
+    }
+}

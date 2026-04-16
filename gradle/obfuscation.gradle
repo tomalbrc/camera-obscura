@@ -1,0 +1,28 @@
+// This buildscript makes ProGuard available to this script
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.8.2'
+    }
+}
+
+import proguard.gradle.ProGuardTask
+
+tasks.register('obfuscate', ProGuardTask) {
+    description = 'Obfuscates the mod JAR using ProGuard'
+    group = 'build'
+
+    dependsOn tasks.named('jar')
+
+    injars tasks.named('jar').flatMap { it.archiveFile }
+    outjars layout.buildDirectory.file("libs/${project.name}-${project.version}-release.jar")
+
+    configuration(rootProject.file("proguard.pro"))
+    libraryjars sourceSets.main.compileClasspath
+}
+
+tasks.named('build') {
+    dependsOn 'obfuscate'
+}

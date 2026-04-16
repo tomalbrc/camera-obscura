@@ -1,0 +1,9 @@
+name: CameraObscura
+version: '$version'
+
+main: de.tomalbrc.cameraobscura.CameraObscuraPlugin
+api-version: '26.1.2'
+load: POSTWORLD
+
+softdepend: [ Nexo, ItemsAdder ]
+folia-supported: true
