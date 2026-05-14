@@ -256,10 +256,12 @@ In a crafting recipes:
 
 For a camcorder (video mode), include `video`:
 ```json
-"components": {
-  "camera-obscura:color": "COLOR",
-  "camera-obscura:resolution": { "width": 256, "height": 256 },
-  "camera-obscura:video": { "frame_rate": 15, "max_frames": 300 }
+{
+  "components": {
+    "camera-obscura:color": "COLOR",
+    "camera-obscura:resolution": { "width": 256, "height": 256 },
+    "camera-obscura:video": { "frame_rate": 15, "max_frames": 300 }
+  }
 }
 ```
 
@@ -410,7 +412,7 @@ The mod ships with several ready‑to‑use presets. You can modify or delete th
   "handycam": {
     "material": "clock",
     "camera": {
-      "resolution": { "width": 256, "height": 256 },
+      "resolution": { "width": 128, "height": 128 },
       "color_mode": "COLOR",
       "dither_mode": "BAYER_2X2",
       "video": { "frame_rate": 15, "max_frames": 450 }
@@ -423,7 +425,7 @@ The mod ships with several ready‑to‑use presets. You can modify or delete th
   "cctv": {
     "material": "observer",
     "camera": {
-      "resolution": { "width": 192, "height": 192 },
+      "resolution": { "width": 128, "height": 128 },
       "color_mode": "MONOCHROME",
       "dither_mode": "SIERRA",
       "video": { "frame_rate": 5, "max_frames": 30000 }
