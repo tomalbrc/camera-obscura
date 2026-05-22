@@ -155,9 +155,9 @@ public class Components {
                 float g = ((rgb >> 8) & 0xff)  + errG[y][x];
                 float b = (rgb & 0xff)         + errB[y][x];
 
-                r = Math.min(255, Math.max(0, r));
-                g = Math.min(255, Math.max(0, g));
-                b = Math.min(255, Math.max(0, b));
+                r = Math.clamp(r, 0, 255);
+                g = Math.clamp(g, 0, 255);
+                b = Math.clamp(b, 0, 255);
 
                 float newR = Math.round(r / step) * step;
                 float newG = Math.round(g / step) * step;

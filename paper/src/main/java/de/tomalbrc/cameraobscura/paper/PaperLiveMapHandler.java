@@ -4,6 +4,7 @@ import de.tomalbrc.cameraobscura.ModConfig;
 import de.tomalbrc.cameraobscura.platform.Platforms;
 import de.tomalbrc.cameraobscura.platform.ScheduledTask;
 import de.tomalbrc.cameraobscura.renderer.WorldRenderer;
+import de.tomalbrc.cameraobscura.util.Constants;
 import de.tomalbrc.cameraobscura.util.ImageUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.Packet;
@@ -108,7 +109,7 @@ public class PaperLiveMapHandler implements Listener {
                     } catch (Throwable t) {
                         Platforms.get().getLogger().error("Error while rendering", t);
                     }
-                });
+                }, Constants.RENDER_EXEC);
                 
                 futures.put(uuid, future);
             }

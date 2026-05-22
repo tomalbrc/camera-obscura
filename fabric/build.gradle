@@ -25,8 +25,7 @@ dependencies {
     implementation libs.fabric.loader
     implementation libs.fabric.api
 
-    include(libs.fabric.permissions)
-    implementation(libs.fabric.permissions)
+    shade(libs.fabric.permissions)
 
     implementation libs.polymer.resource.pack
     implementation libs.polymer.resource.pack.extras
@@ -54,6 +53,9 @@ processResources {
 shadowJar {
     archiveClassifier.set('')
     configurations = [project.configurations.shade]
+
+    relocate('me.lucko.fabric.api', 'de.tomalbrc.cameraobscura.shade.permissionapi')
+
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 

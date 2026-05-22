@@ -204,8 +204,10 @@ public class ChunkMeshCache {
     static boolean isOccluded(BlockGetter level, int wx, int wy, int wz) {
         BlockState state = level.getBlockState(new BlockPos(wx, wy, wz));
         if (!state.isSolidRender()) return false;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (Direction dir : Direction.values()) {
-            BlockState neighbor = level.getBlockState(new BlockPos(wx + dir.getStepX(), wy + dir.getStepY(), wz + dir.getStepZ()));
+            pos.set(wx + dir.getStepX(), wy + dir.getStepY(), wz + dir.getStepZ());
+            BlockState neighbor = level.getBlockState(pos);
             if (!neighbor.isSolidRender()) return false;
         }
         return true;
@@ -219,6 +221,7 @@ public class ChunkMeshCache {
 
         boolean solidRender = state.isSolidRender();
 
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < vertexCount; i++) {
             double x = mesh.positions[i * 3];
             double y = mesh.positions[i * 3 + 1];
@@ -235,12 +238,13 @@ public class ChunkMeshCache {
             double worldY = wy + y;
             double worldZ = wz + z;
 
-            int sky, block;
+            int sky;
+            int block;
             if (solidRender) {
                 sky = getSmoothLight(level, worldX, worldY, worldZ, LightLayer.SKY, faceDir);
                 block = getSmoothLight(level, worldX, worldY, worldZ, LightLayer.BLOCK, faceDir);
             } else {
-                BlockPos pos = new BlockPos(wx, wy, wz);
+                pos.set(wx, wy, wz);
                 sky = level.getBrightness(LightLayer.SKY, pos);
                 block = level.getBrightness(LightLayer.BLOCK, pos);
             }
@@ -336,8 +340,10 @@ public class ChunkMeshCache {
     private static EnumSet<Direction> computeCulledFaces(BlockGetter level, int wx, int wy, int wz, BlockState state) {
         EnumSet<Direction> culled = EnumSet.noneOf(Direction.class);
         if (state.isSolidRender()) {
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (Direction dir : Direction.values()) {
-                BlockState neighbor = level.getBlockState(new BlockPos(wx + dir.getStepX(), wy + dir.getStepY(), wz + dir.getStepZ()));
+                pos.set(wx + dir.getStepX(), wy + dir.getStepY(), wz + dir.getStepZ());
+                BlockState neighbor = level.getBlockState(new BlockPos(pos));
                 if (neighbor.isSolidRender() && !neighbor.isAir()) {
                     culled.add(dir);
                 }
@@ -375,11 +381,15 @@ public class ChunkMeshCache {
             ChunkAccess chunk = level.getChunkAt(pos);
             return 0xFF000000 | BlockColors.get(chunk, state, pos);
         }
-        long r = 0, g = 0, b = 0;
+        long r = 0;
+        long g = 0;
+        long b = 0;
         int samples = 0;
+
+        BlockPos.MutableBlockPos samplePos = new BlockPos.MutableBlockPos();
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-                BlockPos samplePos = new BlockPos(pos.getX() + dx, pos.getY(), pos.getZ() + dz);
+                samplePos.set(pos.getX() + dx, pos.getY(), pos.getZ() + dz);
                 ChunkAccess chunk = level.getChunkAt(samplePos);
                 int color = BlockColors.get(chunk, state, samplePos); // returns RGB
                 r += (color >> 16) & 0xFF;
@@ -401,9 +411,10 @@ public class ChunkMeshCache {
         }
         long r = 0, g = 0, b = 0;
         int samples = 0;
+        BlockPos.MutableBlockPos samplePos = new BlockPos.MutableBlockPos();
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-                BlockPos samplePos = new BlockPos(pos.getX() + dx, pos.getY(), pos.getZ() + dz);
+                samplePos.set(pos.getX() + dx, pos.getY(), pos.getZ() + dz);
                 ChunkAccess chunk = level.getChunkAt(samplePos);
                 int color = BlockColors.biomeWaterColor(chunk, samplePos);
                 r += (color >> 16) & 0xFF;
@@ -412,9 +423,9 @@ public class ChunkMeshCache {
                 samples++;
             }
         }
-        int avgR = (int) (r / samples);
-        int avgG = (int) (g / samples);
-        int avgB = (int) (b / samples);
+        int avgR = samples == 0 ? (int) r : (int) (r / samples);
+        int avgG = samples == 0 ? (int) g : (int) (g / samples);
+        int avgB = samples == 0 ? (int) b : (int) (b / samples);
         return 0xFF000000 | (avgR << 16) | (avgG << 8) | avgB;
     }
 

@@ -70,7 +70,7 @@ public abstract class ServerPlayerMixin extends LivingEntity {
             }
 
             if (e instanceof LivingEntity entity && (co$future == null || co$future.isDone())) {
-                co$renderer.updateChunksAsync(entity.level());
+                co$renderer.updateChunksInRange(entity.level(), false);
                 co$future = co$renderer.renderAsync().thenAccept(img -> {
                     try {
                         if (img == null) {
