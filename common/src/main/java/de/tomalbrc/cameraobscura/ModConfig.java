@@ -49,6 +49,7 @@ public class ModConfig {
         if (!CONFIG_FILE_PATH.toFile().exists()) {
             instance = new ModConfig();
             try {
+                CONFIG_FILE_PATH.getParent().toFile().mkdirs();
                 if (CONFIG_FILE_PATH.toFile().createNewFile()) {
                     FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile());
                     stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));

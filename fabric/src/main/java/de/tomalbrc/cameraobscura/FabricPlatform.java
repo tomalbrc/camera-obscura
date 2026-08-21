@@ -5,13 +5,15 @@ import de.tomalbrc.cameraobscura.sore.pipeline.DrawCommand;
 import eu.pb4.polymer.virtualentity.api.attachment.BlockAwareAttachment;
 import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;
 import eu.pb4.polymer.virtualentity.impl.HolderAttachmentHolder;
-import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.fabricmc.fabric.api.permission.v1.PermissionPredicates;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
@@ -78,7 +80,7 @@ public class FabricPlatform implements Platform {
 
     @Override
     public Predicate<CommandSourceStack> getPermission(String permission, int defaultLevel) {
-        return Permissions.require(permission, defaultLevel);
+        return PermissionPredicates.require(Identifier.bySeparator(permission.replace('.','/'),'/'), PermissionLevel.byId(defaultLevel));
     }
 
     @Override

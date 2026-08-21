@@ -19,7 +19,7 @@ public class PiglinRenderer<T extends AbstractPiglin> extends HumanoidRenderer<T
     @Override
     protected String getTexturePath(T entity) {
         if (entity.isBaby()) return BABY_TEXTURE;
-        return entity.getType() == net.minecraft.world.entity.EntityType.PIGLIN_BRUTE ? BRUTE_TEXTURE : ADULT_TEXTURE;
+        return entity.getType() == net.minecraft.world.entity.EntityTypes.PIGLIN_BRUTE ? BRUTE_TEXTURE : ADULT_TEXTURE;
     }
 
     @Override
