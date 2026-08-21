@@ -1,7 +1,8 @@
 plugins {
-    id("xyz.jpenilla.run-paper")
-    id("io.papermc.paperweight.userdev")
-    id("com.gradleup.shadow")
+    alias(libs.plugins.run.paper)
+    alias(libs.plugins.paperweight)
+    alias(libs.plugins.shadow)
+    `maven-publish`
 }
 
 version = "${rootProject.property("mod_version")}+${rootProject.property("minecraft_version")}"
@@ -18,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("${rootProject.property("minecraft_version")}.build.60-stable")
+    paperweight.paperDevBundle("${rootProject.property("minecraft_version")}.build.+")
     compileOnly("io.papermc.paper:paper-api:${rootProject.property("minecraft_version")}.build.+")
 
     implementation(project(":common"))
@@ -32,28 +33,42 @@ paperweight {
     reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
 }
 
+tasks.shadowJar {
+    archiveClassifier.set("")
+    from(project(":common").sourceSets.main.get().output)
+    relocate("org.bstats", project.group.toString())
+}
+
+tasks.jar {
+    dependsOn(tasks.shadowJar)
+    enabled = false
+}
+
+tasks.runServer {
+    minecraftVersion(rootProject.property("minecraft_version") as String)
+    jvmArgs("-Xms2G", "-Xmx2G")
+}
+
 tasks {
-    shadowJar {
-        archiveClassifier.set("")
-        from(project(":common").sourceSets.main.get().output)
-        relocate("org.bstats", project.group.toString())
-    }
-
-    jar {
-        dependsOn(shadowJar)
-        enabled = false
-    }
-
-    runServer {
-        minecraftVersion(rootProject.property("minecraft_version") as String)
-        jvmArgs("-Xms2G", "-Xmx2G")
-    }
-
     runPaper.folia.registerTask()
+}
 
-    processResources {
-        filesMatching("plugin.yml") {
-            expand(mapOf("version" to version))
+tasks.processResources {
+    filesMatching("plugin.yml") {
+        expand(mapOf("version" to version))
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifact(tasks.shadowJar)
+            groupId = project.group.toString()
+            artifactId = base.archivesName.get()
+            version = project.version.toString()
         }
+    }
+    repositories {
+
     }
 }

@@ -1,19 +1,9 @@
-import proguard.gradle.ProGuardTask
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.guardsquare:proguard-gradle:7.8.2")
-    }
-}
-
 plugins {
-    id("net.fabricmc.fabric-loom") version "1.15-SNAPSHOT" apply false
-    id("xyz.jpenilla.run-paper") version "3.0.2" apply false
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta+" apply false
-    id("com.gradleup.shadow") version "9.4.1" apply false
+    alias(libs.plugins.fabric.loom) apply false
+    alias(libs.plugins.run.paper) apply false
+    alias(libs.plugins.paperweight) apply false
+    alias(libs.plugins.shadow) apply false
+    `maven-publish`
 }
 
 version = "${rootProject.property("mod_version")}+${rootProject.property("minecraft_version")}"
@@ -36,17 +26,18 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven("https://repo.papermc.io/repository/maven-public/")
     }
 }
 
-// Merge raw (unobfuscated) platform JARs
+// Merge platform JARs
 tasks.register<Jar>("mergeJars") {
     group = "build"
     description = "Merge raw Fabric and Paper JARs into one universal JAR"
 
     dependsOn(":fabric:shadowJar")
     dependsOn(":paper:shadowJar")
+
+    isZip64 = true
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
@@ -72,30 +63,11 @@ tasks.register<Jar>("mergeJars") {
     }
 }
 
-tasks.register<ProGuardTask>("obfuscate") {
-    group = "build"
-    description = "Obfuscate the universal merged JAR"
-
-    dependsOn("mergeJars")
-
-    injars(tasks.named<Jar>("mergeJars").flatMap { it.archiveFile })
-    outjars(layout.buildDirectory.file("libs/${rootProject.name}-${project.version}.jar"))
-
-    configuration(rootProject.file("proguard.pro"))
-
-    libraryjars(
-        files(
-            project(":fabric").configurations["compileClasspath"],
-            project(":paper").configurations["compileClasspath"]
-        )
-    )
-}
-
 tasks.register<Copy>("collectJars") {
     group = "build"
     description = "Copy all final JARs into the root build/libs folder"
 
-    dependsOn(":fabric:shadowJar", ":paper:shadowJar", "obfuscate")
+    dependsOn(":fabric:shadowJar", ":paper:shadowJar", "mergeJars")
 
     from(project(":fabric").tasks.named<Jar>("shadowJar").map { it.archiveFile })
     from(project(":paper").tasks.named<Jar>("shadowJar").map { it.archiveFile })
@@ -107,4 +79,18 @@ tasks.register<Copy>("collectJars") {
 tasks.register("build") {
     group = "build"
     dependsOn("collectJars")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifact(tasks.named("mergeJars"))
+            groupId = project.group.toString()
+            artifactId = project.property("archives_base_name") as String + "-universal"
+            version = project.version.toString()
+        }
+    }
+    repositories {
+
+    }
 }

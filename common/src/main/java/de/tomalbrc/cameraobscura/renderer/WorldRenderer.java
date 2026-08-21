@@ -24,7 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -228,7 +228,7 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
                     continue;
                 }
 
-                if (ent.getType() == EntityType.PLAYER) {
+                if (ent.getType() == EntityTypes.PLAYER) {
                     try {
                         RPHelper.loadTexture(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE + ":" + ent.getUUID()));
                     } catch (Exception e) {
@@ -236,7 +236,7 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
                     }
                 }
 
-                var isItemDisplay = ent.getType() == EntityType.ITEM_DISPLAY;
+                var isItemDisplay = ent.getType() == EntityTypes.ITEM_DISPLAY;
                 if (isItemDisplay) {
                     EntityRenderers.renderItemDisplay(pipeline, ent);
                     continue;

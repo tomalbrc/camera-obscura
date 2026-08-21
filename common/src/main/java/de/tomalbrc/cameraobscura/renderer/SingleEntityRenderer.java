@@ -6,7 +6,7 @@ import de.tomalbrc.cameraobscura.renderer.entity.EntityRenderer;
 import de.tomalbrc.cameraobscura.sore.pipeline.FrameContext;
 import de.tomalbrc.cameraobscura.util.Constants;
 import de.tomalbrc.cameraobscura.util.resource.RPHelper;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.Level;
 import org.joml.Vector3d;
 
@@ -51,7 +51,7 @@ public class SingleEntityRenderer extends WorldRenderer {
         uniforms.fogColor = env.fogColor();
         uniforms.pointLights.clear();
 
-        if (entity.getType() == EntityType.PLAYER) {
+        if (entity.getType() == EntityTypes.PLAYER) {
             try {
                 RPHelper.loadTexture(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE + ":" + entity.getUUID()));
             } catch (Exception _) {

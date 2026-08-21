@@ -7,7 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.FlyingAnimal;
+import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.parrot.Parrot;
 
 public class PaperEntityAnimationHandler {
     private ScheduledTask task;
@@ -33,7 +34,7 @@ public class PaperEntityAnimationHandler {
                 }
 
                 if (entity instanceof LivingEntity livingEntity) {
-                    livingEntity.calculateEntityAnimation(livingEntity instanceof FlyingAnimal);
+                    livingEntity.calculateEntityAnimation(livingEntity instanceof Bee || livingEntity instanceof Parrot);
                 }
             }
         }
