@@ -30,13 +30,11 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.FrustumIntersection;
-import org.joml.Matrix4d;
-import org.joml.Matrix4f;
-import org.joml.Vector3d;
+import org.joml.*;
 import org.slf4j.Logger;
 
 import java.awt.image.BufferedImage;
+import java.lang.Math;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -156,7 +154,8 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
         public static EnvironmentValues fromLevel(Level level, Vec3 cameraPos) {
             double sunAngle = level.environmentAttributes().getValue(EnvironmentAttributes.SUN_ANGLE, cameraPos) * Mth.DEG_TO_RAD;
             double lightFactor = level.environmentAttributes().getValue(EnvironmentAttributes.SKY_LIGHT_FACTOR, cameraPos);
-            int fogColor = level.environmentAttributes().getValue(EnvironmentAttributes.FOG_COLOR, cameraPos);
+            var fogVec = level.environmentAttributes().getValue(EnvironmentAttributes.FOG_COLOR, cameraPos).mul(255, new Vector3f());
+            int fogColor = (int)fogVec.x << 16 | (int)fogVec.y << 8 | (int)fogVec.z; // TODO: change EnvironmentValues to use the Vector3fc
             double cloudHeight = level.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_HEIGHT, cameraPos);
             return new EnvironmentValues(sunAngle, lightFactor, fogColor, cloudHeight);
         }

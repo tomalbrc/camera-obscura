@@ -43,7 +43,7 @@ public class ZombieRenderer<T extends Monster> extends HumanoidRenderer<T> {
     @Override
     protected LimbAngles getLimbAngles(T entity, double animPos, double animSpeed, double headYaw, double headPitch, double swim, boolean flying, boolean crouch, LimbAngles base) {
         boolean aggressive = entity.isAggressive();
-        double attackTime = entity.getAttackAnim(1f);
+        double attackTime = entity.getSwingAnimation(1f);
 
         double armDrop = (double) -Math.PI / (aggressive ? 1.5F : 2.25F);
         double attackYRotModifier = Mth.sin(attackTime * (double) Math.PI);

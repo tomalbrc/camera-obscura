@@ -165,7 +165,7 @@ public class PiglinRenderer<T extends AbstractPiglin> extends HumanoidRenderer<T
                                        double swim, boolean flying, boolean crouch,
                                        LimbAngles base) {
         PiglinArmPose armPose = entity.getArmPose();
-        double attackTime = entity.getAttackAnim(1f);
+        double attackTime = entity.getSwingAnimation(1f);
         boolean mainRight = entity.getMainArm() == HumanoidArm.RIGHT;
 
         if (armPose == PiglinArmPose.CROSSBOW_HOLD || armPose == PiglinArmPose.CROSSBOW_CHARGE ||
@@ -217,7 +217,7 @@ public class PiglinRenderer<T extends AbstractPiglin> extends HumanoidRenderer<T
                                  double swim, boolean fly, boolean crouch) {
         PiglinArmPose armPose = entity.getArmPose();
         double ageInTicks = entity.tickCount + 1f;
-        double attackTime = entity.getAttackAnim(1f);
+        double attackTime = entity.getSwingAnimation(1f);
         boolean mainRight = entity.getMainArm() == HumanoidArm.RIGHT;
 
         if (armPose == PiglinArmPose.DANCING) {

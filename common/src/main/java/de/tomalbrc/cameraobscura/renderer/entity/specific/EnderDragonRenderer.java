@@ -11,6 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.boss.enderdragon.DragonFlightHistory;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
+import net.minecraft.world.level.dimension.end.EnderDragonFight;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.EndPodiumFeature;
 import org.joml.Matrix4d;
@@ -97,20 +98,19 @@ public class EnderDragonRenderer implements EntityRenderer<EnderDragon> {
                                       DragonFlightHistory.Sample partPos,
                                       double partialTicks) {
         boolean landing = false, sitting = false;
-        if (dragon.getPhaseManager() != null) {
-            var phase = dragon.getPhaseManager().getCurrentPhase();
-            landing = phase.getPhase() == EnderDragonPhase.LANDING || phase.getPhase() == EnderDragonPhase.TAKEOFF;
-            sitting = phase.isSitting();
-        }
+
+        var phase = dragon.getPhaseManager().getCurrentPhase();
+        landing = phase.getPhase() == EnderDragonPhase.LANDING || phase.getPhase() == EnderDragonPhase.TAKEOFF;
+        sitting = phase.isSitting();
+
         double dist = dragon.level()
-                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                        EndPodiumFeature.getLocation(dragon.getFightOrigin()))
+                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EnderDragonFight.getPodiumLocation(dragon.getFightOrigin()))
                 .distToCenterSqr(dragon.position());
 
-        if (landing) return (double) (part / Math.max(dist / 4.0, 1.0));
+        if (landing) return part / Math.max(dist / 4.0, 1.0);
         if (sitting) return part;
         if (part == 6) return 0f;
-        return (double) (partPos.y() - body.y());
+        return partPos.y() - body.y();
     }
 
     @Override
@@ -120,7 +120,7 @@ public class EnderDragonRenderer implements EntityRenderer<EnderDragon> {
         float pTicks = 1f;
         DragonFlightHistory hist = dragon.flightHistory;
         double flapTime = Mth.lerp(pTicks, dragon.oFlapTime, dragon.flapTime);
-        double flapRad = flapTime * (double) (Math.PI * 2);
+        double flapRad = flapTime * (Math.PI * 2);
 
         double yr = hist.get(7, pTicks).yRot();
         double r2 = (double) (hist.get(5, pTicks).y() - hist.get(10, pTicks).y());

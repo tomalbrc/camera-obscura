@@ -93,7 +93,7 @@ public class ZombifiedPiglinRenderer extends HumanoidRenderer<ZombifiedPiglin> {
                                        double swim, boolean flying, boolean crouch,
                                        LimbAngles base) {
         boolean aggressive = entity.isAggressive();
-        double attackTime = entity.getAttackAnim(1f);
+        double attackTime = entity.getSwingAnimation(1f);
         double armDrop = -Math.PI / (aggressive ? 1.5F : 2.25F);
         double attackYRotModifier = Mth.sin(attackTime * Math.PI);
         double attackXRotModifier = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * Math.PI);

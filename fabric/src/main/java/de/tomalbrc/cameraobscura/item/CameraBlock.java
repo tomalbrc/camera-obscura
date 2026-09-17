@@ -1,6 +1,5 @@
 package de.tomalbrc.cameraobscura.item;
 
-import com.mojang.serialization.MapCodec;
 import de.tomalbrc.cameraobscura.CameraObscura;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
 import eu.pb4.polymer.virtualentity.api.BlockWithElementHolder;
@@ -38,17 +37,11 @@ import org.jspecify.annotations.Nullable;
 
 public class CameraBlock extends BaseEntityBlock implements PolymerBlock, BlockWithElementHolder {
     public static EnumProperty<State> STATE = EnumProperty.create("state", State.class);
-    public static final MapCodec<CameraBlock> CODEC = simpleCodec(CameraBlock::new);
 
     public CameraBlock(Properties properties) {
         super(properties);
 
         this.registerDefaultState(this.defaultBlockState().setValue(STATE, State.OFF).setValue(BlockStateProperties.WATERLOGGED, false));
-    }
-
-    @Override
-    protected @NonNull MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
     }
 
     @Override

@@ -12,8 +12,8 @@ base {
 }
 
 repositories {
+    mavenCentral()
     maven("https://repo.nexomc.com/releases")
-    maven("https://maven.devs.beer/")
     maven("https://repo.papermc.io/repository/maven-public/") // already in root, but can be per-module
 }
 
@@ -25,7 +25,7 @@ dependencies {
     implementation(libs.bstats.bukkit)
 
     compileOnly("com.nexomc:nexo:1.23")
-    compileOnly("dev.lone:api-itemsadder:4.0.10")
+    compileOnly("beer.devs:itemsadder-api:4.0.17")
 }
 
 paperweight {

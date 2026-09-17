@@ -153,7 +153,7 @@ public class ZombieVillagerRenderer extends HumanoidRenderer<ZombieVillager> {
                                        double swim, boolean flying, boolean crouch,
                                        LimbAngles base) {
         boolean aggressive = entity.isAggressive();
-        double attackTime = entity.getAttackAnim(1f);
+        double attackTime = entity.getSwingAnimation(1f);
         double armDrop = (double) -Math.PI / (aggressive ? 1.5F : 2.25F);
         double attackYRotModifier = Mth.sin(attackTime * (double) Math.PI);
         double attackXRotModifier = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (double) Math.PI);

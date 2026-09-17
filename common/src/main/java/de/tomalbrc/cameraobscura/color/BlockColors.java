@@ -12,7 +12,7 @@ import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -82,7 +82,7 @@ public class BlockColors {
         //colors.put(Blocks.BUBBLE_COLUMN, (level, blockState, blockPos) -> -1);
         //colors.put(Blocks.WATER_CAULDRON, (level, blockState, blockPos) -> -1);
 
-        colors.put(Blocks.REDSTONE_WIRE, (level, blockState, blockPos) -> RedStoneWireBlock.getColorForPower(blockState.getValue(RedStoneWireBlock.POWER)));
+        colors.put(Blocks.REDSTONE_WIRE, (level, blockState, blockPos) -> RedstoneWireBlock.getColorForPower(blockState.getValue(RedstoneWireBlock.POWER)));
 
         //colors.put(Blocks.SUGAR_CANE, (blockState) -> GrassColor.getDefaultColor());
 

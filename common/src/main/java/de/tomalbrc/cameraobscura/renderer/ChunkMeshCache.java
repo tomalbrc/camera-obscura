@@ -343,7 +343,7 @@ public class ChunkMeshCache {
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (Direction dir : Direction.values()) {
                 pos.set(wx + dir.getStepX(), wy + dir.getStepY(), wz + dir.getStepZ());
-                BlockState neighbor = level.getBlockState(new BlockPos(pos));
+                BlockState neighbor = level.getBlockState(pos);
                 if (neighbor.isSolidRender() && !neighbor.isAir()) {
                     culled.add(dir);
                 }

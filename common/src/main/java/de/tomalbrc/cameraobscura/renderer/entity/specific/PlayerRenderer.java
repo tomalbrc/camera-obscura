@@ -19,10 +19,7 @@ public class PlayerRenderer extends HumanoidRenderer<Avatar> {
     @Override
     protected String getTexturePath(Avatar player) {
         var b = player.getProfile().skinPatch().body();
-        if (b.isPresent())
-            return b.get().id().toString();
-
-        return Constants.DYNAMIC_PLAYER_TEXTURE + ":" + player.getStringUUID();
+        return b.map(resourceTexture -> resourceTexture.id().toString()).orElseGet(() -> Constants.DYNAMIC_PLAYER_TEXTURE + ":" + player.getStringUUID());
     }
 
     @Override
@@ -119,7 +116,7 @@ public class PlayerRenderer extends HumanoidRenderer<Avatar> {
         ItemStack itemInHand = player.getItemInHand(hand);
         if (itemInHand.isEmpty()) return ArmPose.EMPTY;
 
-        if (!player.swinging && itemInHand.is(Items.CROSSBOW) && CrossbowItem.isCharged(itemInHand)) {
+        if (!player.isSwinging() && itemInHand.is(Items.CROSSBOW) && CrossbowItem.isCharged(itemInHand)) {
             return ArmPose.CROSSBOW_HOLD;
         }
 

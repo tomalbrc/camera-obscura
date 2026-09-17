@@ -117,8 +117,8 @@ public abstract class HumanoidRenderer<T extends LivingEntity> implements Living
 
     protected ArmPose getArmPose(final T mob, final HumanoidArm arm) {
         ItemStack itemHeldByArm = mob.getItemHeldByArm(arm);
-        SwingAnimation anim = itemHeldByArm.get(DataComponents.SWING_ANIMATION);
-        if (anim != null && anim.type() == SwingAnimationType.STAB && mob.swinging) {
+        SwingAnimation anim = itemHeldByArm.get(DataComponents.ATTACK_ANIMATION);
+        if (anim != null && anim.type() == SwingAnimationType.STAB && mob.isSwinging()) {
             return ArmPose.SPEAR;
         } else {
             return itemHeldByArm.is(ItemTags.SPEARS) ? ArmPose.SPEAR : ArmPose.EMPTY;

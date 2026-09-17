@@ -4,13 +4,13 @@ import de.tomalbrc.cameraobscura.renderer.entity.ModelBakery;
 import de.tomalbrc.cameraobscura.sore.pipeline.RenderPipeline;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Enderman;
 import org.joml.Matrix4d;
 
-public class EndermanRenderer extends HumanoidRenderer<EnderMan> {
+public class EndermanRenderer extends HumanoidRenderer<Enderman> {
 
     @Override
-    protected String getTexturePath(EnderMan entity) {
+    protected String getTexturePath(Enderman entity) {
         return "entity/enderman/enderman";
     }
 
@@ -60,12 +60,12 @@ public class EndermanRenderer extends HumanoidRenderer<EnderMan> {
     }
 
     @Override
-    protected ArmPose getArmPose(EnderMan entity, HumanoidArm arm) {
+    protected ArmPose getArmPose(Enderman entity, HumanoidArm arm) {
         return ArmPose.EMPTY;
     }
 
     @Override
-    protected LimbAngles getLimbAngles(EnderMan entity, double animPos, double animSpeed,
+    protected LimbAngles getLimbAngles(Enderman entity, double animPos, double animSpeed,
                                        double headYaw, double headPitch,
                                        double swim, boolean flying, boolean crouch,
                                        LimbAngles base) {
@@ -94,7 +94,7 @@ public class EndermanRenderer extends HumanoidRenderer<EnderMan> {
     }
 
     @Override
-    protected void renderWithAngles(RenderPipeline pipeline, EnderMan entity, Matrix4d base, LimbAngles angles, double swim, boolean flying, boolean crouch, double animPos, double block, double sky) {
+    protected void renderWithAngles(RenderPipeline pipeline, Enderman entity, Matrix4d base, LimbAngles angles, double swim, boolean flying, boolean crouch, double animPos, double block, double sky) {
         super.renderWithAngles(pipeline, entity, base, angles, swim, flying, crouch, animPos, block, sky);
 
         //if (entity.getCarriedBlock() != null) {
@@ -103,7 +103,7 @@ public class EndermanRenderer extends HumanoidRenderer<EnderMan> {
     }
 
     @Override
-    protected void transformPart(Matrix4d mat, String name, EnderMan entity,
+    protected void transformPart(Matrix4d mat, String name, Enderman entity,
                                  LimbAngles angles, double swim, boolean fly, boolean crouch) {
         if (!entity.isCreepy()) return;
 

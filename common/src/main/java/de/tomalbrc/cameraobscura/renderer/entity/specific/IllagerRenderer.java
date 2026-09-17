@@ -96,7 +96,8 @@ public abstract class IllagerRenderer<T extends AbstractIllager> implements Livi
         boolean isRiding = entity.isPassenger();
         double animPos = entity.walkAnimation.position();
         double animSpeed = entity.walkAnimation.speed();
-        double attackAnim = entity.getAttackAnim(1.0f);
+
+        double attackAnim = entity.getSwingAnimation(1.0f);
         double ageInTicks = entity.tickCount + 1.0f;
         AbstractIllager.IllagerArmPose armPose = entity.getArmPose();
         boolean isAggressive = entity.isAggressive();

@@ -63,14 +63,14 @@ public class PaperItemDataStore implements ItemDataStore {
 
     @Override
     public boolean isLiveMap(ItemStack nmsStack) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         PersistentDataContainer pdc = bukkit.getItemMeta().getPersistentDataContainer();
         return pdc.getOrDefault(LIVE_MAP_KEY, PersistentDataType.BOOLEAN, false);
     }
 
     @Override
     public void setLiveMap(ItemStack nmsStack, boolean live) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         ItemMeta meta = bukkit.getItemMeta();
         meta.getPersistentDataContainer().set(LIVE_MAP_KEY, PersistentDataType.BOOLEAN, live);
         bukkit.setItemMeta(meta);
@@ -79,14 +79,14 @@ public class PaperItemDataStore implements ItemDataStore {
     @Override
     @Nullable
     public EntityReference<UniquelyIdentifyable> getEntityRef(ItemStack nmsStack) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         String snbt = bukkit.getItemMeta().getPersistentDataContainer().get(ENTITY_REF_KEY, PersistentDataType.STRING);
         return entityRefFromSnbt(snbt);
     }
 
     @Override
     public void setEntityRef(ItemStack nmsStack, @Nullable EntityReference<UniquelyIdentifyable> ref) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         ItemMeta meta = bukkit.getItemMeta();
         if (ref == null) {
             meta.getPersistentDataContainer().remove(ENTITY_REF_KEY);
@@ -192,7 +192,7 @@ public class PaperItemDataStore implements ItemDataStore {
     }
 
     private String getString(ItemStack nmsStack, NamespacedKey key) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         if (bukkit.getItemMeta() == null) {
             return null;
         }
@@ -202,14 +202,14 @@ public class PaperItemDataStore implements ItemDataStore {
     }
 
     private void setString(ItemStack nmsStack, NamespacedKey key, String value) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         ItemMeta meta = bukkit.getItemMeta();
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, value);
         bukkit.setItemMeta(meta);
     }
 
     private void remove(ItemStack nmsStack, NamespacedKey key) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         ItemMeta meta = bukkit.getItemMeta();
         meta.getPersistentDataContainer().remove(key);
         bukkit.setItemMeta(meta);
@@ -217,38 +217,38 @@ public class PaperItemDataStore implements ItemDataStore {
 
     @Override
     public boolean hasLiveMap(ItemStack nmsStack) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         return bukkit.getItemMeta().getPersistentDataContainer().has(LIVE_MAP_KEY);
     }
 
     @Override
     public boolean hasEntityRef(ItemStack nmsStack) {
-        CraftItemStack bukkit = CraftItemStack.asCraftMirror(nmsStack);
+        org.bukkit.inventory.ItemStack bukkit = CraftItemStack.asBukkitMirror(nmsStack);
         return bukkit.getItemMeta().getPersistentDataContainer().has(ENTITY_REF_KEY);
     }
 
     @Override
     public boolean hasMediaData(ItemStack nmsStack) {
-        return CraftItemStack.asCraftMirror(nmsStack).getItemMeta().getPersistentDataContainer().has(DATA_KEY);
+        return CraftItemStack.asBukkitMirror(nmsStack).getItemMeta().getPersistentDataContainer().has(DATA_KEY);
     }
 
     @Override
     public boolean hasResolution(ItemStack stack) {
-        return CraftItemStack.asCraftMirror(stack).getItemMeta().getPersistentDataContainer().has(RESOLUTION_KEY);
+        return CraftItemStack.asBukkitMirror(stack).getItemMeta().getPersistentDataContainer().has(RESOLUTION_KEY);
     }
 
     @Override
     public boolean hasDitherMode(ItemStack stack) {
-        return CraftItemStack.asCraftMirror(stack).getItemMeta().getPersistentDataContainer().has(DITHER_MODE_KEY);
+        return CraftItemStack.asBukkitMirror(stack).getItemMeta().getPersistentDataContainer().has(DITHER_MODE_KEY);
     }
 
     @Override
     public boolean hasVideoParams(ItemStack stack) {
-        return CraftItemStack.asCraftMirror(stack).getItemMeta().getPersistentDataContainer().has(VIDEO_PARAMS_KEY);
+        return CraftItemStack.asBukkitMirror(stack).getItemMeta().getPersistentDataContainer().has(VIDEO_PARAMS_KEY);
     }
 
     @Override
     public boolean hasColorMode(ItemStack stack) {
-        return CraftItemStack.asCraftMirror(stack).getItemMeta().getPersistentDataContainer().has(COLOR_MODE_KEY);
+        return CraftItemStack.asBukkitMirror(stack).getItemMeta().getPersistentDataContainer().has(COLOR_MODE_KEY);
     }
 }
