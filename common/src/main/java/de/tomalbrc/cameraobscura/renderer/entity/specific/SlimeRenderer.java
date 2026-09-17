@@ -8,7 +8,7 @@ import de.tomalbrc.cameraobscura.sore.pipeline.RenderPipeline;
 import de.tomalbrc.cameraobscura.sore.pipeline.RenderType;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.level.LightLayer;
 import org.joml.Matrix4d;
 

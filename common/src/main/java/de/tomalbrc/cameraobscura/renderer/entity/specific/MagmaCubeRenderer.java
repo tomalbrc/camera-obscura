@@ -8,7 +8,7 @@ import de.tomalbrc.cameraobscura.sore.pipeline.RenderPipeline;
 import de.tomalbrc.cameraobscura.sore.pipeline.RenderType;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.cubemob.MagmaCube;
 import org.joml.Matrix4d;
 
 public class MagmaCubeRenderer implements LivingEntityRenderer<MagmaCube> {

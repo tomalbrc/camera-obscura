@@ -9,6 +9,7 @@ import de.tomalbrc.cameraobscura.sore.pipeline.RenderType;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Zoglin;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
@@ -19,8 +20,8 @@ import java.util.Map;
 
 public class HoglinRenderer<T extends LivingEntity> implements LivingEntityRenderer<T> {
     private static final Map<EntityType<?>, String[]> TEXTURES = Map.of(
-            EntityType.HOGLIN, new String[]{"entity/hoglin/hoglin", "entity/hoglin/hoglin_baby"},
-            EntityType.ZOGLIN, new String[]{"entity/hoglin/zoglin", "entity/hoglin/zoglin_baby"}
+            EntityTypes.HOGLIN, new String[]{"entity/hoglin/hoglin", "entity/hoglin/hoglin_baby"},
+            EntityTypes.ZOGLIN, new String[]{"entity/hoglin/zoglin", "entity/hoglin/zoglin_baby"}
     );
 
     private ModelBakery.BakedPart cachedAdult;

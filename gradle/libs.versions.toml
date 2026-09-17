@@ -1,9 +1,9 @@
 [versions]
-minecraft = "26.1.2"
+minecraft = "26.2"
 
-loader = "0.18.5"
-fabric-api = "0.144.3+26.1"
-polymer = "0.16.0-pre.3+26.1"
+loader = "0.19.3"
+fabric-api = "0.152.1+26.2"
+polymer = "0.17.0+26.2-rc-2"
 fabric-permissions = "0.7.0"
 
 bstats = "3.2.1"
@@ -31,7 +31,7 @@ proguard-gradle = { module = "com.guardsquare:proguard-gradle", version.ref = "p
 
 # Plugins
 [plugins]
-fabric-loom = { id = "net.fabricmc.fabric-loom", version = "1.15-SNAPSHOT" }
+fabric-loom = { id = "net.fabricmc.fabric-loom", version = "1.16-SNAPSHOT" }
 run-paper = { id = "xyz.jpenilla:run-paper", version = "3.0.2" }
 paperweight = { id = "io.papermc.paperweight.userdev", version = "2.0.0-beta+" }
-shadow = { id = "com.gradleup.shadow", version = "9.4.1" }
+shadow = { id = "com.gradleup.shadow", version = "9.4.2" }

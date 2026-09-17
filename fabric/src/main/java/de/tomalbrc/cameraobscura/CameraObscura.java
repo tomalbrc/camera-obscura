@@ -41,6 +41,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 public class CameraObscura implements ModInitializer {
@@ -211,7 +212,7 @@ public class CameraObscura implements ModInitializer {
                 var cache = ChunkMeshCache.CHUNK_CACHE.get(x);
                 if (cache != null) cache.values().removeIf(chunk -> {
                     for (ServerPlayer player : playerList) {
-                        if (player.distanceToSqr(chunk.origin().getCenter()) < d*d) {
+                        if (player.distanceToSqr(Vec3.atCenterOf(chunk.origin())) < d*d) {
                             return false;
                         }
                     }

@@ -5,6 +5,7 @@ import de.tomalbrc.cameraobscura.model.resource.RPModel;
 import de.tomalbrc.cameraobscura.util.resource.RPHelper;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -16,7 +17,7 @@ public class BuiltinEntityModels {
 
     public static @Nullable RPModel.View getModel(EntityType<?> entityType, @Nullable UUID uuid) {
         if (modelMap.containsKey(entityType)) {
-            if (entityType == EntityType.ITEM_FRAME || entityType == EntityType.GLOW_ITEM_FRAME) {
+            if (entityType == EntityTypes.ITEM_FRAME || entityType == EntityTypes.GLOW_ITEM_FRAME) {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(), new Vector3f(0, 0, 0));
             } else {
                 return new RPModel.View(modelMap.get(entityType), new Vector3f(), new Vector3f(-0.5f, 0, -0.5f));
@@ -27,7 +28,7 @@ public class BuiltinEntityModels {
     }
 
     public static void initModels() {
-        modelMap.put(EntityType.ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("block/item_frame")));
-        modelMap.put(EntityType.GLOW_ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("block/glow_item_frame")));
+        modelMap.put(EntityTypes.ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("block/item_frame")));
+        modelMap.put(EntityTypes.GLOW_ITEM_FRAME, RPHelper.loadModel(CachedIdentifierDeserializer.get("block/glow_item_frame")));
     }
 }

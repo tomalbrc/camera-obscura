@@ -19,10 +19,9 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-
-import java.util.concurrent.CompletableFuture;
 
 public class CameraBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, StackedContentsCompatible {
     NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
@@ -46,7 +45,7 @@ public class CameraBlockEntity extends BaseContainerBlockEntity implements World
             this.renderer = null;
         } else if (renderer == null && state.getValue(CameraBlock.STATE) == CameraBlock.State.WARMUP) {
             this.renderer = new VideoRenderer(
-                    VideoRenderer.blockEntitySource(this, worldPosition.getCenter(), -pitch, yaw),
+                    VideoRenderer.blockEntitySource(this, Vec3.atCenterOf(worldPosition), -pitch, yaw),
                     Components.Resolution.DEFAULT,
                     Components.ColorMode.COLOR,
                     Components.DitherMode.NONE,
@@ -126,7 +125,9 @@ public class CameraBlockEntity extends BaseContainerBlockEntity implements World
         this.yaw = yaw;
         this.pitch = pitch;
 
-        if (this.renderer != null)
-            renderer.renderer().updateCamera(getBlockPos().getCenter().x(), getBlockPos().getCenter().y(), getBlockPos().getCenter().z(), -pitch, yaw);
+        if (this.renderer != null) {
+            var center = Vec3.atCenterOf(worldPosition);
+            renderer.renderer().updateCamera(center.x(), center.y(), center.z(), -pitch, yaw);
+        }
     }
 }

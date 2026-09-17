@@ -15,6 +15,7 @@ import de.tomalbrc.cameraobscura.util.resource.model.GeneratedItemModel;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.LightLayer;
@@ -61,7 +62,7 @@ public class ItemFrameRenderer implements EntityRenderer<ItemFrame> {
             itemMatrix.translate(0, 0, 0.4375f);
         }
 
-        boolean glow = entity.getType() == EntityType.GLOW_ITEM_FRAME;
+        boolean glow = entity.getType() == EntityTypes.GLOW_ITEM_FRAME;
         if (entity.hasFramedMap()) {
             var mapId = entity.getFramedMapId(item);
             if (mapId != null) {

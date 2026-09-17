@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("${rootProject.property("minecraft_version")}.build.60-stable")
+    paperweight.paperDevBundle("${rootProject.property("minecraft_version")}+")
     compileOnly("io.papermc.paper:paper-api:${rootProject.property("minecraft_version")}.build.+")
 
     implementation(project(":common"))

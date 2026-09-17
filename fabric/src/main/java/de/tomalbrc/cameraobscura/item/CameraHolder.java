@@ -6,7 +6,6 @@ import eu.pb4.polymer.virtualentity.api.attachment.BlockAwareAttachment;
 import eu.pb4.polymer.virtualentity.api.attachment.BlockBoundAttachment;
 import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;
 import eu.pb4.polymer.virtualentity.api.elements.ItemDisplayElement;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Items;
 import org.joml.Vector3f;
@@ -22,7 +21,7 @@ public class CameraHolder extends ElementHolder {
         item.set(DataComponents.PROFILE, ItemDataStore.createCameraProfile());
         this.display = new ItemDisplayElement(item);
 
-        this.displayStatus = new ItemDisplayElement(Items.GREEN_CONCRETE);
+        this.displayStatus = new ItemDisplayElement(Items.CONCRETE.green());
         this.displayStatus.setTranslation(new Vector3f(0, 0.33f, 0));
         this.displayStatus.setScale(new Vector3f(0.2f));
 
@@ -43,15 +42,15 @@ public class CameraHolder extends ElementHolder {
             if (state.hasProperty(CameraBlock.STATE)) {
                 var s = state.getValue(CameraBlock.STATE);
                 if (s == CameraBlock.State.OFF) {
-                    this.displayStatus.setItem(Items.GREEN_CONCRETE.getDefaultInstance());
+                    this.displayStatus.setItem(Items.CONCRETE.green().getDefaultInstance());
                 }
 
                 if (s == CameraBlock.State.WARMUP) {
-                    this.displayStatus.setItem(Items.ORANGE_CONCRETE.getDefaultInstance());
+                    this.displayStatus.setItem(Items.CONCRETE.orange().getDefaultInstance());
                 }
 
                 if (s == CameraBlock.State.RECORDING) {
-                    this.displayStatus.setItem(Items.RED_CONCRETE.getDefaultInstance());
+                    this.displayStatus.setItem(Items.CONCRETE.red().getDefaultInstance());
                 }
             }
 
