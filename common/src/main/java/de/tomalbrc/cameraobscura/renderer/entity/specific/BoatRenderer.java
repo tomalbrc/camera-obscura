@@ -38,6 +38,8 @@ public class BoatRenderer implements EntityRenderer<AbstractBoat> {
     public static final String SPRUCE_CHEST_BOAT = "entity/chest_boat/spruce";
     public static final String BAMBOO_RAFT = "entity/boat/bamboo";
     public static final String BAMBOO_CHEST_RAFT = "entity/chest_boat/bamboo";
+    public static final String POPLAR_BOAT = "entity/boat/poplar";
+    public static final String POPLAR_CHEST_BOAT = "entity/chest_boat/poplar";
 
     private static final Map<String, ModelBakery.BakedPart> MODEL_CACHE = new HashMap<>();
 

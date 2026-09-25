@@ -93,6 +93,7 @@ public class EntityRenderers {
         RENDERER.put(EntityTypes.SHULKER, new ShulkerRenderer());
         RENDERER.put(EntityTypes.MAGMA_CUBE, new MagmaCubeRenderer());
         RENDERER.put(EntityTypes.SLIME, new SlimeRenderer());
+        RENDERER.put(EntityTypes.SULFUR_CUBE, new SulfurCubeRenderer());
         RENDERER.put(EntityTypes.BAT, new BatRenderer());
         RENDERER.put(EntityTypes.AXOLOTL, new AxolotlRenderer());
         RENDERER.put(EntityTypes.BEE, new BeeRenderer());
@@ -162,6 +163,8 @@ public class EntityRenderers {
         RENDERER.put(EntityTypes.SPRUCE_CHEST_BOAT, new BoatRenderer(BoatRenderer.SPRUCE_CHEST_BOAT, false, true));
         RENDERER.put(EntityTypes.BAMBOO_RAFT, new BoatRenderer(BoatRenderer.BAMBOO_RAFT, true, false));
         RENDERER.put(EntityTypes.BAMBOO_CHEST_RAFT, new BoatRenderer(BoatRenderer.BAMBOO_CHEST_RAFT, true, true));
+        RENDERER.put(EntityTypes.POPLAR_BOAT, new BoatRenderer(BoatRenderer.POPLAR_BOAT, false, false));
+        RENDERER.put(EntityTypes.POPLAR_CHEST_BOAT, new BoatRenderer(BoatRenderer.POPLAR_CHEST_BOAT, false, true));
 
         RENDERER.put(EntityTypes.ARROW, new ArrowRenderer<Arrow>());
         RENDERER.put(EntityTypes.SPECTRAL_ARROW, new ArrowRenderer<SpectralArrow>());
@@ -183,6 +186,7 @@ public class EntityRenderers {
         RENDERER.put(EntityTypes.FIREWORK_ROCKET, new FireworkRocketRenderer());
 
         RENDERER.put(EntityTypes.PAINTING, new PaintingRenderer());
+        RENDERER.put(EntityTypes.CUSHION, new CushionRenderer());
         RENDERER.put(EntityTypes.END_CRYSTAL, new EndCrystalRenderer());
         RENDERER.put(EntityTypes.ITEM_FRAME, new ItemFrameRenderer());
         RENDERER.put(EntityTypes.GLOW_ITEM_FRAME, new ItemFrameRenderer());
