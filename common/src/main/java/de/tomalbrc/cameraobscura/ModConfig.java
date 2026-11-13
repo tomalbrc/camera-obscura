@@ -6,11 +6,11 @@ import de.tomalbrc.cameraobscura.json.CachedIdentifierDeserializer;
 import de.tomalbrc.cameraobscura.platform.Platforms;
 import net.minecraft.resources.Identifier;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ModConfig {
@@ -39,29 +39,32 @@ public class ModConfig {
 
     public static ModConfig getInstance() {
         if (instance == null) {
-            if (!load()) // only save if file wasn't just created
-                save(); // save since newer versions may contain new options, also removes old options
+            if (!load())
+                save();
         }
         return instance;
     }
 
     public static boolean load() {
-        if (!CONFIG_FILE_PATH.toFile().exists()) {
-            instance = new ModConfig();
-            try {
-                if (CONFIG_FILE_PATH.toFile().createNewFile()) {
-                    FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile());
-                    stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try {
+            Path parent = CONFIG_FILE_PATH.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!Files.exists(CONFIG_FILE_PATH)) {
+            instance = new ModConfig();
+            save();
             return true;
         }
 
-        try {
-            ModConfig.instance = gson.fromJson(new FileReader(ModConfig.CONFIG_FILE_PATH.toFile()), ModConfig.class);
-        } catch (FileNotFoundException e) {
+        try (FileReader reader = new FileReader(CONFIG_FILE_PATH.toFile())) {
+            ModConfig loaded = gson.fromJson(reader, ModConfig.class);
+            instance = loaded != null ? loaded : new ModConfig();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -69,8 +72,7 @@ public class ModConfig {
     }
 
     private static void save() {
-        try {
-            FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile());
+        try (FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile())) {
             stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
