@@ -19,7 +19,7 @@ public class Constants {
     public static final Vector3fc UNIT_VEC3 = new Vec3(1, 1, 1).toVector3f();
     public static final Matrix4dc ZERO_MATRIX = new Matrix4d();
 
-    public static ExecutorService RENDER_EXEC = Executors.newVirtualThreadPerTaskExecutor();
+    public static ExecutorService RENDER_EXEC = Executors.newSingleThreadExecutor();
     public static ExecutorService CHUNK_EXEC = Executors.newVirtualThreadPerTaskExecutor();
 
     public static final Direction[][] FACE_TANGENTS = new Direction[6][2];
