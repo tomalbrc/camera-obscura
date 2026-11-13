@@ -24,7 +24,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
@@ -52,7 +51,7 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
 
     public Entity entity = null;
 
-    protected EnvironmentValues envinmentValues;
+    protected EnvironmentValues environmentValues;
 
     public WorldRenderer(Level level, int width, int height, int renderDistance) {
         this(level, width, height, renderDistance, ModConfig.getInstance().ssaa);
@@ -110,7 +109,7 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
         int rebuiltCount = 0;
         int max = ModConfig.getInstance().maxChunkRebuildsPerTick;
 
-        this.envinmentValues = EnvironmentValues.fromLevel(level, camera.position());
+        this.environmentValues = EnvironmentValues.fromLevel(level, camera.position());
 
         BlockPos cameraPos = BlockPos.containing(camera.position());
         int chunkRadius = ChunkMeshCache.toChunkCoord(renderDistance + ChunkMeshCache.CHUNK_SIZE - 1);
@@ -179,10 +178,10 @@ public class WorldRenderer extends AbstractRenderer<BufferedImage> {
         long totalStart = System.nanoTime();
 
         long time = level.getGameTime();
-        double sunAngle = this.envinmentValues.sunAngle;
-        double lightFactor = this.envinmentValues.lightFactor;
-        int fogColor = this.envinmentValues.fogColor;
-        double cloudHeight = this.envinmentValues.cloudHeight;
+        double sunAngle = this.environmentValues.sunAngle;
+        double lightFactor = this.environmentValues.lightFactor;
+        int fogColor = this.environmentValues.fogColor;
+        double cloudHeight = this.environmentValues.cloudHeight;
 
         Vector3d sunDir = new Vector3d(
                 -Math.sin(sunAngle),

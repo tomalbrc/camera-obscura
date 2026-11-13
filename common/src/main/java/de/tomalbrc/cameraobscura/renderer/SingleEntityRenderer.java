@@ -6,7 +6,6 @@ import de.tomalbrc.cameraobscura.renderer.entity.EntityRenderer;
 import de.tomalbrc.cameraobscura.sore.pipeline.FrameContext;
 import de.tomalbrc.cameraobscura.util.Constants;
 import de.tomalbrc.cameraobscura.util.resource.RPHelper;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.Level;
 import org.joml.Vector3d;
@@ -40,7 +39,7 @@ public class SingleEntityRenderer extends WorldRenderer {
         }
 
         long time = level.getGameTime();
-        var env = envinmentValues;
+        var env = environmentValues;
         if (env == null) {
             env = EnvironmentValues.fromLevel(level, camera.position());
         }

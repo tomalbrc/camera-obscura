@@ -14,8 +14,8 @@ import de.tomalbrc.cameraobscura.util.BuiltinModels;
 import de.tomalbrc.cameraobscura.util.Constants;
 import de.tomalbrc.cameraobscura.util.resource.RPHelper;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -42,6 +42,10 @@ import org.joml.Matrix4d;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class ChunkMeshCache {
     public static final int CHUNK_SIZE = 16;
@@ -49,21 +53,25 @@ public class ChunkMeshCache {
     private static final int BITS = 21;
     private static final long MASK = (1L << BITS) - 1;
 
-    public static final Map<Level, Long2ObjectMap<ChunkMesh>> CHUNK_CACHE = Collections.synchronizedMap(new IdentityHashMap<>());
-    private static final Long2ObjectMap<List<Mesh>> BLOCK_MESH_CACHE = new Long2ObjectOpenHashMap<>();
-    private static final Map<Level, Long2ReferenceOpenHashMap<ChunkAccess>> VANILLA_CHUNKS = new IdentityHashMap<>();
+    public static final Map<Level, Long2ObjectMap<ChunkMesh>> CHUNK_CACHE = new ConcurrentHashMap<>();
+
+    private static final Object BLOCK_MESH_CACHE_LOCK = new Object();
+    private static volatile Long2ObjectMap<List<Mesh>> BLOCK_MESH_CACHE = new Long2ObjectOpenHashMap<>();
+
+    private static final ConcurrentHashMap<Level, AtomicReference<Long2ReferenceOpenHashMap<ChunkAccess>>> VANILLA_CHUNKS = new ConcurrentHashMap<>();
 
     public static class FastBlockGetter implements BlockAndLightGetter {
         private final LevelLightEngine lightEngine;
         private final int minY;
         private final int height;
-        Long2ReferenceOpenHashMap<ChunkAccess> chunkCache;
+        private final Long2ReferenceOpenHashMap<ChunkAccess> chunkCache;
 
         public FastBlockGetter(Level level) {
             this.lightEngine = level.getLightEngine();
             this.minY = level.getMinY();
             this.height = level.getHeight();
-            this.chunkCache = VANILLA_CHUNKS.get(level);
+            var ref = VANILLA_CHUNKS.get(level);
+            this.chunkCache = ref == null ? new Long2ReferenceOpenHashMap<>() : ref.get();
         }
 
         @Override
@@ -76,7 +84,6 @@ public class ChunkMeshCache {
         public BlockEntity getBlockEntity(@NonNull BlockPos pos) {
             ChunkAccess chunk = getChunkAt(pos);
             if (chunk == null) return null;
-
             return chunk.getBlockEntity(pos);
         }
 
@@ -113,18 +120,27 @@ public class ChunkMeshCache {
     }
 
     public static void onChunkLoaded(Level level, ChunkAccess chunk) {
-        var packed = chunk.getPos().pack();
-        VANILLA_CHUNKS.computeIfAbsent(level, key -> new Long2ReferenceOpenHashMap<>()).put(packed,  chunk);
+        var ref = VANILLA_CHUNKS.computeIfAbsent(
+                level,
+                key -> new AtomicReference<>(new Long2ReferenceOpenHashMap<>()));
+        long packed = chunk.getPos().pack();
+        synchronized (ref) {
+            var copy = new Long2ReferenceOpenHashMap<>(ref.get());
+            copy.put(packed, chunk);
+            ref.set(copy);
+        }
     }
 
     public static void onChunkUnloaded(Level level, ChunkAccess chunk) {
-        var packed = chunk.getPos().pack();
-        var cache = VANILLA_CHUNKS.get(level);
-        if (cache != null) {
-            cache.remove(packed);
-            if (cache.isEmpty()) {
-                VANILLA_CHUNKS.remove(level);
-            }
+        var ref = VANILLA_CHUNKS.get(level);
+        if (ref == null) return;
+        long packed = chunk.getPos().pack();
+        synchronized (ref) {
+            var old = ref.get();
+            if (!old.containsKey(packed)) return;
+            var copy = new Long2ReferenceOpenHashMap<>(old);
+            copy.remove(packed);
+            ref.set(copy);
         }
     }
 
@@ -136,12 +152,18 @@ public class ChunkMeshCache {
 
     @Nullable
     public static ChunkMeshCache.ChunkMesh getChunkMesh(Level level, long key) {
-        return CHUNK_CACHE.computeIfAbsent(level, k -> new Long2ObjectArrayMap<>()).get(key);
+        Long2ObjectMap<ChunkMesh> inner = CHUNK_CACHE.get(level);
+        if (inner == null) return null;
+        return inner.get(key);
     }
 
     @Nullable
     public static ChunkMeshCache.ChunkMesh putChunkMesh(Level level, long key, ChunkMesh chunkMesh) {
-        return CHUNK_CACHE.computeIfAbsent(level, k -> new Long2ObjectArrayMap<>()).put(key, chunkMesh);
+        return innerMap(level).put(key, chunkMesh);
+    }
+
+    private static Long2ObjectMap<ChunkMesh> innerMap(Level level) {
+        return CHUNK_CACHE.computeIfAbsent(level, _ -> Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>()));
     }
 
     public static void onBlockChanged(Level level, BlockPos pos) {
@@ -164,11 +186,9 @@ public class ChunkMeshCache {
     }
 
     public static void onUnloadChunk(LevelChunk chunk, int x, int z) {
-
     }
 
     public static void onLoadChunk(LevelChunk chunk, int x, int z) {
-
     }
 
     private static long chunkKeyFromBlock(BlockPos pos) {
@@ -310,7 +330,7 @@ public class ChunkMeshCache {
         EnumSet<Direction> culledFaces = computeCulledFaces(level, wx, wy, wz, state);
 
         long key = ((long) state.hashCode() << 32) | (culledFaces.hashCode() & 0xFFFFFFFFL);
-        List<Mesh> meshes = BLOCK_MESH_CACHE.computeIfAbsent(key, k -> {
+        List<Mesh> meshes = getOrBuildMeshes(key, () -> {
             List<Mesh> list = new ObjectArrayList<>(views.size());
             for (RPModel.View view : views) {
                 var m = new ModelTesselator(view, culledFaces).build();
@@ -324,6 +344,23 @@ public class ChunkMeshCache {
             result.add(buildModelWithLighting(level, wx, wy, wz, mesh, state));
         }
         return result;
+    }
+
+    private static List<Mesh> getOrBuildMeshes(long key, Supplier<List<Mesh>> builder) {
+        var snapshot = BLOCK_MESH_CACHE;
+        var existing = snapshot.get(key);
+        if (existing != null) return existing;
+
+        var built = builder.get();
+        synchronized (BLOCK_MESH_CACHE_LOCK) {
+            var current = BLOCK_MESH_CACHE;
+            var check = current.get(key);
+            if (check != null) return check;
+            var next = new Long2ObjectOpenHashMap<List<Mesh>>(current);
+            next.put(key, built);
+            BLOCK_MESH_CACHE = next;
+            return built;
+        }
     }
 
     static List<Model> getFluidModel(FastBlockGetter level, int wx, int wy, int wz, FluidState fluidState) {
@@ -381,9 +418,7 @@ public class ChunkMeshCache {
             ChunkAccess chunk = level.getChunkAt(pos);
             return 0xFF000000 | BlockColors.get(chunk, state, pos);
         }
-        long r = 0;
-        long g = 0;
-        long b = 0;
+        long r = 0, g = 0, b = 0;
         int samples = 0;
 
         BlockPos.MutableBlockPos samplePos = new BlockPos.MutableBlockPos();
@@ -391,7 +426,7 @@ public class ChunkMeshCache {
             for (int dz = -radius; dz <= radius; dz++) {
                 samplePos.set(pos.getX() + dx, pos.getY(), pos.getZ() + dz);
                 ChunkAccess chunk = level.getChunkAt(samplePos);
-                int color = BlockColors.get(chunk, state, samplePos); // returns RGB
+                int color = BlockColors.get(chunk, state, samplePos);
                 r += (color >> 16) & 0xFF;
                 g += (color >> 8) & 0xFF;
                 b += color & 0xFF;
@@ -490,7 +525,9 @@ public class ChunkMeshCache {
 
     static void rebuildChunk(Level level, ChunkMesh chunkMesh) {
         try {
-            chunkMesh.setDrawCommands(buildChunkCommands(level, chunkMesh));
+            long builtVersion = chunkMesh.currentDirtiness();
+            var commands = buildChunkCommands(level, chunkMesh);
+            chunkMesh.setDrawCommands(commands, builtVersion);
         } catch (Exception e) {
             Platforms.get().getLogger().error("Failed to build chunk {}", chunkMesh.key());
         }
@@ -498,12 +535,17 @@ public class ChunkMeshCache {
 
     public static void clear() {
         CHUNK_CACHE.clear();
+        VANILLA_CHUNKS.clear();
+        synchronized (BLOCK_MESH_CACHE_LOCK) {
+            BLOCK_MESH_CACHE = new Long2ObjectOpenHashMap<>();
+        }
     }
 
     public static class ChunkMesh {
         private final BlockPos origin;
         private final long key;
-        private boolean dirty = true;
+        private final AtomicLong dirtiness = new AtomicLong(1);
+        private volatile long builtDirtiness = 0;
         private volatile List<DrawCommand> drawCommands = List.of();
 
         ChunkMesh(BlockPos origin, long key) {
@@ -512,7 +554,7 @@ public class ChunkMeshCache {
         }
 
         public void markDirty() {
-            dirty = true;
+            dirtiness.incrementAndGet();
         }
 
         public BlockPos origin() {
@@ -524,16 +566,25 @@ public class ChunkMeshCache {
         }
 
         public boolean isDirty() {
-            return dirty;
+            return dirtiness.get() != builtDirtiness;
         }
 
         public List<DrawCommand> drawCommands() {
             return drawCommands;
         }
 
+        long currentDirtiness() {
+            return dirtiness.get();
+        }
+
         public void setDrawCommands(List<DrawCommand> drawCommands) {
             this.drawCommands = drawCommands;
-            this.dirty = false;
+            this.builtDirtiness = dirtiness.get();
+        }
+
+        void setDrawCommands(List<DrawCommand> drawCommands, long builtDirtiness) {
+            this.drawCommands = drawCommands;
+            this.builtDirtiness = builtDirtiness;
         }
     }
 }
